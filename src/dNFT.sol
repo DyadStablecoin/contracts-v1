@@ -7,4 +7,6 @@ contract dNFT {
   constructor() {
     minter = msg.sender;
   }
+
+  function mint(address receiver) public { }
 }
