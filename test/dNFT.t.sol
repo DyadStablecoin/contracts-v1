@@ -9,11 +9,23 @@ contract dNFTTest is Test {
   dNFT public dnft;
 
   function setUp() public {
-    console.log("setup");
     dnft = new dNFT();
   }
 
-  function testIncrement() public {
-    console.log(address(dnft));
+  function testMint() public {
+    assertEq(dnft.totalSupply(), 0);
+
+    dnft.mint(address(this));
+    assertEq(dnft.idToOwner(0), address(this));
+    assertEq(dnft.xp(0), 100);
+    assertEq(dnft.totalSupply(), 1);
+
+    dnft.mint(address(this));
+    assertEq(dnft.xp(1), 100);
+    assertEq(dnft.totalSupply(), 2);
+
+    dnft.mint(address(this));
+    assertEq(dnft.xp(2), 100);
+    assertEq(dnft.totalSupply(), 3);
   }
 }
