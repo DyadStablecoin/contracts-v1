@@ -4,12 +4,15 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "../src/dNFT.sol";
+import "../src/dyad.sol";
 
 contract dNFTTest is Test {
   dNFT public dnft;
+  DYAD public dyad;
 
   function setUp() public {
-    dnft = new dNFT();
+    dyad = new DYAD();
+    dnft = new dNFT(address(dyad));
   }
 
   function testMint() public {
