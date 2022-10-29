@@ -30,6 +30,7 @@ contract dNFTTest is Test {
     pool = new Pool(address(dnft), address(dyad));
 
     dnft.setPool(address(pool));
+    dyad.setMinter(address(pool));
 
     addr1 = cheats.addr(1);
     addr2 = cheats.addr(2);

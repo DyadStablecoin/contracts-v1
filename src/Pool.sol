@@ -31,6 +31,7 @@ contract Pool {
 
     uint newDyad = msg.value * lastEthPrice / 100000000;
     console.logUint(newDyad);
+    dyad.mint(msg.sender, newDyad);
 
     return newDyad;
   }
