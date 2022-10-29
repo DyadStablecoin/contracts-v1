@@ -25,13 +25,20 @@ contract Pool {
     lastEthPrice = uint(price);
   }
 
-  function mintDyad() payable external returns (uint) {
-    require(msg.sender == address(dnft), "Pool: Only dNFT can mint dyad");
+  modifier onlyNFT() {
+    require(msg.sender == address(dnft), "Pool: Only NFT can call this function");
+    _;
+  }
+
+  function deposit(uint amount) external onlyNFT {
+
+  }
+
+  function mintDyad() payable external onlyNFT returns (uint) {
     require(msg.value > 0);
 
     uint newDyad = msg.value * lastEthPrice / 100000000;
-    console.logUint(newDyad);
-    dyad.mint(msg.sender, newDyad);
+    dyad.mint(address(this), newDyad);
 
     return newDyad;
   }
