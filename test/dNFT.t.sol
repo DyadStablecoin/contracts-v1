@@ -5,6 +5,8 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "../src/dNFT.sol";
 import "../src/dyad.sol";
+import "../src/dyad.sol";
+import "../src/pool.sol";
 import "ds-test/test.sol";
 
 interface CheatCodes {
@@ -15,6 +17,7 @@ interface CheatCodes {
 contract dNFTTest is Test {
   dNFT public dnft;
   DYAD public dyad;
+  Pool public pool;
 
   // --------------------- Test Addresses ---------------------
   CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
@@ -24,6 +27,9 @@ contract dNFTTest is Test {
   function setUp() public {
     dyad = new DYAD();
     dnft = new dNFT(address(dyad));
+    pool = new Pool(address(dnft), address(dyad));
+
+    dnft.setPool(address(pool));
 
     addr1 = cheats.addr(1);
     addr2 = cheats.addr(2);
@@ -55,8 +61,8 @@ contract dNFTTest is Test {
     dnft.mint(address(this));
     dnft.mintDyad(0);
 
-    dnft.mint(address(addr1));
-    vm.expectRevert();
-    dnft.mintDyad(1);
+    // dnft.mint(address(addr1));
+    // vm.expectRevert();
+    // dnft.mintDyad(1);
   }
 }

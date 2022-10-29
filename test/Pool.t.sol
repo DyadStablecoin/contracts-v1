@@ -15,6 +15,6 @@ contract PoolTest is Test {
   function setUp() public {
     dyad = new DYAD();
     dnft = new dNFT(address(dyad));
-    pool = new Pool(address(dnft));
+    pool = new Pool(address(dnft), address(dyad));
   }
 }

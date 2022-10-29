@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "../src/dyad.sol";
 import "../src/pool.sol";
+import "forge-std/console.sol";
 
 contract dNFT is ERC721Enumerable{
   // maximum number of nfts that can exist at any moment
@@ -49,6 +50,7 @@ contract dNFT is ERC721Enumerable{
   /// @notice Mint new dyad to the NFT
   /// @param id The NFT id
   function mintDyad(uint id) external onlyNFTOwner(id) {
+    uint amount = pool.mintDyad();
   }
 
   /// @notice Deposit dyad in the NFT
