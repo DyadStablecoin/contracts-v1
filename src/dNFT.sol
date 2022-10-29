@@ -41,25 +41,25 @@ contract dNFT is ERC721Enumerable{
 
   /// @dev Check if owner of NFT is msg.sender
   /// @param id The id of the NFT
-  modifier onlyOwner(uint id) {
+  modifier onlyNFTOwner(uint id) {
     require(idToOwner[id] == msg.sender, "Only NFT owner can call this function");
     _;
   }
 
   /// @notice Mint new dyad to the NFT
   /// @param id The NFT id
-  function mintDyad(uint id) external onlyOwner(id) {
+  function mintDyad(uint id) external onlyNFTOwner(id) {
   }
 
   /// @notice Deposit dyad in the NFT
   /// @param id The NFT id
   /// @param amount The amount of dyad to deposit
-  function deposit(uint id, uint amount) external onlyOwner(id) {
+  function deposit(uint id, uint amount) external onlyNFTOwner(id) {
   }
 
   /// @notice Withdraw dyad from the NFT
   /// @param id The NFT id
   /// @param amount The amount of dyad to withdraw
-  function withdraw(uint id, uint amount) external onlyOwner(id) {
+  function withdraw(uint id, uint amount) external onlyNFTOwner(id) {
   }
 }

@@ -5,14 +5,28 @@ import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "../src/dNFT.sol";
 import "../src/dyad.sol";
+import "ds-test/test.sol";
+
+interface CheatCodes {
+   // Gets address for a given private key, (privateKey) => (address)
+   function addr(uint256) external returns (address);
+}
 
 contract dNFTTest is Test {
   dNFT public dnft;
   DYAD public dyad;
 
+  // --------------------- Test Addresses ---------------------
+  CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
+  address public addr1;
+  address public addr2;
+
   function setUp() public {
     dyad = new DYAD();
     dnft = new dNFT(address(dyad));
+
+    addr1 = cheats.addr(1);
+    addr2 = cheats.addr(2);
   }
 
   function testSetPool() public {
@@ -35,5 +49,14 @@ contract dNFTTest is Test {
     dnft.mint(address(this));
     assertEq(dnft.xp(2), 100);
     assertEq(dnft.totalSupply(), 3);
+  }
+
+  function testMintDyad() public {
+    dnft.mint(address(this));
+    dnft.mintDyad(0);
+
+    dnft.mint(address(addr1));
+    vm.expectRevert();
+    dnft.mintDyad(1);
   }
 }
