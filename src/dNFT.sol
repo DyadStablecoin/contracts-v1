@@ -29,7 +29,7 @@ contract dNFT is ERC721Enumerable{
   }
 
   /// @notice Mints a new dNFT
-  /// @param to The address to mint the dNFT to
+  /// @param receiver The address to mint the dNFT to
   function mint(address receiver) external {
     uint id = totalSupply();
     require(id < MAX_SUPPLY, "Max supply reached");
