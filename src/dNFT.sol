@@ -16,6 +16,7 @@ contract dNFT is ERC721Enumerable{
 
   mapping (uint => address) public idToOwner;
   mapping (uint => uint) public xp;
+  mapping (uint => uint) public dyadMinted;
 
   event Mint(address indexed to, uint indexed id);
 
@@ -49,8 +50,9 @@ contract dNFT is ERC721Enumerable{
 
   /// @notice Mint new dyad to the NFT
   /// @param id The NFT id
-  function mintDyad(uint id) external onlyNFTOwner(id) {
-    uint amount = pool.mintDyad();
+  function mintDyad(uint id) payable external onlyNFTOwner(id) {
+    uint amount = pool.mintDyad{value: msg.value}();
+    dyadMinted[id] += amount;
   }
 
   /// @notice Deposit dyad in the NFT

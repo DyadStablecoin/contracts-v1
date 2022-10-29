@@ -58,8 +58,10 @@ contract dNFTTest is Test {
   }
 
   function testMintDyad() public {
+    pool.newEthPrice();
+
     dnft.mint(address(this));
-    dnft.mintDyad(0);
+    dnft.mintDyad{value: 1}(0);
 
     // dnft.mint(address(addr1));
     // vm.expectRevert();

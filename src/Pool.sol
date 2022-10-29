@@ -5,12 +5,9 @@ import "../src/dyad.sol";
 import "../src/IdNFT.sol";
 import "../src/AggregatorV3Interface.sol";
 import "forge-std/console.sol";
+import "../src/Addresses.sol";
 
 contract Pool {
-  // mainnnet
-  address private constant PRICE_ORACLE_ADDRESS = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
-
-
   IdNFT public dnft;
   DYAD public dyad;
   AggregatorV3Interface internal priceFeed;
@@ -20,26 +17,22 @@ contract Pool {
   constructor(address _dnft, address _dyad) {
     dnft = IdNFT(_dnft);
     dyad = DYAD(_dyad);
-
-    // mainnnet 
-    priceFeed = AggregatorV3Interface(PRICE_ORACLE_ADDRESS);
+    priceFeed = AggregatorV3Interface(Addresses.PRICE_ORACLE_ADDRESS);
   }
 
   function newEthPrice() public {
-    (
-      /*uint80 roundID*/,
-      int price,
-      /*uint startedAt*/,
-      /*uint timeStamp*/,
-      /*uint80 answeredInRound*/
-    ) = priceFeed.latestRoundData();
-
+    ( , int price, , , ) = priceFeed.latestRoundData();
     lastEthPrice = uint(price);
   }
 
-  function mintDyad() external returns (uint) {
+  function mintDyad() payable external returns (uint) {
+    require(msg.sender == address(dnft), "Pool: Only dNFT can mint dyad");
+    require(msg.value > 0);
 
-    return 9999;
+    uint newDyad = msg.value * lastEthPrice / 100000000;
+    console.logUint(newDyad);
+
+    return newDyad;
   }
 }
 
