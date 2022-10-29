@@ -6,9 +6,10 @@ import "../src/dyad.sol";
 import "../src/pool.sol";
 
 contract dNFT is ERC721Enumerable{
+  // maximum number of nfts that can exist at any moment
   uint public constant MAX_SUPPLY = 1000;
 
-  address public minter;
+  address public owner;
   DYAD public dyad;
   Pool public pool;
 
@@ -18,21 +19,47 @@ contract dNFT is ERC721Enumerable{
   event Mint(address indexed to, uint indexed id);
 
   constructor(address _dyad) ERC721("dyad NFT", "dNFT") {
-    minter = msg.sender;
+    owner = msg.sender;
     dyad = DYAD(_dyad);
   }
 
-  function setPool(address newPool) public {
-    require(msg.sender == minter, "Only minter can set pool");
+  function setPool(address newPool) external {
+    require(msg.sender == owner, "Only owner can set pool");
     pool = Pool(newPool);
   }
 
-  function mint(address receiver) public {
+  /// @notice Mints a new dNFT
+  /// @param to The address to mint the dNFT to
+  function mint(address receiver) external {
     uint id = totalSupply();
     require(id < MAX_SUPPLY, "Max supply reached");
     idToOwner[id] = receiver;
     xp[id] += 100;
     _mint(receiver, id);
     emit Mint(receiver, id);
+  }
+
+  /// @dev Check if owner of NFT is msg.sender
+  /// @param id The id of the NFT
+  modifier onlyOwner(uint id) {
+    require(idToOwner[id] == msg.sender, "Only NFT owner can call this function");
+    _;
+  }
+
+  /// @notice Mint new dyad to the NFT
+  /// @param id The NFT id
+  function mintDyad(uint id) external onlyOwner(id) {
+  }
+
+  /// @notice Deposit dyad in the NFT
+  /// @param id The NFT id
+  /// @param amount The amount of dyad to deposit
+  function deposit(uint id, uint amount) external onlyOwner(id) {
+  }
+
+  /// @notice Withdraw dyad from the NFT
+  /// @param id The NFT id
+  /// @param amount The amount of dyad to withdraw
+  function withdraw(uint id, uint amount) external onlyOwner(id) {
   }
 }
