@@ -17,4 +17,12 @@ contract PoolTest is Test {
     dnft = new dNFT(address(dyad));
     pool = new Pool(address(dnft), address(dyad));
   }
+
+  function testNewEthPrice() public {
+    assertEq(pool.lastEthPrice(), 0);
+
+    // get new eth price and do sanity check
+    pool.newEthPrice();
+    assertTrue(pool.lastEthPrice() > 0);
+  }
 }
