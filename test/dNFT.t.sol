@@ -15,6 +15,11 @@ contract dNFTTest is Test {
     dnft = new dNFT(address(dyad));
   }
 
+  function testSetPool() public {
+    dnft.setPool(address(0));
+    assertEq(address(dnft.pool()), address(0));
+  }
+
   function testMint() public {
     assertEq(dnft.totalSupply(), 0);
 
