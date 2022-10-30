@@ -29,7 +29,7 @@ contract dNFTTest is Test {
     dnft = new dNFT(address(dyad));
     pool = new Pool(address(dnft), address(dyad));
 
-    pool.newEthPrice();
+    pool.getNewEthPrice();
     dnft.setPool(address(pool));
     dnft.mint(address(this));
     dyad.setMinter(address(pool));

@@ -24,9 +24,17 @@ contract Pool {
   }
 
   /// @notice get the latest eth price from oracle
-  function newEthPrice() public {
-    ( , int price, , , ) = priceFeed.latestRoundData();
-    lastEthPrice = uint(price);
+  function getNewEthPrice() public {
+    ( , int newEthPrice, , , ) = priceFeed.latestRoundData();
+    if (uint(newEthPrice) > lastEthPrice) {
+      // we can mint new dyad here
+
+    } else {
+      // we need to burn dyad here
+
+    }
+
+    lastEthPrice = uint(newEthPrice);
   }
 
   /// @dev Check if msg.sender is the nft contract

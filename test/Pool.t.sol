@@ -22,7 +22,7 @@ contract PoolTest is Test {
     assertEq(pool.lastEthPrice(), 0);
 
     // get new eth price and do sanity check
-    pool.newEthPrice();
+    pool.getNewEthPrice();
     assertTrue(pool.lastEthPrice() > 0);
   }
 }
