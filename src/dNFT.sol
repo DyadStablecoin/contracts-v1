@@ -66,6 +66,7 @@ contract dNFT is ERC721Enumerable{
   /// @param id The NFT id
   /// @param amount The amount of dyad to deposit
   function deposit(uint id, uint amount) external onlyNFTOwner(id) {
+    dyad.transferFrom(msg.sender, address(this), amount);
     dyadInPool[id] = dyadInPool[id].add(amount);
     dyad.approve(address(pool), amount);
     pool.deposit(amount);

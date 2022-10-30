@@ -74,13 +74,20 @@ contract dNFTTest is Test {
   function testWithdraw() public {
     dnft.mintDyad{value: 10}(0);
 
-    // amountn to withdraw
+    // amount to withdraw
     uint AMOUNT = 22;
     dnft.withdraw(0, AMOUNT);
     assertEq(dyad.balanceOf(address(this)), AMOUNT);
   }
 
   function testDeposit() public {
+    dnft.mintDyad{value: 100}(0);
+    // we need to approve the dnft here to transfer our dyad
+    dyad.approve(address(dnft), 100);
 
+    uint AMOUNT = 22;
+    dnft.withdraw(0, AMOUNT);
+    dnft.deposit(0, AMOUNT);
+    assertEq(dyad.balanceOf(address(this)), 0);
   }
 }
