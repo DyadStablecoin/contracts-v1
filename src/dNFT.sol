@@ -2,11 +2,14 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "../src/dyad.sol";
 import "../src/pool.sol";
 import "forge-std/console.sol";
 
 contract dNFT is ERC721Enumerable{
+  using SafeMath for uint256;
+
   // maximum number of nfts that can exist at any moment
   uint public constant MAX_SUPPLY = 1000;
 
@@ -33,11 +36,11 @@ contract dNFT is ERC721Enumerable{
 
   /// @notice Mints a new dNFT
   /// @param receiver The address to mint the dNFT to
-  function mint(address receiver) external {
-    uint id = totalSupply();
+  function mint(address receiver) external returns (uint id) {
+    id = totalSupply();
     require(id < MAX_SUPPLY, "Max supply reached");
     idToOwner[id] = receiver;
-    xp[id] += 100;
+    xp[id] = xp[id].add(100);
     _mint(receiver, id);
     emit Mint(receiver, id);
   }
@@ -53,8 +56,8 @@ contract dNFT is ERC721Enumerable{
   /// @param id The NFT id
   function mintDyad(uint id) payable external onlyNFTOwner(id) {
     uint amount = pool.mintDyad{value: msg.value}();
-    dyadInPool[id] += amount;
-    dyadMinted[id] += amount;
+    dyadInPool[id] = dyadInPool[id].add(amount);
+    dyadMinted[id] += dyadMinted[id].add(amount);
     dyad.approve(address(pool), amount);
     pool.deposit(amount);
   }
@@ -63,16 +66,16 @@ contract dNFT is ERC721Enumerable{
   /// @param id The NFT id
   /// @param amount The amount of dyad to deposit
   function deposit(uint id, uint amount) external onlyNFTOwner(id) {
-    dyadInPool[id] += amount;
+    dyadInPool[id] = dyadInPool[id].add(amount);
     dyad.approve(address(pool), amount);
     pool.deposit(amount);
   }
 
-  /// @notice Withdraw dyad from the NFT
+  /// @notice Withdraw dyad from the NFT to the msg.sender
   /// @param id The NFT id
   /// @param amount The amount of dyad to withdraw
   function withdraw(uint id, uint amount) external onlyNFTOwner(id) {
-    dyadInPool[id] -= amount;
-    dyad.withdraw(amount, msg.sender)
+    dyadInPool[id] = dyadInPool[id].sub(amount);
+    pool.withdraw(msg.sender, amount);
   }
 }

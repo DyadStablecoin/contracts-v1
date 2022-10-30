@@ -52,7 +52,7 @@ contract Pool {
   /// @notice Withdraw dyad from the pool to the recipient
   /// @param amount The amount of dyad to withdraw
   /// @param recipient The address to withdraw dyad to
-  function withdraw(uint amount, address recipient) external onlyNFT {
+  function withdraw(address recipient, uint amount) external onlyNFT {
     dyad.transfer(recipient, amount);
   }
 }

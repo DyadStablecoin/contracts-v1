@@ -29,7 +29,9 @@ contract dNFTTest is Test {
     dnft = new dNFT(address(dyad));
     pool = new Pool(address(dnft), address(dyad));
 
+    pool.newEthPrice();
     dnft.setPool(address(pool));
+    dnft.mint(address(this));
     dyad.setMinter(address(pool));
 
     addr1 = cheats.addr(1);
@@ -42,30 +44,43 @@ contract dNFTTest is Test {
   }
 
   function testMint() public {
-    assertEq(dnft.totalSupply(), 0);
-
-    dnft.mint(address(this));
-    assertEq(dnft.idToOwner(0), address(this));
-    assertEq(dnft.xp(0), 100);
+    // we minted one in setUp
     assertEq(dnft.totalSupply(), 1);
 
     dnft.mint(address(this));
+    assertEq(dnft.idToOwner(1), address(this));
     assertEq(dnft.xp(1), 100);
     assertEq(dnft.totalSupply(), 2);
 
     dnft.mint(address(this));
     assertEq(dnft.xp(2), 100);
     assertEq(dnft.totalSupply(), 3);
+
+    dnft.mint(address(this));
+    assertEq(dnft.xp(3), 100);
+    assertEq(dnft.totalSupply(), 4);
   }
 
   function testMintDyad() public {
-    pool.newEthPrice();
-
     dnft.mint(address(this));
     dnft.mintDyad{value: 1}(0);
 
-    // dnft.mint(address(addr1));
-    // vm.expectRevert();
-    // dnft.mintDyad(1);
+    // try to mint dyad from an nft that the address does not own
+    dnft.mint(address(addr1));
+    vm.expectRevert();
+    dnft.mintDyad(1);
+  }
+
+  function testWithdraw() public {
+    dnft.mintDyad{value: 10}(0);
+
+    // amountn to withdraw
+    uint AMOUNT = 22;
+    dnft.withdraw(0, AMOUNT);
+    assertEq(dyad.balanceOf(address(this)), AMOUNT);
+  }
+
+  function testDeposit() public {
+
   }
 }
