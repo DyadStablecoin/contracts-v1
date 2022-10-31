@@ -16,6 +16,8 @@ contract PoolTest is Test {
     dyad = new DYAD();
     dnft = new dNFT(address(dyad));
     pool = new Pool(address(dnft), address(dyad));
+
+    dyad.setMinter(address(pool));
   }
 
   function testNewEthPrice() public {

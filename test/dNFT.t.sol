@@ -29,10 +29,11 @@ contract dNFTTest is Test {
     dnft = new dNFT(address(dyad));
     pool = new Pool(address(dnft), address(dyad));
 
+    dyad.setMinter(address(pool));
     pool.getNewEthPrice();
     dnft.setPool(address(pool));
     dnft.mint(address(this));
-    dyad.setMinter(address(pool));
+    pool.getNewEthPrice();
 
     addr1 = cheats.addr(1);
     addr2 = cheats.addr(2);
@@ -89,5 +90,6 @@ contract dNFTTest is Test {
     dnft.withdraw(0, AMOUNT);
     dnft.deposit(0, AMOUNT);
     assertEq(dyad.balanceOf(address(this)), 0);
+    pool.getNewEthPrice();
   }
 }

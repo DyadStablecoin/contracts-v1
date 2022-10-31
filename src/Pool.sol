@@ -15,7 +15,10 @@ contract Pool {
   DYAD public dyad;
   AggregatorV3Interface internal priceFeed;
 
+  mapping(uint => int) public poolDeltaAtCheckpoint;
+
   uint public lastEthPrice;
+  uint public lastCheckpoint;
 
   constructor(address _dnft, address _dyad) {
     dnft = IdNFT(_dnft);
@@ -26,15 +29,23 @@ contract Pool {
   /// @notice get the latest eth price from oracle
   function getNewEthPrice() public {
     ( , int newEthPrice, , , ) = priceFeed.latestRoundData();
+    int priceDelta = newEthPrice - int(lastEthPrice);
+    uint poolBalance = dyad.balanceOf(address(this));
+
+    int deltaAmount;
     if (uint(newEthPrice) > lastEthPrice) {
       // we can mint new dyad here
-
+      deltaAmount = 0;
+      dyad.mint(address(this), uint(deltaAmount));
     } else {
       // we need to burn dyad here
-
+      deltaAmount = 0;
+      dyad.burn(uint(deltaAmount));
     }
 
+    poolDeltaAtCheckpoint[lastCheckpoint] = deltaAmount;
     lastEthPrice = uint(newEthPrice);
+    lastCheckpoint += 1;
   }
 
   /// @dev Check if msg.sender is the nft contract
