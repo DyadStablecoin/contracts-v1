@@ -17,7 +17,8 @@ contract Pool {
   DYAD public dyad;
   IAggregatorV3 internal priceFeed;
 
-  mapping(uint => int) public poolDeltaAtCheckpoint;
+  mapping(uint => int) public dyadDeltaAtCheckpoint;
+  mapping(uint => int) public xpDeltaAtCheckpoint;
 
   uint public lastEthPrice;
   uint public lastCheckpoint;
@@ -43,7 +44,8 @@ contract Pool {
     int deltaPricePercent = int(lastEthPrice)       / newEthPrice;
     int deltaAmount       = int(dyad.totalSupply()) * deltaPricePercent;
 
-    poolDeltaAtCheckpoint[lastCheckpoint] = deltaAmount;
+    dyadDeltaAtCheckpoint[lastCheckpoint] = deltaAmount;
+    xpDeltaAtCheckpoint[lastCheckpoint] = 0;
 
     if (uint(newEthPrice) > lastEthPrice) {
       dyad.mint(address(this), uint(deltaAmount));

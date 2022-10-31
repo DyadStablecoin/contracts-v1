@@ -22,7 +22,9 @@ contract dNFT is ERC721Enumerable{
   mapping (uint => address) public idToOwner;
   mapping (uint => uint) public xp;
   mapping (uint => uint) public dyadMinted;
+  mapping (uint => uint) public virtualDyadBalance;
   mapping (uint => uint) public dyadInPool;
+  mapping (uint => uint) public lastCheckpointForId;
 
   event Mint(address indexed to, uint indexed id);
 
@@ -52,6 +54,11 @@ contract dNFT is ERC721Enumerable{
   modifier onlyNFTOwner(uint id) {
     require(idToOwner[id] == msg.sender, "Only NFT owner can call this function");
     _;
+  }
+
+  function sync(uint id) external onlyNFTOwner(id) {
+    xp[id] = 0;
+    virtualDyadBalance[id] += 0;
   }
 
   /// @notice Mint new dyad to the NFT
