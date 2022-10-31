@@ -1,11 +1,13 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
+
+import "forge-std/console.sol";
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "../src/dyad.sol";
-import "../src/pool.sol";
-import "forge-std/console.sol";
+
+import {DYAD} from "../src/dyad.sol";
+import {Pool} from "../src/pool.sol";
 
 contract dNFT is ERC721Enumerable{
   using SafeMath for uint256;

@@ -1,32 +1,40 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "../src/dyad.sol";
-import "../src/IdNFT.sol";
-import "../src/AggregatorV3Interface.sol";
 import "forge-std/console.sol";
-import "../src/Addresses.sol";
+
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+
+import {DYAD} from "../src/dyad.sol";
+import {IAggregatorV3} from "../src/AggregatorV3Interface.sol";
+import {IdNFT} from "../src/IdNFT.sol";
+import {Addresses} from "../src/Addresses.sol";
 
 contract Pool {
   using SafeMath for uint256;
 
   IdNFT public dnft;
   DYAD public dyad;
-  AggregatorV3Interface internal priceFeed;
+  IAggregatorV3 internal priceFeed;
 
   mapping(uint => int) public poolDeltaAtCheckpoint;
 
   uint public lastEthPrice;
   uint public lastCheckpoint;
 
+  event NewEthPrice(int newEthPrice);
+
+  /// @dev Check if msg.sender is the nft contract
+  modifier onlyNFT() {
+    require(msg.sender == address(dnft), "Pool: Only NFT can call this function");
+    _;
+  }
+
   constructor(address _dnft, address _dyad) {
     dnft      = IdNFT(_dnft);
     dyad      = DYAD(_dyad);
-    priceFeed = AggregatorV3Interface(Addresses.PRICE_ORACLE_ADDRESS);
+    priceFeed = IAggregatorV3(Addresses.PRICE_ORACLE_ADDRESS);
   }
-
-  event NewEthPrice(int newEthPrice);
 
   /// @notice get the latest eth price from oracle
   function getNewEthPrice() public returns (int newEthPrice) {
@@ -49,11 +57,6 @@ contract Pool {
     emit NewEthPrice(newEthPrice);
   }
 
-  /// @dev Check if msg.sender is the nft contract
-  modifier onlyNFT() {
-    require(msg.sender == address(dnft), "Pool: Only NFT can call this function");
-    _;
-  }
 
   /// @notice Mint dyad to the NFT
   function mintDyad() payable external onlyNFT returns (uint) {
