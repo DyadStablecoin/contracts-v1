@@ -21,31 +21,32 @@ contract Pool {
   uint public lastCheckpoint;
 
   constructor(address _dnft, address _dyad) {
-    dnft = IdNFT(_dnft);
-    dyad = DYAD(_dyad);
+    dnft      = IdNFT(_dnft);
+    dyad      = DYAD(_dyad);
     priceFeed = AggregatorV3Interface(Addresses.PRICE_ORACLE_ADDRESS);
   }
 
-  /// @notice get the latest eth price from oracle
-  function getNewEthPrice() public {
-    ( , int newEthPrice, , , ) = priceFeed.latestRoundData();
-    int priceDelta = newEthPrice - int(lastEthPrice);
-    uint poolBalance = dyad.balanceOf(address(this));
+  event NewEthPrice(int newEthPrice);
 
-    int deltaAmount;
+  /// @notice get the latest eth price from oracle
+  function getNewEthPrice() public returns (int newEthPrice) {
+    ( , newEthPrice, , , ) = priceFeed.latestRoundData();
+
+    int deltaPricePercent = int(lastEthPrice)       / newEthPrice;
+    int deltaAmount       = int(dyad.totalSupply()) * deltaPricePercent;
+
+    poolDeltaAtCheckpoint[lastCheckpoint] = deltaAmount;
+
     if (uint(newEthPrice) > lastEthPrice) {
-      // we can mint new dyad here
-      deltaAmount = 0;
       dyad.mint(address(this), uint(deltaAmount));
     } else {
-      // we need to burn dyad here
-      deltaAmount = 0;
+      // What happens if there is not enough to burn?
       dyad.burn(uint(deltaAmount));
     }
 
-    poolDeltaAtCheckpoint[lastCheckpoint] = deltaAmount;
-    lastEthPrice = uint(newEthPrice);
+    lastEthPrice    = uint(newEthPrice);
     lastCheckpoint += 1;
+    emit NewEthPrice(newEthPrice);
   }
 
   /// @dev Check if msg.sender is the nft contract
