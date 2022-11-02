@@ -19,6 +19,7 @@ contract Pool {
 
   mapping(uint => int) public dyadDeltaAtCheckpoint;
   mapping(uint => int) public xpDeltaAtCheckpoint;
+  mapping(uint => uint) public poolBalanceAtCheckpoint;
 
   uint public lastEthPrice;
   uint public lastCheckpoint;
@@ -44,8 +45,9 @@ contract Pool {
     int deltaPricePercent = int(lastEthPrice)       / newEthPrice;
     int deltaAmount       = int(dyad.totalSupply()) * deltaPricePercent;
 
-    dyadDeltaAtCheckpoint[lastCheckpoint] = deltaAmount;
-    xpDeltaAtCheckpoint[lastCheckpoint] = 0;
+    dyadDeltaAtCheckpoint  [lastCheckpoint] = deltaAmount;
+    xpDeltaAtCheckpoint    [lastCheckpoint] = 0; // TODO
+    poolBalanceAtCheckpoint[lastCheckpoint] = dyad.balanceOf(address(this));
 
     if (uint(newEthPrice) > lastEthPrice) {
       dyad.mint(address(this), uint(deltaAmount));
