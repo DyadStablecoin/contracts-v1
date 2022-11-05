@@ -104,14 +104,24 @@ contract dNFTTest is Test {
     dnft.mintDyad(1);
   }
 
-  // function testWithdraw() public {
-  //   dnft.mintDyad{value: 10}(0);
+  function testWithdraw() public {
+    dnft.mintDyad{value: 10}(0);
+    uint dyadInPoolPre = dyad.balanceOf(address(pool));
 
-  //   // amount to withdraw
-  //   uint AMOUNT = 22;
-  //   dnft.withdraw(0, AMOUNT);
-  //   assertEq(dyad.balanceOf(address(this)), AMOUNT);
-  // }
+    // amount to withdraw
+    uint AMOUNT = 22;
+    dnft.withdraw(0, AMOUNT);
+    assertEq(dyad.balanceOf(address(this)), AMOUNT);
+
+    uint dyadInPoolPost = dyad.balanceOf(address(pool));
+
+    // check global var
+    assertEq(dyadInPoolPost, dyadInPoolPre - AMOUNT);
+
+    // check struct
+    IdNFT.Metadata memory metadata = dnft.idToMetadata(0);
+    assertEq(metadata.dyadInPool, dyadInPoolPre - AMOUNT);
+  }
 
   // function testDeposit() public {
   //   dnft.mintDyad{value: 100}(0);
