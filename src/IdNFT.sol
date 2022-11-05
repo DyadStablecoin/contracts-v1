@@ -3,9 +3,16 @@ pragma solidity ^0.8.13;
 
 interface IdNFT {
   struct Metadata {
-    int balance;
+    uint dyadInPool; // dyad balance in pool
     uint xp; // always positive, always inflationary
   }
+
+  function pool() external view returns (address);
+  function dyadInPool() external view returns (uint);
+  function idToOwner(uint id) external view returns (address);
+  function mintDyad(uint id) external payable;
+
+  function setPool(address newPool) external;
 
   function mint(address receiver) external returns (uint id);
   function burn(uint id) external;

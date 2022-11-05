@@ -43,7 +43,6 @@ contract Pool {
   function getNewEthPrice() public returns (int newEthPrice) {
     ( , newEthPrice, , , ) = priceFeed.latestRoundData();
 
-
     int deltaPricePercent = int(lastEthPrice)       / newEthPrice;
     int deltaAmount       = int(dyad.totalSupply()) * deltaPricePercent;
 
@@ -55,6 +54,8 @@ contract Pool {
     }
 
     updateNFTs();
+    // boost nft owner for calling this function
+    boost();
 
     lastEthPrice    = uint(newEthPrice);
     lastCheckpoint += 1;
@@ -62,15 +63,22 @@ contract Pool {
   }
 
   function updateNFTs() internal {
-    uint totalSupply = dnft.totalSupply();
-    for (uint i = 0; i < totalSupply; i++) {
+    uint nftTotalSupply = dnft.totalSupply();
+    uint dyadTotalSupply = dyad.totalSupply();
+
+    for (uint i = 0; i < nftTotalSupply; i++) {
       updateNFT(i);
     }
   }
 
   function updateNFT(uint id) internal {
     IdNFT.Metadata memory metadata = dnft.idToMetadata(id);
+
+    // update balance
+    // update xp
   }
+
+  function boost() internal {}
 
 
   /// @notice Mint dyad to the NFT
