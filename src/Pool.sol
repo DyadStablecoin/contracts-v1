@@ -38,16 +38,14 @@ contract Pool {
     priceFeed = IAggregatorV3(Addresses.PRICE_ORACLE_ADDRESS);
   }
 
+
   /// @notice get the latest eth price from oracle
   function getNewEthPrice() public returns (int newEthPrice) {
     ( , newEthPrice, , , ) = priceFeed.latestRoundData();
 
+
     int deltaPricePercent = int(lastEthPrice)       / newEthPrice;
     int deltaAmount       = int(dyad.totalSupply()) * deltaPricePercent;
-
-    dyadDeltaAtCheckpoint  [lastCheckpoint] = deltaAmount;
-    xpDeltaAtCheckpoint    [lastCheckpoint] = 0; // TODO
-    poolBalanceAtCheckpoint[lastCheckpoint] = dyad.balanceOf(address(this));
 
     if (uint(newEthPrice) > lastEthPrice) {
       dyad.mint(address(this), uint(deltaAmount));
@@ -56,9 +54,22 @@ contract Pool {
       dyad.burn(uint(deltaAmount));
     }
 
+    updateNFTs();
+
     lastEthPrice    = uint(newEthPrice);
     lastCheckpoint += 1;
     emit NewEthPrice(newEthPrice);
+  }
+
+  function updateNFTs() internal {
+    uint totalSupply = dnft.totalSupply();
+    for (uint i = 0; i < totalSupply; i++) {
+      updateNFT(i);
+    }
+  }
+
+  function updateNFT(uint id) internal {
+    IdNFT.Metadata memory metadata = dnft.idToMetadata(id);
   }
 
 

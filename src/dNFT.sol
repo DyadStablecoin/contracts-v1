@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import {DYAD} from "../src/dyad.sol";
 import {Pool} from "../src/pool.sol";
+import {IdNFT} from "../src/IdNFT.sol";
 
 contract dNFT is ERC721Enumerable{
   using SafeMath for uint256;
@@ -19,6 +20,9 @@ contract dNFT is ERC721Enumerable{
   DYAD public dyad;
   Pool public pool;
 
+  // mapping from nft id to metadata
+  mapping(uint => IdNFT.Metadata) public idToMetadata;
+  // mapping from nft id to owner
   mapping (uint => address) public idToOwner;
   mapping (uint => uint) public xp;
   mapping (uint => uint) public dyadMinted;
@@ -44,6 +48,10 @@ contract dNFT is ERC721Enumerable{
     id = totalSupply();
     require(id < MAX_SUPPLY, "Max supply reached");
     idToOwner[id] = receiver;
+
+    // update struct
+    idToMetadata[id].xp.add(100);
+
     xp[id] = xp[id].add(100);
     _mint(receiver, id);
     emit Mint(receiver, id);
