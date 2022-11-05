@@ -54,8 +54,6 @@ contract Pool {
     }
 
     updateNFTs();
-    // boost nft owner for calling this function
-    boost();
 
     lastEthPrice    = uint(newEthPrice);
     lastCheckpoint += 1;
@@ -75,10 +73,21 @@ contract Pool {
     IdNFT.Metadata memory metadata = dnft.idToMetadata(id);
 
     // update balance
+    metadata.dyadInPool = metadata.dyadInPool.add(0);
+
+
     // update xp
+    uint boostFactor = getBoostFactor(id);
+    uint xpFactor    = 1;                   // TODO: calculate xp factor
+    metadata.xp      = metadata.xp.add(xpFactor * boostFactor);
   }
 
-  function boost() internal {}
+  function getBoostFactor(uint id) internal returns (uint boostFactor) {
+    if (dnft.idToOwner(id) == msg.sender) {
+      // TODO: hardcoded for now!
+      boostFactor = 10;
+    }
+  }
 
 
   /// @notice Mint dyad to the NFT

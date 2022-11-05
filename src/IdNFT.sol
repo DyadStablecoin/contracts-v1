@@ -8,10 +8,10 @@ interface IdNFT {
   }
 
   function pool() external view returns (address);
-  function dyadInPool() external view returns (uint);
   function idToOwner(uint id) external view returns (address);
   function mintDyad(uint id) external payable;
   function withdraw(uint id, uint amount) external;
+  function deposit(uint id, uint amount) external;
 
   function setPool(address newPool) external;
 

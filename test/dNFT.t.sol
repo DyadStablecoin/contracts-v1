@@ -72,9 +72,6 @@ contract dNFTTest is Test {
   }
 
   function testMintDyad() public {
-    // mint one dNFT
-    dnft.mint(address(this));
-
     // mint dyad for 1 gwei
     dnft.mintDyad{value: 1}(0); // value in gwei
     IdNFT.Metadata memory metadata = dnft.idToMetadata(0);
@@ -84,14 +81,14 @@ contract dNFTTest is Test {
     assertEq(metadata.dyadInPool, lastEthPrice);
 
     // check global var
-    uint dyadInPool = dnft.dyadInPool();
+    uint dyadInPool = dyad.balanceOf(address(pool));
     assertEq(dyadInPool, lastEthPrice);
 
     // mint again for 1 gwie
     dnft.mintDyad{value: 1}(0); // value in gwei
 
     // check global var
-    dyadInPool = dnft.dyadInPool();
+    dyadInPool = dyad.balanceOf(address(pool));
     // dyad in pool should be doubled
     assertEq(dyadInPool, lastEthPrice*2);
 
@@ -109,7 +106,7 @@ contract dNFTTest is Test {
     uint dyadInPoolPre = dyad.balanceOf(address(pool));
 
     // amount to withdraw
-    uint AMOUNT = 22;
+    uint AMOUNT = 42;
     dnft.withdraw(0, AMOUNT);
     assertEq(dyad.balanceOf(address(this)), AMOUNT);
 
@@ -123,15 +120,19 @@ contract dNFTTest is Test {
     assertEq(metadata.dyadInPool, dyadInPoolPre - AMOUNT);
   }
 
-  // function testDeposit() public {
-  //   dnft.mintDyad{value: 100}(0);
-  //   // we need to approve the dnft here to transfer our dyad
-  //   dyad.approve(address(dnft), 100);
+  function testDeposit() public {
+    dnft.mintDyad{value: 100}(0);
+    // we need to approve the dnft here to transfer our dyad
+    dyad.approve(address(dnft), 100);
 
-  //   uint AMOUNT = 22;
-  //   dnft.withdraw(0, AMOUNT);
-  //   dnft.deposit(0, AMOUNT);
-  //   assertEq(dyad.balanceOf(address(this)), 0);
-  //   pool.getNewEthPrice();
-  // }
+    uint AMOUNT = 42;
+
+    // withdraw transfers dyad out of the pool to the owner
+    dnft.withdraw(0, AMOUNT);
+    assertTrue(dyad.balanceOf(address(this)) != 0);
+
+    // deposit transfers dyad back into the pool
+    dnft.deposit(0, AMOUNT);
+    assertEq(dyad.balanceOf(address(this)), 0);
+  }
 }
