@@ -9,6 +9,7 @@ import {DYAD} from "../src/dyad.sol";
 import {IAggregatorV3} from "../src/AggregatorV3Interface.sol";
 import {IdNFT} from "../src/IdNFT.sol";
 import {Addresses} from "../src/Addresses.sol";
+import {PoolLibrary} from "../src/PoolLibrary.sol";
 
 contract Pool {
   using SafeMath for uint256;
@@ -54,6 +55,7 @@ contract Pool {
     }
 
     updateNFTs();
+    console.logUint(PoolLibrary.getXpMulti(100));
 
     lastEthPrice    = uint(newEthPrice);
     lastCheckpoint += 1;
@@ -61,7 +63,7 @@ contract Pool {
   }
 
   function updateNFTs() internal {
-    uint nftTotalSupply = dnft.totalSupply();
+    uint nftTotalSupply  = dnft.totalSupply();
     uint dyadTotalSupply = dyad.totalSupply();
 
     for (uint i = 0; i < nftTotalSupply; i++) {
@@ -75,7 +77,6 @@ contract Pool {
     // update balance
     metadata.dyadInPool = metadata.dyadInPool.add(0);
 
-
     // update xp
     uint boostFactor = getBoostFactor(id);
     uint xpFactor    = 1;                   // TODO: calculate xp factor
@@ -86,9 +87,11 @@ contract Pool {
     if (dnft.idToOwner(id) == msg.sender) {
       // TODO: hardcoded for now!
       boostFactor = 10;
+    } else {
+      // if the dnft holder is not the owner the boost factor is 1;
+      boostFactor = 1;
     }
   }
-
 
   /// @notice Mint dyad to the NFT
   function mintDyad() payable external onlyNFT returns (uint) {
