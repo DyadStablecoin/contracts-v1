@@ -55,7 +55,9 @@ contract Pool {
     }
 
     updateNFTs();
-    console.logUint(PoolLibrary.getXpMulti(95));
+    // console.logUint(PoolLibrary.getXpMulti(61 + 5));
+    // console.logUint(PoolLibrary.getBalanceMulti(56+6));
+    console.logUint(PoolLibrary.getDepositMulti(21));
 
     lastEthPrice    = uint(newEthPrice);
     lastCheckpoint += 1;
