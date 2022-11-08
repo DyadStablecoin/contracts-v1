@@ -10,7 +10,10 @@ library PoolLibrary {
     // xp must be uint and between 0 and 100.
     require(xp >= 0 && xp <= 100, "PoolLibrary: xp must be between 0 and 100");
 
-    uint8[40] memory XP_TABLE = [51, 51, 51, 51, 52, 53, 53, 54, 55, 57, 58, 60, 63, 66, 69, 74, 79, 85, 92, 99, 108, 118, 128, 139, 150, 160, 171, 181, 191, 200, 207, 214, 220, 225, 230, 233, 236, 239, 241, 242];
+    uint8[40] memory XP_TABLE = [51, 51, 51, 51, 52, 53, 53, 54, 55, 57, 58, 60,
+                                 63, 66, 69, 74, 79, 85, 92, 99, 108, 118, 128, 139,
+                                 150, 160, 171, 181, 191, 200, 207, 214, 220, 225,
+                                 230, 233, 236, 239, 241, 242];
 
     // why 61?, because:
     // the first 61 values in the table are all 50, which means we do not need 
