@@ -54,35 +54,43 @@ contract Pool {
       dyad.burn(uint(deltaAmount));
     }
 
-    updateNFTs();
-    // console.logUint(PoolLibrary.getXpMulti(61 + 5));
-    // console.logUint(PoolLibrary.getBalanceMulti(56+6));
-    console.logUint(PoolLibrary.getDepositMulti(21));
+    updateNFTs(deltaAmount);
 
     lastEthPrice    = uint(newEthPrice);
     lastCheckpoint += 1;
     emit NewEthPrice(newEthPrice);
   }
 
-  function updateNFTs() internal {
+  function updateNFTs(int deltaAmount) internal {
     uint nftTotalSupply  = dnft.totalSupply();
     uint dyadTotalSupply = dyad.totalSupply();
 
     for (uint i = 0; i < nftTotalSupply; i++) {
-      updateNFT(i);
+      updateNFT(i, deltaAmount);
     }
   }
 
-  function updateNFT(uint id) internal {
+  function updateNFT(uint id, int deltaAmount) internal {
     IdNFT.Metadata memory metadata = dnft.idToMetadata(id);
 
     // update balance
     metadata.dyadInPool = metadata.dyadInPool.add(0);
 
     // update xp
-    uint boostFactor = getBoostFactor(id);
-    uint xpFactor    = 1;                   // TODO: calculate xp factor
-    metadata.xp      = metadata.xp.add(xpFactor * boostFactor);
+    uint  boostFactor = getBoostFactor(id);
+
+    uint8 xpNormal      = PoolLibrary.normalize(metadata.xp, 100);
+    uint  xpFactor      = PoolLibrary.getXpMulti(xpNormal);
+
+    uint  balance       = 1;
+    uint8 balanceNormal = PoolLibrary.normalize(balance, 100);
+    uint  balanceFactor = PoolLibrary.getBalanceMulti(balanceNormal);
+
+    uint8 depositNormal = PoolLibrary.normalize(metadata.dyadInPool, 100);
+    uint  depositFactor = PoolLibrary.getDepositMulti(depositNormal);
+
+    uint factors = xpFactor * balanceFactor * depositFactor * boostFactor;
+    metadata.xp  = metadata.xp + (uint(deltaAmount) * factors);
   }
 
   function getBoostFactor(uint id) internal returns (uint boostFactor) {

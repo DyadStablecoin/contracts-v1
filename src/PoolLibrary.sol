@@ -5,6 +5,11 @@ import "forge-std/console.sol";
 
 library PoolLibrary {
 
+  // return "normalized" value between 1-100
+  function normalize(uint value, uint maxValue) public view returns (uint8) {
+    return uint8(value / (maxValue / 100));
+  }
+
   function getXpMulti(uint8 xp) public view returns (uint) {
     // xp is like an index which maps exactly to one value in the table. That is why
     // xp must be uint and between 0 and 100.
