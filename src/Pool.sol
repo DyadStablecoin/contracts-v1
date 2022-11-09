@@ -37,6 +37,9 @@ contract Pool {
     dnft      = IdNFT(_dnft);
     dyad      = DYAD(_dyad);
     priceFeed = IAggregatorV3(Addresses.PRICE_ORACLE_ADDRESS);
+
+    ( , int newEthPrice, , , ) = priceFeed.latestRoundData();
+    lastEthPrice = uint(newEthPrice);
   }
 
 
@@ -44,8 +47,14 @@ contract Pool {
   function getNewEthPrice() public returns (int newEthPrice) {
     ( , newEthPrice, , , ) = priceFeed.latestRoundData();
 
-    int deltaPricePercent = int(lastEthPrice)       / newEthPrice;
-    int deltaAmount       = int(dyad.totalSupply()) * deltaPricePercent;
+    int  deltaPrice        = int(lastEthPrice) - newEthPrice;
+    uint deltaPricePercent = uint(newEthPrice).mul(1000).div(lastEthPrice);
+    uint deltaAmount       = PoolLibrary.percentageOf(dyad.totalSupply(), deltaPricePercent);
+    int  deltaAmountSigned = int(deltaAmount);  
+
+    if (deltaPrice < 0) {
+      deltaAmountSigned = -1 * deltaAmountSigned;
+    }
 
     if (uint(newEthPrice) > lastEthPrice) {
       dyad.mint(address(this), uint(deltaAmount));
@@ -54,7 +63,7 @@ contract Pool {
       dyad.burn(uint(deltaAmount));
     }
 
-    updateNFTs(deltaAmount);
+    updateNFTs(deltaAmountSigned);
 
     lastEthPrice    = uint(newEthPrice);
     lastCheckpoint += 1;

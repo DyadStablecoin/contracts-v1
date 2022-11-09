@@ -3,10 +3,17 @@ pragma solidity ^0.8.13;
 
 import "forge-std/console.sol";
 
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+
 library PoolLibrary {
+  using SafeMath for uint256;
+
+  function percentageOf(uint x, uint basisPoints) internal returns (uint) {
+    return x.mul(basisPoints).div(10000);
+  }
 
   // return "normalized" value between 1-100
-  function normalize(uint value, uint maxValue) public view returns (uint8) {
+  function normalize(uint value, uint maxValue) internal returns (uint8) {
     require(maxValue >= 100, "PoolLibrary: maxValue must be >= 100");
     return uint8(value / (maxValue / 100));
   }
