@@ -7,6 +7,7 @@ library PoolLibrary {
 
   // return "normalized" value between 1-100
   function normalize(uint value, uint maxValue) public view returns (uint8) {
+    require(maxValue >= 100, "PoolLibrary: maxValue must be >= 100");
     return uint8(value / (maxValue / 100));
   }
 

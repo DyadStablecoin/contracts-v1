@@ -74,29 +74,42 @@ contract Pool {
     IdNFT.Metadata memory metadata = dnft.idToMetadata(id);
 
     // update balance
-    metadata.dyadInPool = metadata.dyadInPool.add(0);
+    metadata.deposit = metadata.deposit.add(0);
 
-    // update xp
-    uint  boostFactor = getBoostFactor(id);
+    // boost factor
+    uint  boostFactor   = getBoostFactor(id);
 
-    uint8 xpNormal      = PoolLibrary.normalize(metadata.xp, 100);
+    // xp factor
+    uint  maxXp         = dnft.MAX_XP();
+    uint8 xpNormal      = PoolLibrary.normalize(metadata.xp, maxXp);
     uint  xpFactor      = PoolLibrary.getXpMulti(xpNormal);
 
-    uint  balance       = 1;
-    uint8 balanceNormal = PoolLibrary.normalize(balance, 100);
+    // balance factor
+    uint  maxBalance    = dnft.MAX_BALANCE();
+    uint8 balanceNormal = PoolLibrary.normalize(metadata.balance, maxBalance);
     uint  balanceFactor = PoolLibrary.getBalanceMulti(balanceNormal);
 
-    uint8 depositNormal = PoolLibrary.normalize(metadata.dyadInPool, 100);
+    // deposit factor
+    uint  maxDeposit    = dnft.MAX_DEPOSIT();
+    uint8 depositNormal = PoolLibrary.normalize(metadata.deposit, maxDeposit);
     uint  depositFactor = PoolLibrary.getDepositMulti(depositNormal);
 
+    // update xp
     uint factors = xpFactor * balanceFactor * depositFactor * boostFactor;
-    metadata.xp  = metadata.xp + (uint(deltaAmount) * factors);
+    uint newXP   = metadata.xp + (uint(deltaAmount) * factors);
+    metadata.xp  = newXP;
+
+    // update xp max value
+    if (newXP > dnft.MAX_XP()) {
+      dnft.setMaxXP(newXP);
+    }
   }
 
+  // As a reward for calling the `getNewEthPrice` function, we give the caller
+  // a special xp boost.
   function getBoostFactor(uint id) internal returns (uint boostFactor) {
     if (dnft.idToOwner(id) == msg.sender) {
-      // TODO: hardcoded for now!
-      boostFactor = 10;
+      boostFactor = 3;
     } else {
       // if the dnft holder is not the owner the boost factor is 1;
       boostFactor = 1;

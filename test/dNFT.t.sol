@@ -69,6 +69,12 @@ contract dNFTTest is Test {
     metadata = dnft.idToMetadata(3);
     assertEq(metadata.xp, 100);
     assertEq(dnft.totalSupply(), 4);
+
+    // for(uint i = 0; i < 500; i++) {
+    //   dnft.mint(address(this));
+    // }
+
+    // pool.getNewEthPrice();
   }
 
   function testMintDyad() public {
@@ -78,19 +84,19 @@ contract dNFTTest is Test {
 
     // check struct 
     uint lastEthPrice = pool.lastEthPrice() / 1e8;
-    assertEq(metadata.dyadInPool, lastEthPrice);
+    assertEq(metadata.deposit, lastEthPrice);
 
     // check global var
-    uint dyadInPool = dyad.balanceOf(address(pool));
-    assertEq(dyadInPool, lastEthPrice);
+    uint deposit = dyad.balanceOf(address(pool));
+    assertEq(deposit, lastEthPrice);
 
     // mint again for 1 gwie
     dnft.mintDyad{value: 1}(0); // value in gwei
 
     // check global var
-    dyadInPool = dyad.balanceOf(address(pool));
+    deposit = dyad.balanceOf(address(pool));
     // dyad in pool should be doubled
-    assertEq(dyadInPool, lastEthPrice*2);
+    assertEq(deposit, lastEthPrice*2);
 
   }
 
@@ -103,21 +109,21 @@ contract dNFTTest is Test {
 
   function testWithdraw() public {
     dnft.mintDyad{value: 10}(0);
-    uint dyadInPoolPre = dyad.balanceOf(address(pool));
+    uint depositPre = dyad.balanceOf(address(pool));
 
     // amount to withdraw
     uint AMOUNT = 42;
     dnft.withdraw(0, AMOUNT);
     assertEq(dyad.balanceOf(address(this)), AMOUNT);
 
-    uint dyadInPoolPost = dyad.balanceOf(address(pool));
+    uint depositPost = dyad.balanceOf(address(pool));
 
     // check global var
-    assertEq(dyadInPoolPost, dyadInPoolPre - AMOUNT);
+    assertEq(depositPost, depositPre - AMOUNT);
 
     // check struct
     IdNFT.Metadata memory metadata = dnft.idToMetadata(0);
-    assertEq(metadata.dyadInPool, dyadInPoolPre - AMOUNT);
+    assertEq(metadata.deposit, depositPre - AMOUNT);
   }
 
   function testDeposit() public {

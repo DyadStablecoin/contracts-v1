@@ -21,6 +21,16 @@ contract dNFT is ERC721Enumerable{
   DYAD public dyad;
   Pool public pool;
 
+  // here we store the maximum value over every dNFT,
+  // which allows us to do a normalization, without iterating over
+  // all of them to find the max value.
+  // Why init to 100? Because otherwise the normalization function in 
+  // the `PoolLibrary` breaks. We always need to make sure that these 
+  // values are not smaller than 100.
+  uint public MAX_XP      = 100;
+  uint public MAX_BALANCE = 100;
+  uint public MAX_DEPOSIT = 100;
+
   // mapping from nft id to metadata
   mapping(uint => IdNFT.Metadata) public idToMetadata;
   // mapping from nft id to owner
@@ -38,6 +48,11 @@ contract dNFT is ERC721Enumerable{
   constructor(address _dyad) ERC721("dyad NFT", "dNFT") {
     owner = msg.sender;
     dyad = DYAD(_dyad);
+  }
+
+  function setMaxXP(uint newMaxXP) public {
+    require(msg.sender == address(pool), "Only the pool can call this function");
+    MAX_XP = newMaxXP;
   }
 
   function setPool(address newPool) external {
@@ -72,7 +87,7 @@ contract dNFT is ERC721Enumerable{
 
     // update struct
     IdNFT.Metadata storage metadata = idToMetadata[id];
-    metadata.dyadInPool = metadata.dyadInPool.add(amount);
+    metadata.deposit = metadata.deposit.add(amount);
   }
 
   /// @notice Withdraw dyad from the NFT to the msg.sender
@@ -80,12 +95,18 @@ contract dNFT is ERC721Enumerable{
   /// @param amount The amount of dyad to withdraw
   function withdraw(uint id, uint amount) external onlyNFTOwner(id) {
     IdNFT.Metadata storage metadata = idToMetadata[id];
-    require(amount <= metadata.dyadInPool, "Not enough dyad in pool to withdraw");
+    require(amount <= metadata.deposit, "Not enough dyad in pool to withdraw");
 
     pool.withdraw(msg.sender, amount);
 
     // update struct
-    metadata.dyadInPool = metadata.dyadInPool.sub(amount);
+    metadata.deposit = metadata.deposit     .sub(amount);
+    metadata.balance = metadata.balance.add(amount);
+
+    // update max value
+    if (metadata.balance > MAX_BALANCE) {
+      MAX_BALANCE = metadata.balance;
+    }
   }
 
   /// @notice Deposit dyad in the pool
@@ -101,6 +122,13 @@ contract dNFT is ERC721Enumerable{
 
     // update struct
     IdNFT.Metadata storage metadata = idToMetadata[id];
-    metadata.dyadInPool = metadata.dyadInPool.add(amount);
+
+    metadata.deposit = metadata.deposit.add(amount);
+    metadata.balance = metadata.balance.sub(amount);
+
+    // update max value
+    if (metadata.deposit > MAX_DEPOSIT) {
+      MAX_DEPOSIT = metadata.deposit;
+    }
   }
 }
