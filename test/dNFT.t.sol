@@ -40,6 +40,8 @@ contract dNFTTest is Test {
     dnft.mint(address(this));
     pool.sync();
 
+    console.logUint(dnft.idToMetadata(0).xp);
+
     addr1 = cheats.addr(1);
     addr2 = cheats.addr(2);
   }

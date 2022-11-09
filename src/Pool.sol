@@ -90,18 +90,15 @@ contract Pool {
     uint  boostFactor   = getBoostFactor(id);
 
     // xp factor
-    uint  maxXp         = dnft.MAX_XP();
-    uint8 xpNormal      = PoolLibrary.normalize(nft.xp, maxXp);
+    uint8 xpNormal      = PoolLibrary.normalize(nft.xp, dnft.MAX_XP());
     uint  xpFactor      = PoolLibrary.getXpMulti(xpNormal);
 
     // balance factor
-    uint  maxBalance    = dnft.MAX_BALANCE();
-    uint8 balanceNormal = PoolLibrary.normalize(nft.balance, maxBalance);
+    uint8 balanceNormal = PoolLibrary.normalize(nft.balance, dnft.MAX_BALANCE());
     uint  balanceFactor = PoolLibrary.getBalanceMulti(balanceNormal);
 
     // deposit factor
-    uint  maxDeposit    = dnft.MAX_DEPOSIT();
-    uint8 depositNormal = PoolLibrary.normalize(nft.deposit, maxDeposit);
+    uint8 depositNormal = PoolLibrary.normalize(nft.deposit, dnft.MAX_DEPOSIT());
     uint  depositFactor = PoolLibrary.getDepositMulti(depositNormal);
 
     // --------------- update -------------
@@ -114,6 +111,8 @@ contract Pool {
     uint factors = xpFactor * balanceFactor * depositFactor * boostFactor;
     uint newXP   = nft.xp + (nft.xp * factors);
     nft.xp       = newXP;
+
+    dnft.updateNft(id, nft);
 
     // update xp max value
     dnft.setMaxXP(newXP);
