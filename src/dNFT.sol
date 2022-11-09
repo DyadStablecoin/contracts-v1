@@ -74,8 +74,9 @@ contract dNFT is ERC721Enumerable{
     }
   }
 
-  function updateNft(uint id, IdNFT.Nft memory metadata) external onlyPool {
-    idToNft[id] = metadata;
+  // the pool needs a function to update nft info
+  function updateNft(uint id, IdNFT.Nft memory nft) external onlyPool {
+    idToNft[id] = nft;
   }
 
   /// @notice Mints a new dNFT

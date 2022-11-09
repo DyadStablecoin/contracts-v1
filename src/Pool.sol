@@ -93,6 +93,10 @@ contract Pool {
     uint8 xpNormal      = PoolLibrary.normalize(nft.xp, dnft.MAX_XP());
     uint  xpFactor      = PoolLibrary.getXpMulti(xpNormal);
 
+    if (deltaAmount < 0) {
+      xpFactor = 292 - xpFactor;
+    }
+
     // balance factor
     uint8 balanceNormal = PoolLibrary.normalize(nft.balance, dnft.MAX_BALANCE());
     uint  balanceFactor = PoolLibrary.getBalanceMulti(balanceNormal);
