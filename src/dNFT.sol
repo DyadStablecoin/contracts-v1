@@ -50,9 +50,12 @@ contract dNFT is ERC721Enumerable{
     dyad = DYAD(_dyad);
   }
 
-  function setMaxXP(uint newMaxXP) public {
+  // we need to update the max xp value from the pool, that is why we need this
+  function setMaxXP(uint newXP) public {
     require(msg.sender == address(pool), "Only the pool can call this function");
-    MAX_XP = newMaxXP;
+    if (newXP > MAX_XP) {
+      MAX_XP = newXP;
+    }
   }
 
   function setPool(address newPool) external {

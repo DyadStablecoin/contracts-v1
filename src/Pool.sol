@@ -71,38 +71,40 @@ contract Pool {
   }
 
   function updateNFT(uint id, int deltaAmount) internal {
-    IdNFT.Metadata memory metadata = dnft.idToMetadata(id);
+    IdNFT.Metadata memory nft = dnft.idToMetadata(id);
 
-    // update balance
-    metadata.deposit = metadata.deposit.add(0);
-
+    // --------------- calculte factors -------------
     // boost factor
     uint  boostFactor   = getBoostFactor(id);
 
     // xp factor
     uint  maxXp         = dnft.MAX_XP();
-    uint8 xpNormal      = PoolLibrary.normalize(metadata.xp, maxXp);
+    uint8 xpNormal      = PoolLibrary.normalize(nft.xp, maxXp);
     uint  xpFactor      = PoolLibrary.getXpMulti(xpNormal);
 
     // balance factor
     uint  maxBalance    = dnft.MAX_BALANCE();
-    uint8 balanceNormal = PoolLibrary.normalize(metadata.balance, maxBalance);
+    uint8 balanceNormal = PoolLibrary.normalize(nft.balance, maxBalance);
     uint  balanceFactor = PoolLibrary.getBalanceMulti(balanceNormal);
 
     // deposit factor
     uint  maxDeposit    = dnft.MAX_DEPOSIT();
-    uint8 depositNormal = PoolLibrary.normalize(metadata.deposit, maxDeposit);
+    uint8 depositNormal = PoolLibrary.normalize(nft.deposit, maxDeposit);
     uint  depositFactor = PoolLibrary.getDepositMulti(depositNormal);
+
+    // --------------- update -------------
+
+    // update deposit: nft.deposit + (xp_normal * deltaAmount)
+    nft.deposit = uint(int(nft.deposit) + (int(uint256(xpNormal)) * deltaAmount));
+    // IMPORTANT: deposit can not be < 0
 
     // update xp
     uint factors = xpFactor * balanceFactor * depositFactor * boostFactor;
-    uint newXP   = metadata.xp + (uint(deltaAmount) * factors);
-    metadata.xp  = newXP;
+    uint newXP   = nft.xp + (nft.xp * factors);
+    nft.xp       = newXP;
 
     // update xp max value
-    if (newXP > dnft.MAX_XP()) {
-      dnft.setMaxXP(newXP);
-    }
+    dnft.setMaxXP(newXP);
   }
 
   // As a reward for calling the `getNewEthPrice` function, we give the caller
