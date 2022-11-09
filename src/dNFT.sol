@@ -32,7 +32,7 @@ contract dNFT is ERC721Enumerable{
   uint public MAX_DEPOSIT = 100;
 
   // mapping from nft id to nft metadata
-  mapping(uint => IdNFT.Metadata) public idToMetadata;
+  mapping(uint => IdNFT.Nft) public idToNft;
   // mapping from nft id to owner
   mapping (uint => address) public idToOwner;
 
@@ -57,14 +57,14 @@ contract dNFT is ERC721Enumerable{
   }
 
   // we need to update the max xp value from the pool, that is why we need this
-  function setMaxXP(uint newXP) public onlyPool {
+  function updateMaxXP(uint newXP) public onlyPool {
     if (newXP > MAX_XP) {
       MAX_XP = newXP;
     }
   }
 
-  function updateNft(uint id, IdNFT.Metadata memory metadata) public onlyPool {
-    idToMetadata[id] = metadata;
+  function updateNft(uint id, IdNFT.Nft memory metadata) public onlyPool {
+    idToNft[id] = metadata;
   }
 
   function setPool(address newPool) external {
@@ -80,7 +80,7 @@ contract dNFT is ERC721Enumerable{
     idToOwner[id] = receiver;
 
     // add 100 xp to the nft to start with
-    IdNFT.Metadata storage nft = idToMetadata[id];
+    IdNFT.Nft storage nft = idToNft[id];
     nft.xp = nft.xp.add(100);
 
     _mint(receiver, id);
@@ -90,7 +90,7 @@ contract dNFT is ERC721Enumerable{
   /// @notice Mint new dyad to the NFT
   /// @param id The NFT id
   function mintDyad(uint id) payable external onlyNFTOwner(id) {
-    IdNFT.Metadata storage nft = idToMetadata[id];
+    IdNFT.Nft storage nft = idToNft[id];
     require(msg.value > 0, "You need to send some ETH to mint dyad");
 
     // mint dyad to the nft contract
@@ -108,7 +108,7 @@ contract dNFT is ERC721Enumerable{
   /// @param id The NFT id
   /// @param amount The amount of dyad to withdraw
   function withdraw(uint id, uint amount) external onlyNFTOwner(id) {
-    IdNFT.Metadata storage nft = idToMetadata[id];
+    IdNFT.Nft storage nft = idToNft[id];
     require(amount <= nft.deposit, "Not enough dyad in pool to withdraw");
 
     pool.withdraw(msg.sender, amount);
@@ -127,7 +127,7 @@ contract dNFT is ERC721Enumerable{
   /// @param id The NFT id
   /// @param amount The amount of dyad to deposit
   function deposit(uint id, uint amount) external onlyNFTOwner(id) {
-    IdNFT.Metadata storage nft = idToMetadata[id];
+    IdNFT.Nft storage nft = idToNft[id];
     require(amount <= nft.balance, "Not enough dyad in balance to deposit");
 
     // transfer dyad to the nft

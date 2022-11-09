@@ -40,8 +40,6 @@ contract dNFTTest is Test {
     dnft.mint(address(this));
     pool.sync();
 
-    console.logUint(dnft.idToMetadata(0).xp);
-
     addr1 = cheats.addr(1);
     addr2 = cheats.addr(2);
   }
@@ -58,17 +56,17 @@ contract dNFTTest is Test {
     dnft.mint(address(this));
     assertEq(dnft.idToOwner(1), address(this));
 
-    IdNFT.Metadata memory metadata = dnft.idToMetadata(1);
+    IdNFT.Nft memory metadata = dnft.idToNft(1);
     assertEq(metadata.xp, 100);
     assertEq(dnft.totalSupply(), 2);
 
     dnft.mint(address(this));
-    metadata = dnft.idToMetadata(2);
+    metadata = dnft.idToNft(2);
     assertEq(metadata.xp, 100);
     assertEq(dnft.totalSupply(), 3);
 
     dnft.mint(address(this));
-    metadata = dnft.idToMetadata(3);
+    metadata = dnft.idToNft(3);
     assertEq(metadata.xp, 100);
     assertEq(dnft.totalSupply(), 4);
 
@@ -82,7 +80,7 @@ contract dNFTTest is Test {
   function testMintDyad() public {
     // mint dyad for 1 gwei
     dnft.mintDyad{value: 1}(0); // value in gwei
-    IdNFT.Metadata memory metadata = dnft.idToMetadata(0);
+    IdNFT.Nft memory metadata = dnft.idToNft(0);
 
     // check struct 
     uint lastEthPrice = pool.lastEthPrice() / 1e8;
@@ -124,7 +122,7 @@ contract dNFTTest is Test {
     assertEq(depositPost, depositPre - AMOUNT);
 
     // check struct
-    IdNFT.Metadata memory metadata = dnft.idToMetadata(0);
+    IdNFT.Nft memory metadata = dnft.idToNft(0);
     assertEq(metadata.deposit, depositPre - AMOUNT);
   }
 

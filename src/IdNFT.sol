@@ -2,20 +2,20 @@
 pragma solidity ^0.8.13;
 
 interface IdNFT {
-  struct Metadata {
+  struct Nft {
     uint balance; // dyad directly owned by the dnft holder 
     uint deposit; // dyad balance in pool
     uint xp;      // always positive, always inflationary
   }
 
-  function setMaxXP(uint newMaxXP) external;
+  function updateMaxXP(uint newMaxXP) external;
   function MAX_XP() external view returns (uint);
   function MAX_BALANCE() external view returns (uint);
   function MAX_DEPOSIT() external view returns (uint);
 
   function pool() external view returns (address);
   function idToOwner(uint id) external view returns (address);
-  function updateNft(uint id, Metadata memory metadata) external;
+  function updateNft(uint id, Nft memory metadata) external;
   function mintDyad(uint id) external payable;
   function withdraw(uint id, uint amount) external;
   function deposit(uint id, uint amount) external;
@@ -29,6 +29,6 @@ interface IdNFT {
   function dyadInPoolOf(uint id) external view returns (uint);
   function lastCheckpointForIdOf(uint id) external view returns (uint);
   function totalSupply() external view returns (uint);
-  function idToMetadata(uint) external view returns (Metadata memory);
+  function idToNft(uint) external view returns (Nft memory);
 }
 
