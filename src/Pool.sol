@@ -34,18 +34,20 @@ contract Pool {
   }
 
   constructor(address _dnft, address _dyad) {
-    dnft      = IdNFT(_dnft);
-    dyad      = DYAD(_dyad);
-    priceFeed = IAggregatorV3(Addresses.PRICE_ORACLE_ADDRESS);
+    dnft         = IdNFT(_dnft);
+    dyad         = DYAD(_dyad);
+    priceFeed    = IAggregatorV3(Addresses.PRICE_ORACLE_ADDRESS);
+    lastEthPrice = uint(getNewEthPrice());
+  }
 
-    ( , int newEthPrice, , , ) = priceFeed.latestRoundData();
-    lastEthPrice = uint(newEthPrice);
+  function getNewEthPrice() internal returns (int newEthPrice) {
+    ( , newEthPrice, , , ) = priceFeed.latestRoundData();
   }
 
 
   /// @notice get the latest eth price from oracle
-  function getNewEthPrice() public returns (int newEthPrice) {
-    ( , newEthPrice, , , ) = priceFeed.latestRoundData();
+  function sync() public returns (int newEthPrice) {
+    newEthPrice = getNewEthPrice();
 
     int  deltaPrice        = int(lastEthPrice) - newEthPrice;
     uint deltaPricePercent = uint(newEthPrice).mul(1000).div(lastEthPrice);

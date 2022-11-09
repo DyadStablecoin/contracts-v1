@@ -35,10 +35,10 @@ contract dNFTTest is Test {
     pool = new Pool(address(dnft), address(dyad));
 
     dyad.setMinter(address(pool));
-    pool.getNewEthPrice();
+    pool.sync();
     dnft.setPool(address(pool));
     dnft.mint(address(this));
-    pool.getNewEthPrice();
+    pool.sync();
 
     addr1 = cheats.addr(1);
     addr2 = cheats.addr(2);
@@ -74,7 +74,7 @@ contract dNFTTest is Test {
     //   dnft.mint(address(this));
     // }
 
-    // pool.getNewEthPrice();
+    // pool.sync();
   }
 
   function testMintDyad() public {

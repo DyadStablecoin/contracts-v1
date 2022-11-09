@@ -20,11 +20,11 @@ contract PoolTest is Test {
     dyad.setMinter(address(pool));
   }
 
-  function testNewEthPrice() public {
+  function testSync() public {
     // assertEq(pool.lastEthPrice(), 1); // 1 is the init value
 
     // get new eth price and do sanity check
-    pool.getNewEthPrice();
+    pool.sync();
     assertTrue(pool.lastEthPrice() > 0);
   }
 }
