@@ -51,25 +51,31 @@ contract dNFT is ERC721Enumerable{
     _;
   }
 
+  /// @dev Check if caller is the owner
+  modifier onlyOwner() {
+    require(owner == msg.sender, "Only owner can call this function");
+    _;
+  }
+
   constructor(address _dyad) ERC721("dyad NFT", "dNFT") {
     owner = msg.sender;
     dyad = DYAD(_dyad);
   }
 
+  function setPool(address newPool) external onlyOwner {
+    require(msg.sender == owner, "Only owner can set pool");
+    pool = Pool(newPool);
+  }
+
   // we need to update the max xp value from the pool, that is why we need this
-  function updateMaxXP(uint newXP) public onlyPool {
+  function updateMaxXP(uint newXP) external onlyPool {
     if (newXP > MAX_XP) {
       MAX_XP = newXP;
     }
   }
 
-  function updateNft(uint id, IdNFT.Nft memory metadata) public onlyPool {
+  function updateNft(uint id, IdNFT.Nft memory metadata) external onlyPool {
     idToNft[id] = metadata;
-  }
-
-  function setPool(address newPool) external {
-    require(msg.sender == owner, "Only owner can set pool");
-    pool = Pool(newPool);
   }
 
   /// @notice Mints a new dNFT
