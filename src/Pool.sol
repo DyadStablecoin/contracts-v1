@@ -54,6 +54,7 @@ contract Pool {
     uint deltaAmount       = PoolLibrary.percentageOf(dyad.totalSupply(), deltaPricePercent);
     int  deltaAmountSigned = int(deltaAmount);  
 
+    // if the delta is negative we have to make deltaAmount negative as well
     if (deltaPrice < 0) {
       deltaAmountSigned = -1 * deltaAmountSigned;
     }
