@@ -94,7 +94,7 @@ contract Pool {
 
     // --------------- update -------------
 
-    // update deposit: nft.deposit + (xp_normal * deltaAmount)
+    // update deposit: nft.deposit = nft.deposit + (xpNormal * deltaAmount)
     nft.deposit = uint(int(nft.deposit) + (int(uint256(xpNormal)) * deltaAmount));
     // IMPORTANT: deposit can not be < 0
 

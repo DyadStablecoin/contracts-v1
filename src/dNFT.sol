@@ -31,7 +31,7 @@ contract dNFT is ERC721Enumerable{
   uint public MAX_BALANCE = 100;
   uint public MAX_DEPOSIT = 100;
 
-  // mapping from nft id to metadata
+  // mapping from nft id to nft metadata
   mapping(uint => IdNFT.Metadata) public idToMetadata;
   // mapping from nft id to owner
   mapping (uint => address) public idToOwner;
@@ -71,8 +71,8 @@ contract dNFT is ERC721Enumerable{
     idToOwner[id] = receiver;
 
     // add 100 xp to the nft to start with
-    IdNFT.Metadata storage metadata = idToMetadata[id];
-    metadata.xp = metadata.xp.add(100);
+    IdNFT.Metadata storage nft = idToMetadata[id];
+    nft.xp = nft.xp.add(100);
 
     _mint(receiver, id);
     emit Mint(receiver, id);
@@ -81,6 +81,9 @@ contract dNFT is ERC721Enumerable{
   /// @notice Mint new dyad to the NFT
   /// @param id The NFT id
   function mintDyad(uint id) payable external onlyNFTOwner(id) {
+    IdNFT.Metadata storage nft = idToMetadata[id];
+    require(msg.value > 0, "You need to send some ETH to mint dyad");
+
     // mint dyad to the nft contract
     // approve the pool to spend the dyad
     // deposit minted dyad to the pool
@@ -88,27 +91,26 @@ contract dNFT is ERC721Enumerable{
     dyad.approve(address(pool), amount);
     pool.deposit(amount);
 
-    // update struct
-    IdNFT.Metadata storage metadata = idToMetadata[id];
-    metadata.deposit = metadata.deposit.add(amount);
+    // update nft
+    nft.deposit = nft.deposit.add(amount);
   }
 
   /// @notice Withdraw dyad from the NFT to the msg.sender
   /// @param id The NFT id
   /// @param amount The amount of dyad to withdraw
   function withdraw(uint id, uint amount) external onlyNFTOwner(id) {
-    IdNFT.Metadata storage metadata = idToMetadata[id];
-    require(amount <= metadata.deposit, "Not enough dyad in pool to withdraw");
+    IdNFT.Metadata storage nft = idToMetadata[id];
+    require(amount <= nft.deposit, "Not enough dyad in pool to withdraw");
 
     pool.withdraw(msg.sender, amount);
 
-    // update struct
-    metadata.deposit = metadata.deposit     .sub(amount);
-    metadata.balance = metadata.balance.add(amount);
+    // update nft
+    nft.deposit = nft.deposit.sub(amount);
+    nft.balance = nft.balance.add(amount);
 
     // update max value
-    if (metadata.balance > MAX_BALANCE) {
-      MAX_BALANCE = metadata.balance;
+    if (nft.balance > MAX_BALANCE) {
+      MAX_BALANCE = nft.balance;
     }
   }
 
@@ -116,6 +118,9 @@ contract dNFT is ERC721Enumerable{
   /// @param id The NFT id
   /// @param amount The amount of dyad to deposit
   function deposit(uint id, uint amount) external onlyNFTOwner(id) {
+    IdNFT.Metadata storage nft = idToMetadata[id];
+    require(amount <= nft.balance, "Not enough dyad in balance to deposit");
+
     // transfer dyad to the nft
     // approve the pool to spend the dyad of this contract
     // deposit dyad in the pool
@@ -123,15 +128,13 @@ contract dNFT is ERC721Enumerable{
     dyad.approve(address(pool), amount);
     pool.deposit(amount);
 
-    // update struct
-    IdNFT.Metadata storage metadata = idToMetadata[id];
-
-    metadata.deposit = metadata.deposit.add(amount);
-    metadata.balance = metadata.balance.sub(amount);
+    // update nft
+    nft.deposit = nft.deposit.add(amount);
+    nft.balance = nft.balance.sub(amount);
 
     // update max value
-    if (metadata.deposit > MAX_DEPOSIT) {
-      MAX_DEPOSIT = metadata.deposit;
+    if (nft.deposit > MAX_DEPOSIT) {
+      MAX_DEPOSIT = nft.deposit;
     }
   }
 }
