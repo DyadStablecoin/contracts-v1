@@ -63,6 +63,7 @@ contract dNFT is ERC721Enumerable{
     owner = msg.sender;
     dyad = DYAD(_dyad);
 
+    // spcecial mint for core-team/contributors/early-adopters/investors
     // _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
     // _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
     // _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
