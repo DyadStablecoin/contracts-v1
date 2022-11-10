@@ -49,23 +49,23 @@ contract dNFT is ERC721Enumerable{
   /// @dev Check if owner of NFT is msg.sender
   /// @param id The id of the NFT
   modifier onlyNFTOwner(uint id) {
-    require(idToOwner[id] == msg.sender, "Only NFT owner can call this function");
+    require(idToOwner[id] == msg.sender, "dNFT: Only NFT owner can call this function");
     _;
   }
 
   /// @dev Check if caller is the pool
   modifier onlyPool() {
-    require(address(pool) == msg.sender, "Only Pool can call this function");
+    require(address(pool) == msg.sender, "dNFT: Only Pool can call this function");
     _;
   }
 
   /// @dev Check if caller is the owner
   modifier onlyOwner() {
-    require(owner == msg.sender, "Only owner can call this function");
+    require(owner == msg.sender, "dNFT: Only owner can call this function");
     _;
   }
 
-  constructor(address _dyad) ERC721("dyad NFT", "dNFT") {
+  constructor(address _dyad) ERC721("DYAD NFT", "dNFT") {
     owner = msg.sender;
     dyad = DYAD(_dyad);
 
@@ -76,8 +76,8 @@ contract dNFT is ERC721Enumerable{
   }
 
   function setPool(address newPool) external onlyOwner {
-    require(!isPoolSet, "Pool is already set");
-    require(msg.sender == owner, "Only owner can set pool");
+    require(!isPoolSet, "dNFT: Pool is already set");
+    require(msg.sender == owner, "dNFT: Only owner can set pool");
     pool = Pool(newPool);
     isPoolSet = true;
   }
@@ -94,12 +94,11 @@ contract dNFT is ERC721Enumerable{
     idToNft[id] = nft;
   }
 
-  /// @notice Mints a new dNFT
-  /// @param receiver The address to mint the dNFT to
+  // mint a new nft to the `receiver`
+  // to mint a new nft a minimum of $`DEPOSIT_MINIMUM` in eth is required
   function mintNft(address receiver) external payable returns (uint id) {
     _mintNft(receiver);
     _mintDyad(id, DEPOSIT_MINIMUM);
-    emit MintNft(receiver, id);
   }
 
   // the main reason for this method is that we need to be able to mint
@@ -114,6 +113,8 @@ contract dNFT is ERC721Enumerable{
     IdNFT.Nft storage nft = idToNft[id];
     // add 100 xp to the nft to start with
     nft.xp = nft.xp.add(100);
+
+    emit MintNft(receiver, id);
   }
 
   // mint new dyad to the respective nft
@@ -163,7 +164,7 @@ contract dNFT is ERC721Enumerable{
     emit Withdraw(msg.sender, id, amount);
   }
 
-  /// @notice Deposit dyad in the pool
+  /// @notice Deposit dyad back in the pool
   /// @param id The NFT id
   /// @param amount The amount of dyad to deposit
   function deposit(uint id, uint amount) external onlyNFTOwner(id) {
