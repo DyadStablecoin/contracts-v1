@@ -13,32 +13,38 @@ import {IdNFT} from "../src/IdNFT.sol";
 contract dNFT is ERC721Enumerable{
   using SafeMath for uint256;
 
-  // maximum number of nfts that can exist at any moment
-  // TODO: it is more dynamic than this!
+  // maximum number of nfts that can be minted
   uint public constant MAX_SUPPLY = 1000;
-  // to mint a dnft $5k in eth are required
+  // to mint a dnft $ 5k in eth are required
   uint public constant DEPOSIT_MINIMUM = 5000000000000000000000;
 
+  // the only ability the owner has is to set the pool once.
+  // once it is set it is impossible to change it.
   address public owner;
+  bool private isPoolSet = false;
+
   DYAD public dyad;
   Pool public pool;
 
   // here we store the maximum value over every dNFT,
   // which allows us to do a normalization, without iterating over
   // all of them to find the max value.
-  // Why init to 100? Because otherwise the normalization function in 
-  // the `PoolLibrary` breaks. We always need to make sure that these 
-  // values are not smaller than 100.
+  // Why init to 100? Because otherwise they are set to 0 and the 
+  // normalization function in the `PoolLibrary` breaks. We always
+  // need to make sure that these values are not smaller than 100.
   uint public MAX_XP      = 100;
   uint public MAX_BALANCE = 100;
   uint public MAX_DEPOSIT = 100;
 
-  // mapping from nft id to nft metadata
+  // mapping from nft id to nft data
   mapping(uint => IdNFT.Nft) public idToNft;
   // mapping from nft id to owner
   mapping (uint => address) public idToOwner;
 
-  event Mint(address indexed to, uint indexed id);
+  event MintNft (address indexed to, uint indexed id);
+  event MintDyad(address indexed to, uint indexed id, uint amount);
+  event Withdraw(address indexed to, uint indexed id, uint amount);
+  event Deposit (address indexed to, uint indexed id, uint amount);
 
   /// @dev Check if owner of NFT is msg.sender
   /// @param id The id of the NFT
@@ -70,8 +76,10 @@ contract dNFT is ERC721Enumerable{
   }
 
   function setPool(address newPool) external onlyOwner {
+    require(!isPoolSet, "Pool is already set");
     require(msg.sender == owner, "Only owner can set pool");
     pool = Pool(newPool);
+    isPoolSet = true;
   }
 
   // we need to update the max xp value from the pool, that is why we need this
@@ -91,28 +99,35 @@ contract dNFT is ERC721Enumerable{
   function mintNft(address receiver) external payable returns (uint id) {
     _mintNft(receiver);
     _mintDyad(id, DEPOSIT_MINIMUM);
-    emit Mint(receiver, id);
+    emit MintNft(receiver, id);
   }
 
+  // the main reason for this method is that we need to be able to mint
+  // nfts for the core team and investors without the deposit minimum,
+  // this happens in the constructor where we call this method directly.
   function _mintNft(address receiver) private {
     uint id = totalSupply();
     require(id < MAX_SUPPLY, "Max supply reached");
     _mint(receiver, id); // nft mint
     idToOwner[id] = receiver;
 
-    // add 100 xp to the nft to start with
     IdNFT.Nft storage nft = idToNft[id];
+    // add 100 xp to the nft to start with
     nft.xp = nft.xp.add(100);
   }
 
+  // mint new dyad to the respective nft
   function mintDyad(uint id) payable public onlyNFTOwner(id) {
     _mintDyad(id, 0);
   }
 
-  /// @notice Mint new dyad to the NFT
-  /// @param id The NFT id
+  // this method is needed, because of the required deposit minimum
+  // when minting new nfts.
+  // this deposit minimum is not required though when calling `mintDyad`
+  // through the respective nft.
+  // therfore `minAmount` is set to 0 in the `mintDyad` method and to 
+  // `DEPOSIT_MINIMUM` in the `mintNft` method.
   function _mintDyad(uint id, uint minAmount) private {
-    IdNFT.Nft storage nft = idToNft[id];
     require(msg.value > 0, "You need to send some ETH to mint dyad");
 
     // mint new dyad and deposit it in the pool 
@@ -120,8 +135,11 @@ contract dNFT is ERC721Enumerable{
     dyad.approve(address(pool), amount);
     pool.deposit(amount);
 
+    IdNFT.Nft storage nft = idToNft[id];
     // give msg.sender ownership of the dyad
     nft.deposit = nft.deposit.add(amount);
+
+    emit MintDyad(msg.sender, id, amount);
   }
 
   /// @notice Withdraw dyad from the NFT to the msg.sender
@@ -141,6 +159,8 @@ contract dNFT is ERC721Enumerable{
     if (nft.balance > MAX_BALANCE) {
       MAX_BALANCE = nft.balance;
     }
+
+    emit Withdraw(msg.sender, id, amount);
   }
 
   /// @notice Deposit dyad in the pool
@@ -165,5 +185,7 @@ contract dNFT is ERC721Enumerable{
     if (nft.deposit > MAX_DEPOSIT) {
       MAX_DEPOSIT = nft.deposit;
     }
+
+    emit Deposit(msg.sender, id, amount);
   }
 }
