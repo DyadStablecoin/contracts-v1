@@ -33,11 +33,11 @@ contract dNFTTest is Test {
     dnft = IdNFT(address(_dnft));
 
     pool = new Pool(address(dnft), address(dyad));
+    dnft.setPool(address(pool));
 
     dyad.setMinter(address(pool));
     pool.sync();
-    dnft.setPool(address(pool));
-    dnft.mint{value: 5 ether}(address(this));
+    dnft.mintNft{value: 5 ether}(address(this));
     pool.sync();
 
     addr1 = cheats.addr(1);
@@ -56,25 +56,25 @@ contract dNFTTest is Test {
     // we minted one in setUp
     assertEq(dnft.totalSupply(), 1);
 
-    dnft.mint{value: 5 ether}(address(this));
+    dnft.mintNft{value: 5 ether}(address(this));
     assertEq(dnft.idToOwner(1), address(this));
 
     IdNFT.Nft memory metadata = dnft.idToNft(1);
     assertEq(metadata.xp, 100);
     assertEq(dnft.totalSupply(), 2);
 
-    dnft.mint{value: 5 ether}(address(this));
+    dnft.mintNft{value: 5 ether}(address(this));
     metadata = dnft.idToNft(2);
     assertEq(metadata.xp, 100);
     assertEq(dnft.totalSupply(), 3);
 
-    dnft.mint{value: 5 ether}(address(this));
+    dnft.mintNft{value: 5 ether}(address(this));
     metadata = dnft.idToNft(3);
     assertEq(metadata.xp, 100);
     assertEq(dnft.totalSupply(), 4);
 
     // for(uint i = 0; i < 500; i++) {
-    //   dnft.mint(address(this));
+    //   dnft.mintNft(address(this));
     // }
 
     // pool.sync();
@@ -103,7 +103,7 @@ contract dNFTTest is Test {
 
   function testMintDyadForNonOwner() public {
     // try to mint dyad from an nft that the address does not own
-    dnft.mint{value: 5 ether}(address(addr1));
+    dnft.mintNft{value: 5 ether}(address(addr1));
     // vm.expectRevert();
     // dnft.mintDyad{value: 1}(1); 
   }

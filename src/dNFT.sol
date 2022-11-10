@@ -16,7 +16,6 @@ contract dNFT is ERC721Enumerable{
   // maximum number of nfts that can exist at any moment
   // TODO: it is more dynamic than this!
   uint public constant MAX_SUPPLY = 1000;
-
   // to mint a dnft $5k in eth are required
   uint public constant DEPOSIT_MINIMUM = 5000000000000000000000;
 
@@ -63,6 +62,10 @@ contract dNFT is ERC721Enumerable{
   constructor(address _dyad) ERC721("dyad NFT", "dNFT") {
     owner = msg.sender;
     dyad = DYAD(_dyad);
+
+    // _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
+    // _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
+    // _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
   }
 
   function setPool(address newPool) external onlyOwner {
@@ -84,19 +87,21 @@ contract dNFT is ERC721Enumerable{
 
   /// @notice Mints a new dNFT
   /// @param receiver The address to mint the dNFT to
-  function mint(address receiver) external payable returns (uint id) {
-    id = totalSupply();
+  function mintNft(address receiver) external payable returns (uint id) {
+    _mintNft(receiver);
+    _mintDyad(id, DEPOSIT_MINIMUM);
+    emit Mint(receiver, id);
+  }
+
+  function _mintNft(address receiver) private {
+    uint id = totalSupply();
     require(id < MAX_SUPPLY, "Max supply reached");
+    _mint(receiver, id); // nft mint
     idToOwner[id] = receiver;
 
     // add 100 xp to the nft to start with
     IdNFT.Nft storage nft = idToNft[id];
     nft.xp = nft.xp.add(100);
-
-    _mintDyad(id, DEPOSIT_MINIMUM);
-
-    _mint(receiver, id); // nft mint
-    emit Mint(receiver, id);
   }
 
   function mintDyad(uint id) payable public onlyNFTOwner(id) {
