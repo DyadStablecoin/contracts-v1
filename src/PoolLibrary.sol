@@ -11,17 +11,17 @@ library PoolLibrary {
   // mainnnet
   address constant PRICE_ORACLE_ADDRESS = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
 
-  function percentageOf(uint x, uint basisPoints) internal returns (uint) {
+  function percentageOf(uint x, uint basisPoints) internal pure returns (uint) {
     return x.mul(basisPoints).div(10000);
   }
 
   // return "normalized" value between 1-100
-  function normalize(uint value, uint maxValue) internal returns (uint8) {
+  function normalize(uint value, uint maxValue) internal pure returns (uint8) {
     require(maxValue >= 100, "PoolLibrary: maxValue must be >= 100");
     return uint8(value / (maxValue / 100));
   }
 
-  function getXpMulti(uint8 xp) public view returns (uint) {
+  function getXpMulti(uint8 xp) public pure returns (uint) {
     // xp is like an index which maps exactly to one value in the table. That is why
     // xp must be uint and between 0 and 100.
     require(xp >= 0 && xp <= 100, "PoolLibrary: xp must be between 0 and 100");
@@ -41,7 +41,7 @@ library PoolLibrary {
     }
   }
 
-  function getBalanceMulti(uint8 balance) public view returns (uint) {
+  function getBalanceMulti(uint8 balance) public pure returns (uint) {
     // balance is like an index which maps exactly to one value in the table. That is why
     // balance must be uint and between 0 and 100.
     require(balance >= 0 && balance <= 100, "PoolLibrary: balance must be between 0 and 100");
@@ -64,7 +64,7 @@ library PoolLibrary {
     }
   }
 
-  function getDepositMulti(uint8 deposit) public view returns (uint) {
+  function getDepositMulti(uint8 deposit) public pure returns (uint) {
     // deposit is like an index which maps exactly to one value in the table. That is why
     // deposit must be uint and between 0 and 100.
     require(deposit >= 0 && deposit <= 100, "PoolLibrary: deposit must be between 0 and 100");

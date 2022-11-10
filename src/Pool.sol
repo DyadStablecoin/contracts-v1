@@ -41,7 +41,7 @@ contract Pool {
     lastEthPrice = uint(getNewEthPrice());
   }
 
-  function getNewEthPrice() internal returns (int newEthPrice) {
+  function getNewEthPrice() internal view returns (int newEthPrice) {
     ( , newEthPrice, , , ) = priceFeed.latestRoundData();
   }
 
@@ -76,7 +76,6 @@ contract Pool {
 
   function updateNFTs(int deltaAmount) internal {
     uint nftTotalSupply  = dnft.totalSupply();
-    uint dyadTotalSupply = dyad.totalSupply();
 
     for (uint i = 0; i < nftTotalSupply; i++) {
       updateNFT(i, deltaAmount);
@@ -123,7 +122,7 @@ contract Pool {
 
   // As a reward for calling the `getNewEthPrice` function, we give the caller
   // a special xp boost.
-  function getBoostFactor(uint id) internal returns (uint boostFactor) {
+  function getBoostFactor(uint id) internal view returns (uint boostFactor) {
     if (dnft.idToOwner(id) == msg.sender) {
       boostFactor = 3;
     } else {
@@ -156,6 +155,8 @@ contract Pool {
   /// @notice Redeem dyad for eth
   function redeem(uint amount) public {
     require(amount > REDEEM_MINIMUM, "Pool: Amount must be greater than 100000000");
+    console.logUint(amount);
+    console.logUint(dyad.balanceOf(msg.sender));
     // msg.sender has to approve pool to spend its tokens
     dyad.transferFrom(msg.sender, address(this), amount);
     dyad.burn(amount);

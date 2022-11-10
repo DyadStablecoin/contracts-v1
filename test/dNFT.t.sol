@@ -148,16 +148,29 @@ contract dNFTTest is Test {
   }
 
   function testRedeem() public {
-    uint balancePreMint = address(this).balance;
+    uint ethBalancePreMint = address(this).balance;
     dnft.mintDyad{value: 1 ether}(0);
-    uint balancePostMint = address(this).balance;
+    uint ethBalancePostMint = address(this).balance;
     // after the mint, we should have less eth
-    assertTrue(balancePostMint < balancePreMint);
-    uint balance = dyad.balanceOf(address(pool));
-    dyad.approve(address(pool), balance);
-    pool.redeem(balance);
-    uint balancePostRedeem = address(this).balance;
-    // after the redeem, we should have exactly the same eth as before
-    assertTrue(balancePostRedeem == balancePreMint);
+    assertTrue(ethBalancePreMint > ethBalancePostMint);
+
+    IdNFT.Nft memory nft = dnft.idToNft(0);
+    assertEq(dyad.balanceOf(address(this)), 0);
+    dnft.withdraw(0, nft.deposit);
+    uint dyadBalancePostWithdraw = dyad.balanceOf(address(this));
+    // after the withdraw, we should have more dyad
+    assertTrue(dyadBalancePostWithdraw > 0);
+
+    dyad.approve(address(pool), dyadBalancePostWithdraw);
+    pool.redeem(dyadBalancePostWithdraw);
+    uint dyadBalancePostRedeem = dyad.balanceOf(address(this));
+    // after we redeem, we should have no dyad
+    assertEq(dyadBalancePostRedeem, 0);
+    uint ethBalancePostRedeem = address(this).balance;
+    // after we redeem, we should have more eth
+    assertTrue(ethBalancePostRedeem >  ethBalancePostMint);
+    // after we redeem all dyad we have, we should have exactly the same eth
+    // as before the mint.
+    assertTrue(ethBalancePostRedeem == ethBalancePreMint);
   }
 }
