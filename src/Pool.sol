@@ -151,5 +151,16 @@ contract Pool {
   function withdraw(address recipient, uint amount) external onlyNFT {
     dyad.transfer(recipient, amount);
   }
+
+  /// @notice Redeem dyad for eth
+  function redeem(uint amount) public {
+    require(amount > 0, "Pool: Amount must be greater than 0");
+    // msg.sender has to approve pool to spend its tokens
+    dyad.transferFrom(msg.sender, address(this), amount);
+    dyad.burn(amount);
+
+    uint usdInEth = amount.mul(100000000).div(lastEthPrice);
+    payable(msg.sender).transfer(usdInEth);
+  }
 }
 

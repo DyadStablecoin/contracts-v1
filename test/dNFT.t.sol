@@ -44,6 +44,9 @@ contract dNFTTest is Test {
     addr2 = cheats.addr(2);
   }
 
+  // needed, so we can receive eth transfers
+  receive() external payable {}
+
   function testSetPool() public {
     dnft.setPool(address(0));
     assertEq(address(dnft.pool()), address(0));
@@ -78,8 +81,8 @@ contract dNFTTest is Test {
   }
 
   function testMintDyad() public {
-    // mint dyad for 1 gwei
-    dnft.mintDyad{value: 1}(0); // value in gwei
+    // mint dyad for 1 wei
+    dnft.mintDyad{value: 1}(0); // value in wei
     IdNFT.Nft memory metadata = dnft.idToNft(0);
 
     // check struct 
@@ -97,7 +100,6 @@ contract dNFTTest is Test {
     deposit = dyad.balanceOf(address(pool));
     // dyad in pool should be doubled
     assertEq(deposit, lastEthPrice*2);
-
   }
 
   function testMintDyadForNonOwner() public {
@@ -106,6 +108,7 @@ contract dNFTTest is Test {
     vm.expectRevert();
     dnft.mintDyad(1);
   }
+
 
   function testWithdraw() public {
     dnft.mintDyad{value: 10}(0);
@@ -124,6 +127,13 @@ contract dNFTTest is Test {
     // check struct
     IdNFT.Nft memory metadata = dnft.idToNft(0);
     assertEq(metadata.deposit, depositPre - AMOUNT);
+
+    // TODO: create redeem test method
+    dnft.mintDyad{value: 1 ether}(0); // value in wei
+    uint balance = dyad.balanceOf(address(pool));
+    dyad.approve(address(pool), balance);
+    dnft.withdraw(0, balance);
+    pool.redeem(balance);
   }
 
   function testDeposit() public {
