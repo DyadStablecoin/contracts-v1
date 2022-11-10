@@ -10,5 +10,4 @@ t:
 tt:
 	forge test $(matchFile) $(matchFunction) -vvv --fork-url https://mainnet.infura.io/v3/786a7764b8234b06b4cd6764a1646a17
 ttt:
-	console.log(j)
 	forge test $(matchFile) $(matchFunction) -vvvv --fork-url https://mainnet.infura.io/v3/786a7764b8234b06b4cd6764a1646a17

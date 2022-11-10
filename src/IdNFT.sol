@@ -21,7 +21,7 @@ interface IdNFT {
   function withdraw(uint id, uint amount) external;
   function deposit(uint id, uint amount) external;
   function setPool(address newPool) external;
-  function mint(address receiver) external returns (uint id);
+  function mint(address receiver) external payable returns (uint id);
   function burn(uint id) external;
   function balanceOf(uint id) external view returns (int);
   function xpOf(uint id) external view returns (uint);

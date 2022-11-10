@@ -139,7 +139,7 @@ contract Pool {
   // a special xp boost.
   function getBoostFactor(uint id) internal view returns (uint boostFactor) {
     if (dnft.idToOwner(id) == msg.sender) {
-      boostFactor = 3;
+      boostFactor = 2;
     } else {
       // if the dnft holder is not the owner the boost factor is 1;
       boostFactor = 1;
@@ -147,9 +147,10 @@ contract Pool {
   }
 
   /// @notice Mint dyad to the NFT
-  function mintDyad() payable external onlyNFT returns (uint) {
-    require(msg.value > 0);
+  function mintDyad(uint minAmount) payable external onlyNFT returns (uint) {
+    require(msg.value > 0,        "Pool: You need to send some ETH");
     uint newDyad = lastEthPrice.mul(msg.value).div(100000000);
+    require(newDyad >= minAmount, "Pool: mintDyad: minAmount not reached");
     dyad.mint(msg.sender, newDyad);
     return newDyad;
   }
@@ -170,8 +171,6 @@ contract Pool {
   /// @notice Redeem dyad for eth
   function redeem(uint amount) public {
     require(amount > REDEEM_MINIMUM, "Pool: Amount must be greater than 100000000");
-    console.logUint(amount);
-    console.logUint(dyad.balanceOf(msg.sender));
     // msg.sender has to approve pool to spend its tokens
     dyad.transferFrom(msg.sender, address(this), amount);
     dyad.burn(amount);

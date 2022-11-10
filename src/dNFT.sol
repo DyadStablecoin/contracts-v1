@@ -17,6 +17,9 @@ contract dNFT is ERC721Enumerable{
   // TODO: it is more dynamic than this!
   uint public constant MAX_SUPPLY = 1000;
 
+  // to mint a dnft $5k in eth are required
+  uint public constant DEPOSIT_MINIMUM = 5000000000000000000000;
+
   address public owner;
   DYAD public dyad;
   Pool public pool;
@@ -81,7 +84,7 @@ contract dNFT is ERC721Enumerable{
 
   /// @notice Mints a new dNFT
   /// @param receiver The address to mint the dNFT to
-  function mint(address receiver) external returns (uint id) {
+  function mint(address receiver) external payable returns (uint id) {
     id = totalSupply();
     require(id < MAX_SUPPLY, "Max supply reached");
     idToOwner[id] = receiver;
@@ -90,24 +93,28 @@ contract dNFT is ERC721Enumerable{
     IdNFT.Nft storage nft = idToNft[id];
     nft.xp = nft.xp.add(100);
 
-    _mint(receiver, id);
+    _mintDyad(id, DEPOSIT_MINIMUM);
+
+    _mint(receiver, id); // nft mint
     emit Mint(receiver, id);
+  }
+
+  function mintDyad(uint id) payable public onlyNFTOwner(id) {
+    _mintDyad(id, 0);
   }
 
   /// @notice Mint new dyad to the NFT
   /// @param id The NFT id
-  function mintDyad(uint id) payable external onlyNFTOwner(id) {
+  function _mintDyad(uint id, uint minAmount) private {
     IdNFT.Nft storage nft = idToNft[id];
     require(msg.value > 0, "You need to send some ETH to mint dyad");
 
-    // mint dyad to the nft contract
-    // approve the pool to spend the dyad
-    // deposit minted dyad to the pool
-    uint amount = pool.mintDyad{value: msg.value}();
+    // mint new dyad and deposit it in the pool 
+    uint amount = pool.mintDyad{value: msg.value}(minAmount);
     dyad.approve(address(pool), amount);
     pool.deposit(amount);
 
-    // update nft
+    // give msg.sender ownership of the dyad
     nft.deposit = nft.deposit.add(amount);
   }
 
