@@ -48,34 +48,41 @@ contract Pool {
     ( , newEthPrice, , , ) = priceFeed.latestRoundData();
   }
 
-  function sync() public returns (int newEthPrice) {
-    newEthPrice = getNewEthPrice();
-
+  /// @notice returns the amount that we need to mint/burn depending on the new eth price
+  function getDeltaAmount(int newEthPrice) internal view returns (int deltaAmountSigned) {
     int  deltaPrice        = newEthPrice - int(lastEthPrice) ;
     uint deltaPricePercent = uint(newEthPrice).mul(10000).div(lastEthPrice);
 
+    // we have to do this to get basis points in the correct range
     if (deltaPrice < 0) {
       deltaPricePercent = 10000 - deltaPricePercent;
     } else {
       deltaPricePercent -= 10000;
     }
 
-    uint deltaAmount = PoolLibrary.percentageOf(dyad.balanceOf(address(this)), deltaPricePercent);
-    int  deltaAmountSigned = int(deltaAmount);  
+    uint poolBalance = dyad.balanceOf(address(this));
+    uint deltaAmount = PoolLibrary.percentageOf(poolBalance, deltaPricePercent);
 
     // if the delta is negative we have to make deltaAmount negative as well
     if (deltaPrice < 0) {
-      deltaAmountSigned *= -1;
+      deltaAmountSigned = int(deltaAmount) * -1;
     }
+  }
+
+  function sync() public returns (int newEthPrice) {
+    newEthPrice = getNewEthPrice();
+
+    int  deltaAmount    = getDeltaAmount(newEthPrice);
+    uint deltaAmountAbs = PoolLibrary.abs(deltaAmount);
 
     if (uint(newEthPrice) > lastEthPrice) {
-      dyad.mint(address(this), uint(deltaAmount));
+      dyad.mint(address(this), deltaAmountAbs);
     } else {
       // What happens if there is not enough to burn?
-      dyad.burn(uint(deltaAmount));
+      dyad.burn(deltaAmountAbs);
     }
 
-    updateNFTs(deltaAmountSigned);
+    updateNFTs(deltaAmount);
 
     lastEthPrice    = uint(newEthPrice);
     lastCheckpoint += 1;

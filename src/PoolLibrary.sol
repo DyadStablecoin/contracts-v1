@@ -15,6 +15,11 @@ library PoolLibrary {
     return x.mul(basisPoints).div(10000);
   }
 
+  function abs(int x) internal pure returns (uint) {
+    x = x >= 0 ? x : -x;
+    return uint(x);
+}
+
   // return "normalized" value between 1-100
   function normalize(uint value, uint maxValue) internal pure returns (uint8) {
     require(maxValue >= 100, "PoolLibrary: maxValue must be >= 100");
