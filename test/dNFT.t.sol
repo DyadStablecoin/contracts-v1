@@ -110,28 +110,24 @@ contract dNFTTest is Test {
   }
 
   function testWithdraw() public {
-    // dnft.mintDyad{value: 1 ether}(0);
-    // uint depositPre = dyad.balanceOf(address(pool));
-    // uint AMOUNT = 42;
-    // dnft.withdraw(0, AMOUNT);
-    // IdNFT.Nft memory nft = dnft.idToNft(0);
-    // assertEq(dyad.balanceOf(address(this)), AMOUNT);
-    // assertEq(dyad.balanceOf(address(this)), nft.balance);
+    uint ethBalancePreMint = address(this).balance;
+    dnft.mintDyad{value: 1 ether}(0);
+    uint ethBalancePostMint = address(this).balance;
+    // after the mint, we should have less eth
+    assertTrue(ethBalancePreMint > ethBalancePostMint);
+    IdNFT.Nft memory nft = dnft.idToNft(0);
+    // after the mint, the nft should have a deposit
+    assertTrue(nft.deposit >  0);
+    // but no balance, 
+    assertTrue(nft.balance == 0);
+    // because all dyad is in the pool.
+    assertTrue(dyad.balanceOf(address(pool)) > 0);
 
-    // uint depositPost = dyad.balanceOf(address(pool));
-
-    // // check global var
-    // assertEq(depositPost, depositPre - AMOUNT);
-    // // check struct
-    // assertEq(metadata.deposit, depositPre - AMOUNT);
-
-    // IdNFT.Nft memory nft = dnft.idToNft(0);
-    // console.logUint(nft.deposit);
-    // console.logUint(nft.balance);
-    // dnft.withdraw(0, balance);
-    // nft = dnft.idToNft(0);
-    // console.logUint(nft.deposit);
-    // console.logUint(nft.balance);
+    assertEq(dyad.balanceOf(address(this)), 0);
+    dnft.withdraw(0, nft.deposit);
+    uint dyadBalancePostWithdraw = dyad.balanceOf(address(this));
+    // after the withdraw, we should have more dyad
+    assertTrue(dyadBalancePostWithdraw > 0);
   }
 
   function testDeposit() public {

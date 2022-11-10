@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 interface IdNFT {
   struct Nft {
+    // TODO: remove this!
     uint balance; // dyad directly owned by the dnft holder 
     uint deposit; // dyad balance in pool
     uint xp;      // always positive, always inflationary
