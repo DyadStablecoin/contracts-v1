@@ -18,6 +18,8 @@ contract Pool {
   DYAD public dyad;
   IAggregatorV3 internal priceFeed;
 
+  uint256 constant private REDEEM_MINIMUM = 100000000;
+
   mapping(uint => int) public dyadDeltaAtCheckpoint;
   mapping(uint => int) public xpDeltaAtCheckpoint;
   mapping(uint => uint) public poolBalanceAtCheckpoint;
@@ -154,7 +156,7 @@ contract Pool {
 
   /// @notice Redeem dyad for eth
   function redeem(uint amount) public {
-    require(amount > 0, "Pool: Amount must be greater than 0");
+    require(amount > REDEEM_MINIMUM, "Pool: Amount must be greater than 100000000");
     // msg.sender has to approve pool to spend its tokens
     dyad.transferFrom(msg.sender, address(this), amount);
     dyad.burn(amount);
