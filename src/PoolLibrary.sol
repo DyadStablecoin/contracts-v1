@@ -8,6 +8,9 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 library PoolLibrary {
   using SafeMath for uint256;
 
+  // mainnnet
+  address constant PRICE_ORACLE_ADDRESS = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+
   function percentageOf(uint x, uint basisPoints) internal returns (uint) {
     return x.mul(basisPoints).div(10000);
   }

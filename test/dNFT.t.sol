@@ -109,46 +109,55 @@ contract dNFTTest is Test {
     dnft.mintDyad(1);
   }
 
-
   function testWithdraw() public {
-    dnft.mintDyad{value: 10}(0);
-    uint depositPre = dyad.balanceOf(address(pool));
+    // dnft.mintDyad{value: 1 ether}(0);
+    // uint depositPre = dyad.balanceOf(address(pool));
+    // uint AMOUNT = 42;
+    // dnft.withdraw(0, AMOUNT);
+    // IdNFT.Nft memory nft = dnft.idToNft(0);
+    // assertEq(dyad.balanceOf(address(this)), AMOUNT);
+    // assertEq(dyad.balanceOf(address(this)), nft.balance);
 
-    // amount to withdraw
-    uint AMOUNT = 42;
-    dnft.withdraw(0, AMOUNT);
-    assertEq(dyad.balanceOf(address(this)), AMOUNT);
+    // uint depositPost = dyad.balanceOf(address(pool));
 
-    uint depositPost = dyad.balanceOf(address(pool));
+    // // check global var
+    // assertEq(depositPost, depositPre - AMOUNT);
+    // // check struct
+    // assertEq(metadata.deposit, depositPre - AMOUNT);
 
-    // check global var
-    assertEq(depositPost, depositPre - AMOUNT);
-
-    // check struct
-    IdNFT.Nft memory metadata = dnft.idToNft(0);
-    assertEq(metadata.deposit, depositPre - AMOUNT);
-
-    // TODO: create redeem test method
-    dnft.mintDyad{value: 1 ether}(0); // value in wei
-    uint balance = dyad.balanceOf(address(pool));
-    dyad.approve(address(pool), balance);
-    dnft.withdraw(0, balance);
-    pool.redeem(balance);
+    // IdNFT.Nft memory nft = dnft.idToNft(0);
+    // console.logUint(nft.deposit);
+    // console.logUint(nft.balance);
+    // dnft.withdraw(0, balance);
+    // nft = dnft.idToNft(0);
+    // console.logUint(nft.deposit);
+    // console.logUint(nft.balance);
   }
 
   function testDeposit() public {
     dnft.mintDyad{value: 100}(0);
     // we need to approve the dnft here to transfer our dyad
     dyad.approve(address(dnft), 100);
-
     uint AMOUNT = 42;
-
     // withdraw transfers dyad out of the pool to the owner
     dnft.withdraw(0, AMOUNT);
     assertTrue(dyad.balanceOf(address(this)) != 0);
-
     // deposit transfers dyad back into the pool
     dnft.deposit(0, AMOUNT);
     assertEq(dyad.balanceOf(address(this)), 0);
+  }
+
+  function testRedeem() public {
+    uint balancePreMint = address(this).balance;
+    dnft.mintDyad{value: 1 ether}(0);
+    uint balancePostMint = address(this).balance;
+    // after the mint, we should have less eth
+    assertTrue(balancePostMint < balancePreMint);
+    uint balance = dyad.balanceOf(address(pool));
+    dyad.approve(address(pool), balance);
+    pool.redeem(balance);
+    uint balancePostRedeem = address(this).balance;
+    // after the redeem, we should have exactly the same eth as before
+    assertTrue(balancePostRedeem == balancePreMint);
   }
 }

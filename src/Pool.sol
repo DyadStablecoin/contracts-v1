@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import {DYAD} from "../src/dyad.sol";
 import {IAggregatorV3} from "../src/AggregatorV3Interface.sol";
 import {IdNFT} from "../src/IdNFT.sol";
-import {Addresses} from "../src/Addresses.sol";
 import {PoolLibrary} from "../src/PoolLibrary.sol";
 
 contract Pool {
@@ -38,7 +37,7 @@ contract Pool {
   constructor(address _dnft, address _dyad) {
     dnft         = IdNFT(_dnft);
     dyad         = DYAD(_dyad);
-    priceFeed    = IAggregatorV3(Addresses.PRICE_ORACLE_ADDRESS);
+    priceFeed    = IAggregatorV3(PoolLibrary.PRICE_ORACLE_ADDRESS);
     lastEthPrice = uint(getNewEthPrice());
   }
 
