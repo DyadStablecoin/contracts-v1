@@ -1,8 +1,8 @@
-ifdef file
-  matchFile = --match-contract $(file)
+ifdef FILE
+  matchFile = --match-contract $(FILE)
 endif
-ifdef func
-  matchFunction = --match $(func)
+ifdef FUNC
+  matchFunction = --match $(FUNC)
 endif
 
 t:

@@ -13,6 +13,11 @@ import {PoolLibrary} from "../src/PoolLibrary.sol";
 contract Pool {
   using SafeMath for uint256;
 
+  // IMPORTANT: do not change the ordering of these variables
+  // because some tests depend on this specific slot arrangement.
+  uint public lastEthPrice;
+  uint public lastCheckpoint;
+
   IdNFT public dnft;
   DYAD public dyad;
   IAggregatorV3 internal priceFeed;
@@ -22,9 +27,6 @@ contract Pool {
   mapping(uint => int) public dyadDeltaAtCheckpoint;
   mapping(uint => int) public xpDeltaAtCheckpoint;
   mapping(uint => uint) public poolBalanceAtCheckpoint;
-
-  uint public lastEthPrice;
-  uint public lastCheckpoint;
 
   event NewEthPrice(int newEthPrice);
 
@@ -41,12 +43,11 @@ contract Pool {
     lastEthPrice = uint(getNewEthPrice());
   }
 
+  /// @notice get the latest eth price from oracle
   function getNewEthPrice() internal view returns (int newEthPrice) {
     ( , newEthPrice, , , ) = priceFeed.latestRoundData();
   }
 
-
-  /// @notice get the latest eth price from oracle
   function sync() public returns (int newEthPrice) {
     newEthPrice = getNewEthPrice();
 
