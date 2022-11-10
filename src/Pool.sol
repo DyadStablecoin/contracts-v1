@@ -51,14 +51,21 @@ contract Pool {
   function sync() public returns (int newEthPrice) {
     newEthPrice = getNewEthPrice();
 
-    int  deltaPrice        = int(lastEthPrice) - newEthPrice;
-    uint deltaPricePercent = uint(newEthPrice).mul(1000).div(lastEthPrice);
-    uint deltaAmount       = PoolLibrary.percentageOf(dyad.totalSupply(), deltaPricePercent);
+    int  deltaPrice        = newEthPrice - int(lastEthPrice) ;
+    uint deltaPricePercent = uint(newEthPrice).mul(10000).div(lastEthPrice);
+
+    if (deltaPrice < 0) {
+      deltaPricePercent = 10000 - deltaPricePercent;
+    } else {
+      deltaPricePercent -= 10000;
+    }
+
+    uint deltaAmount = PoolLibrary.percentageOf(dyad.balanceOf(address(this)), deltaPricePercent);
     int  deltaAmountSigned = int(deltaAmount);  
 
     // if the delta is negative we have to make deltaAmount negative as well
     if (deltaPrice < 0) {
-      deltaAmountSigned = -1 * deltaAmountSigned;
+      deltaAmountSigned *= -1;
     }
 
     if (uint(newEthPrice) > lastEthPrice) {

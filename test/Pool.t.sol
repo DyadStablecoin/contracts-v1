@@ -18,6 +18,7 @@ contract PoolTest is Test {
     pool = new Pool(address(dnft), address(dyad));
 
     dyad.setMinter(address(pool));
+    dnft.setPool(address(pool));
   }
 
   function overwriteLastEthPrice(uint newPrice) public {
@@ -29,7 +30,12 @@ contract PoolTest is Test {
     // sanity check
     assertTrue(pool.lastEthPrice() > 0);
 
-    overwriteLastEthPrice(140000000000);
+    // mint some dyad
+    dnft.mint(address(this));
+    dnft.mintDyad{value: 1 ether}(0); 
+
+    overwriteLastEthPrice(130000000000);
+    console.log("testSync");
     pool.sync();
   }
 }

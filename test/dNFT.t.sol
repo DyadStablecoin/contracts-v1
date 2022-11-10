@@ -82,7 +82,7 @@ contract dNFTTest is Test {
 
   function testMintDyad() public {
     // mint dyad for 1 wei
-    dnft.mintDyad{value: 1}(0); // value in wei
+    dnft.mintDyad{value: 1}(0);
     IdNFT.Nft memory metadata = dnft.idToNft(0);
 
     // check struct 
