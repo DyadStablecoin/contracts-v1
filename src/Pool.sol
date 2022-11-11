@@ -93,6 +93,7 @@ contract Pool {
     uint nftTotalSupply  = dnft.totalSupply();
 
     for (uint i = 0; i < nftTotalSupply; i++) {
+      // TODO: delta amount relative to each nft
       updateNFT(i, deltaAmount);
     }
   }
@@ -122,6 +123,9 @@ contract Pool {
 
     // --------------- update -------------
     // IMPORTANT: deposit can not be < 0
+    console.log("deposit: %s", nft.deposit);
+    console.log("xpNormal: %s", xpNormal);
+    console.logInt(deltaAmount);
     nft.deposit = uint(int(nft.deposit) + (int(uint256(xpNormal)) * deltaAmount));
 
     // update xp
