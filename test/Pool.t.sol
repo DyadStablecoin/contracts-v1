@@ -31,7 +31,7 @@ contract PoolTest is Test {
     assertTrue(pool.lastEthPrice() > 0);
 
     // mint some dyad
-    dnft.mintNft(address(this));
+    dnft.mintNft{value: 5 ether}(address(this));
     dnft.mintDyad{value: 1 ether}(0); 
 
     overwriteLastEthPrice(130000000000);

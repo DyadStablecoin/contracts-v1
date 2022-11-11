@@ -76,8 +76,9 @@ contract dNFT is ERC721Enumerable{
   }
 
   function setPool(address newPool) external onlyOwner {
-    require(!isPoolSet, "dNFT: Pool is already set");
-    require(msg.sender == owner, "dNFT: Only owner can set pool");
+    require(!isPoolSet,            "dNFT: Pool is already set");
+    require(msg.sender == owner,   "dNFT: Only owner can set pool");
+    require(newPool != address(0), "dNFT: Pool address cannot be 0x0");
     pool = Pool(newPool);
     isPoolSet = true;
   }
