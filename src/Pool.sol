@@ -78,95 +78,64 @@ contract Pool {
 
     int  deltaAmount    = getDeltaAmount(newEthPrice);
     uint deltaAmountAbs = PoolLibrary.abs(deltaAmount);
-    console.logUint(deltaAmountAbs);
 
-    updateNFTs();
+    updateNFTs(deltaAmountAbs);
 
-    // if (uint(newEthPrice) > lastEthPrice) {
-    //   dyad.mint(address(this), deltaAmountAbs);
-    // } else {
-    //   // What happens if there is not enough to burn?
-    //   dyad.burn(deltaAmountAbs);
-    // }
+    if (uint(newEthPrice) > lastEthPrice) {
+      dyad.mint(address(this), deltaAmountAbs);
+    } else {
+      // What happens if there is not enough to burn?
+      dyad.burn(deltaAmountAbs);
+    }
 
-    // updateNFTs(deltaAmount);
-
-    // lastEthPrice    = uint(newEthPrice);
-    // lastCheckpoint += 1;
-    // emit NewEthPrice(newEthPrice);
+    lastEthPrice    = uint(newEthPrice);
+    lastCheckpoint += 1;
+    emit NewEthPrice(newEthPrice);
   }
 
-  function updateNFTs() internal {
+  function updateNFTs(uint deltaAmountAbs) internal {
+    bool isBoosted = false;
     uint nftTotalSupply  = dnft.totalSupply();
 
     for (uint i = 0; i < nftTotalSupply; i++) {
-      // TODO: delta amount relative to each nft
-      // updateNFT(i, deltaAmount);
-      IdNFT.Nft memory nft = dnft.idToNft(i);
-
-      console.logUint(dyad.balanceOf(address(this)));
-      console.logUint(nft.deposit);
-
-      // pool deposit percentage in basis points
-      uint depositPoolRatio = nft.deposit * 10000 / dyad.balanceOf(address(this));
-      console.logUint(depositPoolRatio);
-
-      uint totalMinted = nft.deposit + nft.balance;
-      uint mintedRatio = totalMinted * 10000 / dyad.totalSupply();
-      console.logUint(mintedRatio);
-
-      uint xpRatio = nft.xp * 10000 / dnft.totalXp();
-      console.logUint(xpRatio);
+      updateNFT(i, deltaAmountAbs, isBoosted);
     }
   }
 
-  function updateNFT(uint id, int deltaAmount) internal {
-    IdNFT.Nft memory nft = dnft.idToNft(id);
 
-    // --------------- calculte factors -------------
-    // boost factor
-    uint  boostFactor   = getBoostFactor(id);
+  function updateNFT(uint i, uint deltaAmountAbs, bool isBoosted) internal {
+    console.log();
+    console.logUint(i);
+    // TODO: delta amount relative to each nft
+    // updateNFT(i, deltaAmount);
+    IdNFT.Nft memory nft = dnft.idToNft(i);
 
-    // xp factor
-    uint8 xpNormal      = PoolLibrary.normalize(nft.xp, dnft.MAX_XP());
-    uint  xpFactor      = PoolLibrary.getXpMulti(xpNormal);
+    // pool deposit percentage in basis points
+    uint depositPoolRatio = nft.deposit * 10000 / dyad.balanceOf(address(this));
+    console.logUint(depositPoolRatio);
 
-    if (deltaAmount < 0) {
-      xpFactor = 292 - xpFactor;
+    uint totalMinted = nft.deposit + nft.balance;
+    uint mintedRatio = totalMinted * 10000 / dyad.totalSupply();
+    console.logUint(mintedRatio);
+
+    uint xpRatio = nft.xp * 10000 / dnft.totalXp();
+    console.logUint(xpRatio);
+
+    uint xpDeviation = 0;
+
+    uint prorata  = PoolLibrary.percentageOf(deltaAmountAbs, depositPoolRatio);
+    uint withXP   = prorata.mul(xpDeviation);
+    uint smoothed = ((xpDeviation * prorata)+withXP)/(xpDeviation+1);
+    console.logUint(prorata);
+
+    // give xp boost to caller
+    // boost can only happen once
+    if (!isBoosted && dnft.idToOwner(i) == msg.sender) {
+      isBoosted = true;
+      nft.xp = nft.xp.add(PoolLibrary.percentageOf(nft.xp, 100)); // 1% boost
     }
 
-    // balance factor
-    uint8 balanceNormal = PoolLibrary.normalize(nft.balance, dnft.MAX_BALANCE());
-    uint  balanceFactor = PoolLibrary.getBalanceMulti(balanceNormal);
-
-    // deposit factor
-    uint8 depositNormal = PoolLibrary.normalize(nft.deposit, dnft.MAX_DEPOSIT());
-    uint  depositFactor = PoolLibrary.getDepositMulti(depositNormal);
-
-    // --------------- update -------------
-    // IMPORTANT: deposit can not be < 0
-    nft.deposit = uint(int(nft.deposit) + (int(uint256(xpNormal)) * deltaAmount));
-
-    // update xp
-    uint factors = xpFactor * balanceFactor * depositFactor * boostFactor;
-    uint newXP   = nft.xp + (nft.xp * factors);
-    nft.xp       = newXP;
-
-    dnft.updateNft(id, nft);
-
-    // update xp max value
-    dnft.updateMaxXP(newXP);
-  }
-
-  // As a reward for calling the `getNewEthPrice` function, we give the caller
-  // a special xp boost.
-  function getBoostFactor(uint id) internal view returns (uint boostFactor) {
-    if (dnft.idToOwner(id) == msg.sender) {
-      boostFactor = 2;
-    } else {
-      // if the dnft holder is not the owner the boost factor is 1;
-      boostFactor = 1;
-    }
+    dnft.updateNft(i, nft);
   }
 
   /// @notice Mint dyad to the NFT
