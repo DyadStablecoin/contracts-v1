@@ -45,7 +45,9 @@ contract Pool {
 
   /// @notice get the latest eth price from oracle
   function getNewEthPrice() internal view returns (int newEthPrice) {
-    ( , newEthPrice, , , ) = priceFeed.latestRoundData();
+    // TODO: testing
+    // ( , newEthPrice, , , ) = priceFeed.latestRoundData();
+    newEthPrice = 100000000000;
   }
 
   /// @notice returns the amount that we need to mint/burn depending on the new eth price
@@ -123,9 +125,6 @@ contract Pool {
 
     // --------------- update -------------
     // IMPORTANT: deposit can not be < 0
-    console.log("deposit: %s", nft.deposit);
-    console.log("xpNormal: %s", xpNormal);
-    console.logInt(deltaAmount);
     nft.deposit = uint(int(nft.deposit) + (int(uint256(xpNormal)) * deltaAmount));
 
     // update xp

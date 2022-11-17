@@ -97,15 +97,16 @@ contract dNFT is ERC721Enumerable{
 
   // mint a new nft to the `receiver`
   // to mint a new nft a minimum of $`DEPOSIT_MINIMUM` in eth is required
-  function mintNft(address receiver) external payable returns (uint id) {
-    _mintNft(receiver);
+  function mintNft(address receiver) external payable returns (uint) {
+    uint id = _mintNft(receiver);
     _mintDyad(id, DEPOSIT_MINIMUM);
+    return id;
   }
 
   // the main reason for this method is that we need to be able to mint
   // nfts for the core team and investors without the deposit minimum,
   // this happens in the constructor where we call this method directly.
-  function _mintNft(address receiver) private {
+  function _mintNft(address receiver) private returns (uint) {
     uint id = totalSupply();
     require(id < MAX_SUPPLY, "Max supply reached");
     _mint(receiver, id); // nft mint
@@ -116,6 +117,7 @@ contract dNFT is ERC721Enumerable{
     nft.xp = nft.xp.add(100);
 
     emit MintNft(receiver, id);
+    return id;
   }
 
   // mint new dyad to the respective nft
