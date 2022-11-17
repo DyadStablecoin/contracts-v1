@@ -44,19 +44,21 @@ contract PoolTest is Test {
     // sanity check
     assertTrue(pool.lastEthPrice() > 0);
 
+    overwriteLastEthPrice(100000000000);
     for (uint i = 0; i < 10; i++) {
       dnft.mintNft{value: 1000 ether}(cheats.addr(i+1)); // i+1 to avoid 0x0 address
     }
 
-    console.logUint(dyad.balanceOf(address(pool)));
-    console.logUint(dyad.totalSupply());
-
     for (uint i = 0; i < 10; i++) {
-      vm.prank(cheats.addr(i+1)); // i+1 to avoid 0x0 address
+      vm.prank(cheats.addr(i+1)); 
       dnft.withdraw(i, 200000000000000000000000); 
     }
 
-    console.logUint(dyad.balanceOf(address(pool)));
+    IdNFT.Nft memory metadata = dnft.idToNft(1);
+
+    overwriteLastEthPrice(100000000000);
+    // overwriteLastEthPrice(130000000000);
+    pool.sync();
 
     // mint some dyad
     // dnft.mintNft{value: 5 ether}(address(this));

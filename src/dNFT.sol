@@ -14,7 +14,7 @@ contract dNFT is ERC721Enumerable{
   using SafeMath for uint256;
 
   // maximum number of nfts that can be minted
-  uint public constant MAX_SUPPLY = 1000;
+  uint public constant MAX_SUPPLY = 200;
   // to mint a dnft $ 5k in eth are required
   uint public constant DEPOSIT_MINIMUM = 5000000000000000000000;
 
@@ -114,7 +114,10 @@ contract dNFT is ERC721Enumerable{
 
     IdNFT.Nft storage nft = idToNft[id];
     // add 100 xp to the nft to start with
-    nft.xp = nft.xp.add(100);
+    // TODO: for testing
+    // nft.xp = nft.xp.add(100);
+
+    nft.xp = nft.xp.add(90000);
 
     emit MintNft(receiver, id);
     return id;
