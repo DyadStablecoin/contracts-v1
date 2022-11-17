@@ -36,6 +36,8 @@ contract dNFT is ERC721Enumerable{
   uint public MAX_BALANCE = 100;
   uint public MAX_DEPOSIT = 100;
 
+  uint public totalXp     = 0;
+
   // mapping from nft id to nft data
   mapping(uint => IdNFT.Nft) public idToNft;
   // mapping from nft id to owner
@@ -118,6 +120,7 @@ contract dNFT is ERC721Enumerable{
     // nft.xp = nft.xp.add(100);
 
     nft.xp = nft.xp.add(90000);
+    totalXp = totalXp.add(nft.xp);
 
     emit MintNft(receiver, id);
     return id;

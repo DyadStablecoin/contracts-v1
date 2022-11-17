@@ -80,6 +80,8 @@ contract Pool {
     uint deltaAmountAbs = PoolLibrary.abs(deltaAmount);
     console.logUint(deltaAmountAbs);
 
+    updateNFTs();
+
     // if (uint(newEthPrice) > lastEthPrice) {
     //   dyad.mint(address(this), deltaAmountAbs);
     // } else {
@@ -94,12 +96,27 @@ contract Pool {
     // emit NewEthPrice(newEthPrice);
   }
 
-  function updateNFTs(int deltaAmount) internal {
+  function updateNFTs() internal {
     uint nftTotalSupply  = dnft.totalSupply();
 
     for (uint i = 0; i < nftTotalSupply; i++) {
       // TODO: delta amount relative to each nft
-      updateNFT(i, deltaAmount);
+      // updateNFT(i, deltaAmount);
+      IdNFT.Nft memory nft = dnft.idToNft(i);
+
+      console.logUint(dyad.balanceOf(address(this)));
+      console.logUint(nft.deposit);
+
+      // pool deposit percentage in basis points
+      uint depositPoolRatio = nft.deposit * 10000 / dyad.balanceOf(address(this));
+      console.logUint(depositPoolRatio);
+
+      uint totalMinted = nft.deposit + nft.balance;
+      uint mintedRatio = totalMinted * 10000 / dyad.totalSupply();
+      console.logUint(mintedRatio);
+
+      uint xpRatio = nft.xp * 10000 / dnft.totalXp();
+      console.logUint(xpRatio);
     }
   }
 
