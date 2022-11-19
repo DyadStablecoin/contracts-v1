@@ -97,10 +97,15 @@ contract Pool {
     bool isBoosted = false;
     uint nftTotalSupply  = dnft.totalSupply();
 
+    uint TOTAL_SUPPLY = 10;
+
     uint MAX_XP = 8000;
     uint MIN_XP = 1079;
 
-    for (uint i = 0; i < 10; i++) {
+    uint multi_sum;
+    uint[] memory multiplier_products = new uint[](TOTAL_SUPPLY);
+
+    for (uint i = 0; i < TOTAL_SUPPLY; i++) {
       console.log();
       console.logUint(i);
 
@@ -121,7 +126,17 @@ contract Pool {
       uint multi_product = xp_multi * deposit_multi/100;
       console.log("multi product: ", multi_product);
 
-      // updateNFT(i, deltaAmountAbs, isBoosted);
+      multi_sum += multi_product;
+      multiplier_products[i] = multi_product;
+    }
+
+    console.log();
+    // ROUNDING ERROR OF A COUPLE OF BASIS POINTS
+    console.log("multi sum: ", multi_sum);
+
+    for (uint i = 0; i < TOTAL_SUPPLY; i++) {
+      uint percentage_change = multiplier_products[i]*10000 / multi_sum;
+      console.log("percentage change: ", percentage_change);
     }
   }
 
