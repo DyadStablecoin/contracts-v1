@@ -115,6 +115,12 @@ contract Pool {
       uint xp_multi = PoolLibrary.getXpMulti(xp_scaled / 100);
       console.log("xp multi: ", xp_multi);
 
+      uint deposit_multi = nft.deposit*10000/(nft.deposit+nft.balance+1);
+      console.log("deposit multi: ", deposit_multi);
+
+      uint multi_product = xp_multi * deposit_multi/100;
+      console.log("multi product: ", multi_product);
+
       // updateNFT(i, deltaAmountAbs, isBoosted);
     }
   }
