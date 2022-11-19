@@ -97,6 +97,9 @@ contract Pool {
     bool isBoosted = false;
     uint nftTotalSupply  = dnft.totalSupply();
 
+    uint MAX_XP = 8000;
+    uint MIN_XP = 1079;
+
     for (uint i = 0; i < 10; i++) {
       console.log();
       console.logUint(i);
@@ -105,6 +108,12 @@ contract Pool {
       console.log("xp: ", nft.xp);
       console.log("deposit: ", nft.deposit);
       console.log("balance: ", nft.balance);
+
+      uint xp_scaled = (nft.xp-MIN_XP) * 10000 / (MAX_XP-MIN_XP);
+      console.log("xp scaled: ", xp_scaled);
+
+      uint xp_multi = PoolLibrary.getXpMulti(xp_scaled / 100);
+      console.log("xp multi: ", xp_multi);
 
       // updateNFT(i, deltaAmountAbs, isBoosted);
     }
