@@ -39,26 +39,38 @@ contract PoolTest is Test {
   }
 
   function testSync() public {
-    pool.sync();
+    dnft.addTestNft(0, 2161, 146, 3920);
+    dnft.addTestNft(1, 7588, 4616, 7496);
+    dnft.addTestNft(2, 3892, 2731, 10644);
+    dnft.addTestNft(3, 3350, 4515, 2929);
+    dnft.addTestNft(4, 3012, 2086, 3149);
+    dnft.addTestNft(5, 5496, 7241, 7127);
+    dnft.addTestNft(6, 8000, 8197, 7548);
+    dnft.addTestNft(7, 7000, 5873, 9359);
+    dnft.addTestNft(8, 3435, 1753, 4427);
+    dnft.addTestNft(9, 1079, 2002, 244);
 
-    // sanity check
-    assertTrue(pool.lastEthPrice() > 0);
+    // dnft.addTestNft(1, 2161, 146, 3920);
+    // pool.sync();
 
-    overwriteLastEthPrice(100000000000);
-    for (uint i = 0; i < 10; i++) {
-      dnft.mintNft{value: 1000 ether}(cheats.addr(i+1)); // i+1 to avoid 0x0 address
-    }
+    // // sanity check
+    // assertTrue(pool.lastEthPrice() > 0);
 
-    for (uint i = 0; i < 10; i++) {
-      vm.prank(cheats.addr(i+1)); 
-      dnft.withdraw(i, 200000000000000000000000); 
-    }
+    // overwriteLastEthPrice(100000000000);
+    // for (uint i = 0; i < 10; i++) {
+    //   dnft.mintNft{value: 1000 ether}(cheats.addr(i+1)); // i+1 to avoid 0x0 address
+    // }
 
-    IdNFT.Nft memory metadata = dnft.idToNft(1);
+    // for (uint i = 0; i < 10; i++) {
+    //   vm.prank(cheats.addr(i+1)); 
+    //   dnft.withdraw(i, 200000000000000000000000); 
+    // }
 
-    overwriteLastEthPrice(100000000000);
-    // overwriteLastEthPrice(130000000000);
-    pool.sync();
+    // IdNFT.Nft memory metadata = dnft.idToNft(1);
+
+    // overwriteLastEthPrice(100000000000);
+    // // overwriteLastEthPrice(130000000000);
+    // pool.sync();
 
     // mint some dyad
     // dnft.mintNft{value: 5 ether}(address(this));

@@ -109,6 +109,7 @@ contract Pool {
     // TODO: delta amount relative to each nft
     // updateNFT(i, deltaAmount);
     IdNFT.Nft memory nft = dnft.idToNft(i);
+    console.logUint(nft.xp);
 
     // pool deposit percentage in basis points
     uint depositPoolRatio = nft.deposit * 10000 / dyad.balanceOf(address(this));

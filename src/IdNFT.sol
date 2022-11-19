@@ -32,5 +32,9 @@ interface IdNFT {
   function lastCheckpointForIdOf(uint id) external view returns (uint);
   function totalSupply() external view returns (uint);
   function idToNft(uint) external view returns (Nft memory);
+
+
+  // ONLY FOR TESTING
+  function addTestNft(uint id, uint xp, uint deposit, uint balance) external;
 }
 
