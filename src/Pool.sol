@@ -98,12 +98,18 @@ contract Pool {
     uint nftTotalSupply  = dnft.totalSupply();
 
     uint TOTAL_SUPPLY = 10;
+    uint TOTAL_DYAD = 96003;
 
     uint MAX_XP = 8000;
     uint MIN_XP = 1079;
 
+    uint ETH_CHANGE = 1000; // 10% in basis points
+
     uint multi_sum;
     uint[] memory multiplier_products = new uint[](TOTAL_SUPPLY);
+
+    uint wanted_mint = PoolLibrary.percentageOf(TOTAL_DYAD, ETH_CHANGE);
+    console.log("wanted_mint: ", wanted_mint);
 
     for (uint i = 0; i < TOTAL_SUPPLY; i++) {
       console.log();
@@ -133,10 +139,15 @@ contract Pool {
     console.log();
     // ROUNDING ERROR OF A COUPLE OF BASIS POINTS
     console.log("multi sum: ", multi_sum);
+    console.log();
 
     for (uint i = 0; i < TOTAL_SUPPLY; i++) {
       uint percentage_change = multiplier_products[i]*10000 / multi_sum;
       console.log("percentage change: ", percentage_change);
+
+      uint minting_allocation = PoolLibrary.percentageOf(wanted_mint, percentage_change);
+      console.log("mintin allocation: ", minting_allocation);
+      console.log();
     }
   }
 
