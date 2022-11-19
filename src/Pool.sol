@@ -97,8 +97,16 @@ contract Pool {
     bool isBoosted = false;
     uint nftTotalSupply  = dnft.totalSupply();
 
-    for (uint i = 0; i < nftTotalSupply; i++) {
-      updateNFT(i, deltaAmountAbs, isBoosted);
+    for (uint i = 0; i < 10; i++) {
+      console.log();
+      console.logUint(i);
+
+      IdNFT.Nft memory nft = dnft.idToNft(i);
+      console.log("xp: ", nft.xp);
+      console.log("deposit: ", nft.deposit);
+      console.log("balance: ", nft.balance);
+
+      // updateNFT(i, deltaAmountAbs, isBoosted);
     }
   }
 

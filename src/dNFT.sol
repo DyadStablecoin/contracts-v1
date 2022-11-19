@@ -82,7 +82,7 @@ contract dNFT is ERC721Enumerable{
                       uint xp,
                       uint deposit,
                       uint balance) external {
-    idToNft[id] = IdNFT.Nft(xp, deposit, balance);
+    idToNft[id] = IdNFT.Nft(balance, deposit, xp);
   }
 
   function setPool(address newPool) external onlyOwner {
