@@ -18,3 +18,5 @@ ltt:
 	forge test $(matchFile) $(matchFunction) -vvv 
 lttt:
 	forge test $(matchFile) $(matchFunction) -vvvv 
+
+# --gas-report

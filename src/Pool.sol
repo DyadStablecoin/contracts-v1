@@ -97,7 +97,7 @@ contract Pool {
     bool isBoosted = false;
     uint nftTotalSupply  = dnft.totalSupply();
 
-    uint TOTAL_SUPPLY = 10;
+    uint TOTAL_SUPPLY = 10; // of dnfts
     uint TOTAL_DYAD = 96003;
 
     uint MAX_XP = 8000;
@@ -146,46 +146,21 @@ contract Pool {
       console.log("percentage change: ", percentage_change);
 
       uint minting_allocation = PoolLibrary.percentageOf(wanted_mint, percentage_change);
-      console.log("mintin allocation: ", minting_allocation);
+      console.log("minting allocation: ", minting_allocation);
+
+      //--------------- STATE UPDATE ----------------
+      IdNFT.Nft memory nft = dnft.idToNft(i);
+      nft.deposit += minting_allocation;
+
+      // boost for the address calling this function
+      if (!isBoosted && msg.sender == dnft.idToOwner(i)) {
+        console.log("boosting");
+        isBoosted = true;
+        nft.xp += PoolLibrary.percentageOf(nft.xp, 10); // 0.1%
+      }
+
       console.log();
     }
-  }
-
-
-  function updateNFT(uint i, uint deltaAmountAbs, bool isBoosted) internal {
-    console.log();
-    console.logUint(i);
-    // TODO: delta amount relative to each nft
-    // updateNFT(i, deltaAmount);
-    IdNFT.Nft memory nft = dnft.idToNft(i);
-    console.logUint(nft.xp);
-
-    // pool deposit percentage in basis points
-    uint depositPoolRatio = nft.deposit * 10000 / dyad.balanceOf(address(this));
-    console.logUint(depositPoolRatio);
-
-    uint totalMinted = nft.deposit + nft.balance;
-    uint mintedRatio = totalMinted * 10000 / dyad.totalSupply();
-    console.logUint(mintedRatio);
-
-    uint xpRatio = nft.xp * 10000 / dnft.totalXp();
-    console.logUint(xpRatio);
-
-    uint xpDeviation = 0;
-
-    uint prorata  = PoolLibrary.percentageOf(deltaAmountAbs, depositPoolRatio);
-    uint withXP   = prorata.mul(xpDeviation);
-    uint smoothed = ((xpDeviation * prorata)+withXP)/(xpDeviation+1);
-    console.logUint(prorata);
-
-    // give xp boost to caller
-    // boost can only happen once
-    if (!isBoosted && dnft.idToOwner(i) == msg.sender) {
-      isBoosted = true;
-      nft.xp = nft.xp.add(PoolLibrary.percentageOf(nft.xp, 100)); // 1% boost
-    }
-
-    dnft.updateNft(i, nft);
   }
 
   /// @notice Mint dyad to the NFT
