@@ -93,6 +93,7 @@ contract Pool {
     emit NewEthPrice(newEthPrice);
   }
 
+  // TODO: input eth_change in basis points
   function updateNFTs(uint deltaAmountAbs) internal {
     bool isBoosted = false;
     uint nftTotalSupply  = dnft.totalSupply();
@@ -103,13 +104,17 @@ contract Pool {
     uint MAX_XP = 8000;
     uint MIN_XP = 1079;
 
-    uint ETH_CHANGE = 1000; // 10% in basis points
+    bool isNegative = true;
+    uint ETH_CHANGE = 500; // 10% in basis points
 
     uint multi_sum;
     uint[] memory multiplier_products = new uint[](TOTAL_SUPPLY);
 
     uint wanted_mint = PoolLibrary.percentageOf(TOTAL_DYAD, ETH_CHANGE);
     console.log("wanted_mint: ", wanted_mint);
+
+    uint average_minted = TOTAL_DYAD / TOTAL_SUPPLY;
+    console.log("average_minted: ", average_minted);
 
     for (uint i = 0; i < TOTAL_SUPPLY; i++) {
       console.log();
@@ -124,13 +129,25 @@ contract Pool {
       console.log("xp scaled: ", xp_scaled);
 
       uint xp_multi = PoolLibrary.getXpMulti(xp_scaled / 100);
+      if (isNegative) {
+        xp_multi = 300 - xp_multi;
+      }
       console.log("xp multi: ", xp_multi);
+
+      uint mint_avg_minted = (nft.balance+nft.deposit)*10000/(average_minted+1);
+      console.log("mint_avg_minted: ", mint_avg_minted);
+
+      uint minted_multi = PoolLibrary.getXpMulti(xp_scaled / 100);
+      console.log("minted_multi: ", minted_multi);
 
       uint deposit_multi = nft.deposit*10000/(nft.deposit+nft.balance+1);
       console.log("deposit multi: ", deposit_multi);
 
       uint multi_product = xp_multi * deposit_multi/100;
       console.log("multi product: ", multi_product);
+
+      uint multi_product_burn = xp_multi * mint_avg_minted/100;
+      console.log("multi_product_burn", multi_product_burn);
 
       multi_sum += multi_product;
       multiplier_products[i] = multi_product;
