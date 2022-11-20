@@ -50,29 +50,6 @@ contract Pool {
     newEthPrice = 115000000000;
   }
 
-  /// @notice returns the amount that we need to mint/burn depending on the new eth price
-  function getDeltaAmount(int newEthPrice) internal view returns (int deltaAmountSigned) {
-    int  deltaPrice        = newEthPrice - int(lastEthPrice) ;
-    uint deltaPricePercent = uint(newEthPrice).mul(10000).div(lastEthPrice);
-
-    // we have to do this to get basis points in the correct range
-    if (deltaPrice < 0) {
-      deltaPricePercent = 10000 - deltaPricePercent;
-    } else {
-      deltaPricePercent -= 10000;
-    }
-
-    // uint poolBalance = dyad.balanceOf(address(this));
-    uint deltaAmount = PoolLibrary.percentageOf(dyad.totalSupply(), deltaPricePercent);
-
-    deltaAmountSigned = int(deltaAmount);
-
-    // if the delta is negative we have to make deltaAmount negative as well
-    if (deltaPrice < 0) {
-      deltaAmountSigned = int(deltaAmount) * -1;
-    }   
-  }
-
   uint TOTAL_SUPPLY = 10; // of dnfts
   uint MAX_XP = 8000;
   uint MIN_XP = 1079;
@@ -84,9 +61,6 @@ contract Pool {
     int OLD_ETH_PRICE = 100000000;
     int NEW_ETH_PRICE = 95000000;  // 95000000  ->  -5%
     // int NEW_ETH_PRICE = 110000000; // 110000000 -> +10%
-
-    int  deltaAmount    = getDeltaAmount(newEthPrice);
-    uint deltaAmountAbs = PoolLibrary.abs(deltaAmount);
 
     bool isNegative;
     if (NEW_ETH_PRICE - OLD_ETH_PRICE < 0) {
@@ -106,10 +80,11 @@ contract Pool {
     console.log("deltaAmount: ", wantedMint);
 
     if (uint(newEthPrice) > lastEthPrice) {
-      dyad.mint(address(this), deltaAmountAbs);
+      dyad.mint(address(this), wantedMint);
     } else {
       // What happens if there is not enough to burn?
-      dyad.burn(deltaAmountAbs);
+      // TODO
+      // dyad.burn(wantedMint);
     }
 
     lastEthPrice    = uint(newEthPrice);
