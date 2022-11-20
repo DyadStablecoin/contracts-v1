@@ -96,7 +96,6 @@ contract Pool {
   // TODO: input eth_change in basis points
   function updateNFTs(uint deltaAmountAbs) internal {
     bool isBoosted = false;
-    uint nftTotalSupply  = dnft.totalSupply();
 
     uint TOTAL_SUPPLY = 10; // of dnfts
     uint TOTAL_DYAD = 96003;
@@ -108,13 +107,19 @@ contract Pool {
     uint ETH_CHANGE = 500; // 10% in basis points
 
     uint multi_sum;
+    uint multi_sum_burn;
     uint[] memory multiplier_products = new uint[](TOTAL_SUPPLY);
+    uint[] memory multiplier_products_burn = new uint[](TOTAL_SUPPLY);
+    uint[] memory minted_multis = new uint[](TOTAL_SUPPLY);
 
     uint wanted_mint = PoolLibrary.percentageOf(TOTAL_DYAD, ETH_CHANGE);
     console.log("wanted_mint: ", wanted_mint);
 
     uint average_minted = TOTAL_DYAD / TOTAL_SUPPLY;
     console.log("average_minted: ", average_minted);
+
+    MintData memory mintData = mint();
+    BurnData memory burnData = burn();
 
     for (uint i = 0; i < TOTAL_SUPPLY; i++) {
       console.log();
@@ -149,35 +154,117 @@ contract Pool {
       uint multi_product_burn = xp_multi * mint_avg_minted/100;
       console.log("multi_product_burn", multi_product_burn);
 
-      multi_sum += multi_product;
-      multiplier_products[i] = multi_product;
+      multi_sum      += multi_product;
+      multi_sum_burn += multi_product_burn;
+      multiplier_products[i]      = multi_product;
+      multiplier_products_burn[i] = multi_product_burn;
+      minted_multis[i] = minted_multi;
     }
 
     console.log();
     // ROUNDING ERROR OF A COUPLE OF BASIS POINTS
-    console.log("multi sum: ", multi_sum);
+    console.log("multi sum: ", multi_sum_burn);
     console.log();
 
+    uint percentage_change;
     for (uint i = 0; i < TOTAL_SUPPLY; i++) {
-      uint percentage_change = multiplier_products[i]*10000 / multi_sum;
+      if (isNegative) {
+        percentage_change = multiplier_products_burn[i]*10000 / multi_sum_burn;
+      } else {
+        percentage_change = multiplier_products[i]*10000 / multi_sum;
+      }
+
       console.log("percentage change: ", percentage_change);
 
       uint minting_allocation = PoolLibrary.percentageOf(wanted_mint, percentage_change);
       console.log("minting allocation: ", minting_allocation);
+
+      uint xp_accrual;
+      if (isNegative) {
+        xp_accrual = minting_allocation * 100 / (minted_multis[i]);
+      }
+      console.log("xp_accrual", xp_accrual);
 
       //--------------- STATE UPDATE ----------------
       IdNFT.Nft memory nft = dnft.idToNft(i);
       nft.deposit += minting_allocation;
 
       // boost for the address calling this function
-      if (!isBoosted && msg.sender == dnft.idToOwner(i)) {
-        console.log("boosting");
-        isBoosted = true;
-        nft.xp += PoolLibrary.percentageOf(nft.xp, 10); // 0.1%
-      }
+      // if (!isBoosted && msg.sender == dnft.idToOwner(i)) {
+      //   console.log("boosting");
+      //   isBoosted = true;
+      //   nft.xp += PoolLibrary.percentageOf(nft.xp, 10); // 0.1%
+      // }
 
       console.log();
     }
+  }
+
+  struct MintData {
+    uint multiSum;
+    uint[] multiProducts;
+  }
+
+  struct BurnData {
+    uint multiSum;
+    uint[] multiProducts;
+    uint[] mintedMultis;
+  }
+
+  function burn() internal returns (BurnData memory) {
+    uint TOTAL_SUPPLY = 10; // of dnfts
+    uint MAX_XP = 8000;
+    uint MIN_XP = 1079;
+    uint TOTAL_DYAD = 96003;
+
+    uint AVG_MINTED = TOTAL_DYAD / TOTAL_SUPPLY;
+
+    uint multiSum;
+    uint[] memory multiProducts = new uint[](TOTAL_SUPPLY);
+    uint[] memory mintedMultis  = new uint[](TOTAL_SUPPLY);
+
+    for (uint i = 0; i < TOTAL_SUPPLY; i++) {
+      IdNFT.Nft memory nft = dnft.idToNft(i);
+      uint xpScaled = (nft.xp-MIN_XP)*10000 / (MAX_XP-MIN_XP);
+      uint xpMulti  = 300 - (PoolLibrary.getXpMulti(xpScaled/100));
+      uint mintAvgMinted = (nft.balance+nft.deposit)*10000 / (AVG_MINTED+1);
+      uint mintedMulti   = PoolLibrary.getXpMulti(xpScaled/100);
+      uint depositMulti  = nft.deposit*10000 / (nft.deposit+nft.balance+1);
+      uint multiProduct  = xpMulti * mintAvgMinted/100;
+
+      multiSum        += multiProduct;
+      multiProducts[i] = multiProduct;
+      mintedMultis[i]  = mintedMulti;
+    }
+
+    return BurnData(multiSum, multiProducts, mintedMultis);
+  }
+
+  function mint() internal returns (MintData memory) {
+    uint TOTAL_SUPPLY = 10; // of dnfts
+    uint MAX_XP = 8000;
+    uint MIN_XP = 1079;
+    uint TOTAL_DYAD = 96003;
+
+    uint AVG_MINTED = TOTAL_DYAD / TOTAL_SUPPLY;
+
+    uint multiSum;
+    uint[] memory multiProducts = new uint[](TOTAL_SUPPLY);
+
+    for (uint i = 0; i < TOTAL_SUPPLY; i++) {
+      IdNFT.Nft memory nft = dnft.idToNft(i);
+      uint xpScaled = (nft.xp-MIN_XP)*10000 / (MAX_XP-MIN_XP);
+      uint xpMulti  = PoolLibrary.getXpMulti(xpScaled/100);
+      uint mintAvgMinted = (nft.balance+nft.deposit)*10000 / (AVG_MINTED+1);
+      uint mintedMulti   = PoolLibrary.getXpMulti(xpScaled/100);
+      uint depositMulti  = nft.deposit*10000 / (nft.deposit+nft.balance+1);
+      uint multiProduct  = xpMulti * depositMulti/100;
+
+      multiSum        += multiProduct;
+      multiProducts[i] = multiProduct;
+    }
+
+    return MintData(multiSum, multiProducts);
   }
 
   /// @notice Mint dyad to the NFT
