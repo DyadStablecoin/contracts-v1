@@ -67,16 +67,16 @@ contract Pool {
       isNegative = true;
     }
  
-    uint ethChange = uint(NEW_ETH_PRICE).mul(10000).div(uint(OLD_ETH_PRICE));
+    uint dyadDelta = uint(NEW_ETH_PRICE).mul(10000).div(uint(OLD_ETH_PRICE));
     if (isNegative) {
-      ethChange = 10000 - ethChange;
+      dyadDelta = 10000 - dyadDelta;
     } else {
-      ethChange -= 10000;
+      dyadDelta -= 10000;
     }
 
-    console.log("ethChange: %s", ethChange);
+    console.log("dyadDelta: %s", dyadDelta);
 
-    uint wantedMint = updateNFTs(ethChange, isNegative);
+    uint wantedMint = updateNFTs(dyadDelta, isNegative);
     console.log("deltaAmount: ", wantedMint);
 
     if (uint(newEthPrice) > lastEthPrice) {
@@ -112,7 +112,7 @@ contract Pool {
 
     for (uint i = 0; i < TOTAL_SUPPLY; i++) {
       uint percentageChange  = multis.multis[i]*10000/multis.multisSum;
-      uint mintingAllocation = PoolLibrary.percentageOf(dyadDelta, percentageChange);
+      uint dyadAllocation = PoolLibrary.percentageOf(dyadDelta, percentageChange);
 
       IdNFT.Nft memory nft = dnft.idToNft(i);
 
@@ -120,7 +120,7 @@ contract Pool {
       uint xpAccrual;
       if (isNegative) {
         // normal accrual
-        xpAccrual = mintingAllocation * 100 / (multis.xpMultis[i]);
+        xpAccrual = dyadAllocation * 100 / (multis.xpMultis[i]);
         // boost for the address calling this function
         if (!isBoosted && msg.sender == dnft.idToOwner(i)) {
           isBoosted = true;
@@ -133,10 +133,13 @@ contract Pool {
       console.logUint(nft.deposit);
 
       if (isNegative) {
-        nft.deposit -= mintingAllocation;
+        // we cap nft.deposit at 0
+        dyadAllocation > nft.deposit 
+          ? nft.deposit = 0 
+          : nft.deposit -= dyadAllocation;
         nft.xp      += xpAccrual;
       } else {
-        nft.deposit += mintingAllocation;
+        nft.deposit += dyadAllocation;
       }
 
       console.logUint(nft.deposit);
