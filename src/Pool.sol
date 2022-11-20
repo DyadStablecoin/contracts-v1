@@ -30,8 +30,8 @@ contract Pool {
   uint TOTAL_DYAD = 96003;
   uint AVG_MINTED = TOTAL_DYAD / TOTAL_SUPPLY;
   int OLD_ETH_PRICE = 100000000;
-  int NEW_ETH_PRICE = 95000000;  // 95000000  ->  -5%
-  // int NEW_ETH_PRICE = 110000000; // 110000000 -> +10%
+  // int NEW_ETH_PRICE = 95000000;  // 95000000  ->  -5%
+  int NEW_ETH_PRICE = 110000000; // 110000000 -> +10%
   // ---------------------------------------------------------
 
   // when syncing, the protocol can be in two states:
@@ -89,6 +89,7 @@ contract Pool {
     // we have to do this to get the percentage in basis points
     mode == Mode.BURNING ? ethChange = 10000 - ethChange : ethChange -= 10000;
 
+    // the amount of dyad to burn/mint
     uint dyadDelta = updateNFTs(ethChange, mode);
     console.log("dyadDelta: %s", dyadDelta);
 
@@ -165,6 +166,7 @@ contract Pool {
   }
 
 
+  // NOTE: calculation of the multis is determined by the `mode`
   function calcMultis(Mode mode) internal view returns (Multis memory) {
     uint multiProductsSum;
     uint[] memory multiProducts = new uint[](TOTAL_SUPPLY);
@@ -172,19 +174,13 @@ contract Pool {
 
     for (uint id = 0; id < TOTAL_SUPPLY; id++) {
       IdNFT.Nft memory nft = dnft.idToNft(id);
-      uint xpScaled = (nft.xp-MIN_XP)*10000 / (MAX_XP-MIN_XP);
+
+      uint xpScaled      = (nft.xp-MIN_XP)*10000 / (MAX_XP-MIN_XP);
       uint mintAvgMinted = (nft.balance+nft.deposit)*10000 / (AVG_MINTED+1);
-      uint xpMulti  = PoolLibrary.getXpMulti(xpScaled/100);
-      if (mode == Mode.BURNING) {
-        xpMulti = 300 - xpMulti;
-      }
-      uint depositMulti  = nft.deposit*10000 / (nft.deposit+nft.balance+1);
-      uint multiProduct;
-      if (mode == Mode.BURNING) {
-        multiProduct = xpMulti * mintAvgMinted/100;
-      } else {
-        multiProduct = xpMulti * depositMulti/100;
-      }
+      uint xpMulti       = PoolLibrary.getXpMulti(xpScaled/100);
+      if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; }
+      uint depositMulti = nft.deposit*10000 / (nft.deposit+nft.balance+1);
+      uint multiProduct = xpMulti/100 * (mode == Mode.BURNING ? mintAvgMinted : depositMulti);
 
       multiProducts[id]  = multiProduct;
       multiProductsSum  += multiProduct;
