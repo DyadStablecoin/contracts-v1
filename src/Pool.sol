@@ -73,13 +73,37 @@ contract Pool {
     }   
   }
 
+  uint TOTAL_SUPPLY = 10; // of dnfts
+  uint MAX_XP = 8000;
+  uint MIN_XP = 1079;
+  uint TOTAL_DYAD = 96003;
+
+  uint AVG_MINTED = TOTAL_DYAD / TOTAL_SUPPLY;
+
   function sync() public returns (int newEthPrice) {
-    newEthPrice = getNewEthPrice();
+    int OLD_ETH_PRICE = 100000000;
+    int NEW_ETH_PRICE = 95000000;  // 95000000  ->  -5%
+    // int NEW_ETH_PRICE = 110000000; // 110000000 -> +10%
 
     int  deltaAmount    = getDeltaAmount(newEthPrice);
     uint deltaAmountAbs = PoolLibrary.abs(deltaAmount);
 
-    updateNFTs(deltaAmountAbs);
+    bool isNegative;
+    if (NEW_ETH_PRICE - OLD_ETH_PRICE < 0) {
+      isNegative = true;
+    }
+ 
+    uint ethChange = uint(NEW_ETH_PRICE).mul(10000).div(uint(OLD_ETH_PRICE));
+    if (isNegative) {
+      ethChange = 10000 - ethChange;
+    } else {
+      ethChange -= 10000;
+    }
+
+    console.log("ethChange: %s", ethChange);
+
+    uint wantedMint = updateNFTs(ethChange, isNegative);
+    console.log("deltaAmount: ", wantedMint);
 
     if (uint(newEthPrice) > lastEthPrice) {
       dyad.mint(address(this), deltaAmountAbs);
@@ -93,25 +117,12 @@ contract Pool {
     emit NewEthPrice(newEthPrice);
   }
 
-  uint TOTAL_SUPPLY = 10; // of dnfts
-  uint MAX_XP = 8000;
-  uint MIN_XP = 1079;
-  uint TOTAL_DYAD = 96003;
-
-  uint AVG_MINTED = TOTAL_DYAD / TOTAL_SUPPLY;
-
   // TODO: input eth_change in basis points
-  function updateNFTs(uint deltaAmountAbs) internal {
+  function updateNFTs(uint ethChange, bool isNegative) internal returns (uint) {
     // to make sure we only boost once
     bool isBoosted = false;
 
-    bool isNegative = false;
-    uint ETH_CHANGE = 1000; // in basis points
-
-    uint multi_sum;
-    uint multi_sum_burn;
-
-    uint wantedMint = PoolLibrary.percentageOf(TOTAL_DYAD, ETH_CHANGE);
+    uint wantedMint = PoolLibrary.percentageOf(TOTAL_DYAD, ethChange);
 
     Multis memory multis = calcMultis(isNegative);
     console.log("multisSum: ", multis.multisSum);
@@ -135,9 +146,13 @@ contract Pool {
 
       //--------------- STATE UPDATE ----------------
       nft.deposit += mintingAllocation;
+      console.log(i);
+      console.log("mintingAllocation: ", mintingAllocation);
       nft.xp      += xpAccrual;
       dnft.updateNft(i, nft);
     }
+
+    return wantedMint;
   }
 
   struct Multis {
@@ -148,8 +163,8 @@ contract Pool {
 
   function calcMultis(bool isNegative) internal view returns (Multis memory) {
     uint multisSum;
-    uint[] memory multis = new uint[](TOTAL_SUPPLY);
-    uint[] memory xpMultis  = new uint[](TOTAL_SUPPLY);
+    uint[] memory multis   = new uint[](TOTAL_SUPPLY);
+    uint[] memory xpMultis = new uint[](TOTAL_SUPPLY);
 
     for (uint i = 0; i < TOTAL_SUPPLY; i++) {
       IdNFT.Nft memory nft = dnft.idToNft(i);
