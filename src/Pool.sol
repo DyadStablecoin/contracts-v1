@@ -28,6 +28,9 @@ contract Pool {
   mapping(uint => int) public xpDeltaAtCheckpoint;
   mapping(uint => uint) public poolBalanceAtCheckpoint;
 
+  // when syncing the protocoll can be in two states.
+  //   BURNING: if the price of eth went down.
+  //   MINTING: if the price of eth went up.
   enum Mode{ BURNING, MINTING }
 
   event NewEthPrice(int newEthPrice);
@@ -41,9 +44,9 @@ contract Pool {
   // A convenient way to store the ouptput of the `calcMultis` function
   struct Multis {
     // Holds two different sort of values depending on wheather the 
-    // protocoll is burning or minting
-    //   Minting: xp mulit * deposit multi
-    //   Buring:  xp mulit * mintAvg  
+    // protocoll is in BURNING or MINTING mode.
+    //   Mode.MINTING: xp mulit * deposit multi
+    //   Mode.BURNING: xp mulit * mintAvg  
     uint[] multiProducts;
 
     uint   multiProductsSum; // sum of the elements in `multiProducts`
@@ -76,29 +79,25 @@ contract Pool {
     int NEW_ETH_PRICE = 95000000;  // 95000000  ->  -5%
     // int NEW_ETH_PRICE = 110000000; // 110000000 -> +10%
 
-    bool isNegative;
+    Mode mode = Mode.MINTING;
     if (NEW_ETH_PRICE - OLD_ETH_PRICE < 0) {
-      isNegative = true;
+      mode = Mode.BURNING;
     }
  
-    uint dyadDelta = uint(NEW_ETH_PRICE).mul(10000).div(uint(OLD_ETH_PRICE));
-    if (isNegative) {
-      dyadDelta = 10000 - dyadDelta;
-    } else {
-      dyadDelta -= 10000;
-    }
+    // stores the eth price change in basis points
+    uint ethChange = uint(NEW_ETH_PRICE).mul(10000).div(uint(OLD_ETH_PRICE));
+    // we have to do this to get the percentage in basis points
+    mode == Mode.BURNING ? ethChange = 10000 - ethChange : ethChange -= 10000;
 
+    uint dyadDelta = updateNFTs(ethChange, mode);
     console.log("dyadDelta: %s", dyadDelta);
 
-    uint wantedMint = updateNFTs(dyadDelta, isNegative);
-    console.log("deltaAmount: ", wantedMint);
-
     if (uint(newEthPrice) > lastEthPrice) {
-      dyad.mint(address(this), wantedMint);
+      dyad.mint(address(this), dyadDelta);
     } else {
       // What happens if there is not enough to burn?
       // TODO
-      // dyad.burn(wantedMint);
+      // dyad.burn(dyadDelta);
     }
 
     lastEthPrice    = uint(newEthPrice);
@@ -107,9 +106,9 @@ contract Pool {
   }
 
   /// @param ethChange  Eth price change in basis points
-  /// @param isNegative Is the change negative or positive
+  /// @param mode Is the change negative or positive
   /// @return dyadDelta The amount of dyad to mint or burn
-  function updateNFTs(uint ethChange, bool isNegative) internal returns (uint dyadDelta) {
+  function updateNFTs(uint ethChange, Mode mode) internal returns (uint dyadDelta) {
     // we boost the nft of the user calling this function with additional
     // xp, but only once! If boosted was used already, it can not be used again.
     bool isBoosted = false;
@@ -117,12 +116,12 @@ contract Pool {
     // the amount to mint/burn to keep the peg
     dyadDelta = PoolLibrary.percentageOf(TOTAL_DYAD, ethChange);
 
-    Multis memory multis = calcMultis(isNegative);
+    Multis memory multis = calcMultis(mode);
 
     // we use these to keep track of the max/min xp values for this round, 
     // so we can save them in storage to be used in the next round.
-    uint roundMinXp = type(uint256).max;
-    uint roundMaxXp = MAX_XP;
+    uint minXp = type(uint256).max;
+    uint maxXp = MAX_XP;
 
     for (uint i = 0; i < TOTAL_SUPPLY; i++) {
       // multi normalized by the multi sum
@@ -134,7 +133,7 @@ contract Pool {
 
       // xp accrual happens only when there is a burn.
       uint xpAccrual;
-      if (isNegative) {
+      if (mode == Mode.BURNING) {
         // normal accrual
         xpAccrual = relativeDyadDelta*100 / (multis.xpMultis[i]);
         // boost for the address calling this function
@@ -145,10 +144,7 @@ contract Pool {
       }
 
       //--------------- STATE UPDATE ----------------
-      console.logUint(i);
-      console.logUint(nft.deposit);
-
-      if (isNegative) {
+      if (mode == Mode.BURNING) {
         // we cap nft.deposit at 0, so it can never become negative
         relativeDyadDelta > nft.deposit 
           ? nft.deposit  = 0 
@@ -158,28 +154,25 @@ contract Pool {
         nft.deposit += relativeDyadDelta;
       }
 
-      console.logUint(nft.deposit);
-      console.log();
-
       dnft.updateNft(i, nft);
 
       // check if this is a new xp minimum for this round
-      if (nft.xp < roundMinXp) {
-        roundMinXp = nft.xp;
+      if (nft.xp < minXp) {
+        minXp = nft.xp;
       }
       // check if this is a new xp maximum for this round
-      if (nft.xp > roundMaxXp) {
-        roundMaxXp = nft.xp;
+      if (nft.xp > maxXp) {
+        maxXp = nft.xp;
       }
     }
 
     // save new min/max xp in storage
-    MIN_XP = roundMinXp;
-    MAX_XP = roundMaxXp;
+    MIN_XP = minXp;
+    MAX_XP = maxXp;
   }
 
 
-  function calcMultis(bool isNegative) internal view returns (Multis memory) {
+  function calcMultis(Mode mode) internal view returns (Multis memory) {
     uint multiProductsSum;
     uint[] memory multiProducts = new uint[](TOTAL_SUPPLY);
     uint[] memory xpMultis      = new uint[](TOTAL_SUPPLY);
@@ -189,12 +182,12 @@ contract Pool {
       uint xpScaled = (nft.xp-MIN_XP)*10000 / (MAX_XP-MIN_XP);
       uint mintAvgMinted = (nft.balance+nft.deposit)*10000 / (AVG_MINTED+1);
       uint xpMulti  = PoolLibrary.getXpMulti(xpScaled/100);
-      if (isNegative) {
+      if (mode == Mode.BURNING) {
         xpMulti = 300 - xpMulti;
       }
       uint depositMulti  = nft.deposit*10000 / (nft.deposit+nft.balance+1);
       uint multiProduct;
-      if (isNegative) {
+      if (mode == Mode.BURNING) {
         multiProduct = xpMulti * mintAvgMinted/100;
       } else {
         multiProduct = xpMulti * depositMulti/100;
