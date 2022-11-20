@@ -119,15 +119,7 @@ contract Pool {
     uint average_minted = TOTAL_DYAD / TOTAL_SUPPLY;
     console.log("average_minted: ", average_minted);
 
-    MintData memory mintData = mint();
-    BurnData memory burnData = burn();
     Multis memory multis = calcMultis(isNegative);
-
-    console.log("xxxxxxxxxx");
-    console.logUint(mintData.multiSum);
-    console.logUint(burnData.multiSum);
-    console.logUint(multis.multiSum);
-    console.log();
 
     for (uint i = 0; i < TOTAL_SUPPLY; i++) {
       console.log();
@@ -253,48 +245,6 @@ contract Pool {
     }
 
     return Multis(multiSum, multiProducts, mintedMultis);
-  }
-
-  function burn() internal returns (BurnData memory) {
-    uint multiSum;
-    uint[] memory multiProducts = new uint[](TOTAL_SUPPLY);
-    uint[] memory mintedMultis  = new uint[](TOTAL_SUPPLY);
-
-    for (uint i = 0; i < TOTAL_SUPPLY; i++) {
-      IdNFT.Nft memory nft = dnft.idToNft(i);
-      uint xpScaled = (nft.xp-MIN_XP)*10000 / (MAX_XP-MIN_XP);
-      uint mintAvgMinted = (nft.balance+nft.deposit)*10000 / (AVG_MINTED+1);
-      uint xpMulti  = 300 - (PoolLibrary.getXpMulti(xpScaled/100));
-      uint mintedMulti   = PoolLibrary.getXpMulti(xpScaled/100);
-      uint depositMulti  = nft.deposit*10000 / (nft.deposit+nft.balance+1);
-      uint multiProduct  = xpMulti * mintAvgMinted/100;
-
-      multiSum        += multiProduct;
-      multiProducts[i] = multiProduct;
-      mintedMultis[i]  = mintedMulti;
-    }
-
-    return BurnData(multiSum, multiProducts, mintedMultis);
-  }
-
-  function mint() internal returns (MintData memory) {
-    uint multiSum;
-    uint[] memory multiProducts = new uint[](TOTAL_SUPPLY);
-
-    for (uint i = 0; i < TOTAL_SUPPLY; i++) {
-      IdNFT.Nft memory nft = dnft.idToNft(i);
-      uint xpScaled = (nft.xp-MIN_XP)*10000 / (MAX_XP-MIN_XP);
-      uint xpMulti  = PoolLibrary.getXpMulti(xpScaled/100);
-      uint mintAvgMinted = (nft.balance+nft.deposit)*10000 / (AVG_MINTED+1);
-      uint mintedMulti   = PoolLibrary.getXpMulti(xpScaled/100);
-      uint depositMulti  = nft.deposit*10000 / (nft.deposit+nft.balance+1);
-      uint multiProduct  = xpMulti * depositMulti/100;
-
-      multiSum        += multiProduct;
-      multiProducts[i] = multiProduct;
-    }
-
-    return MintData(multiSum, multiProducts);
   }
 
   /// @notice Mint dyad to the NFT
