@@ -28,12 +28,26 @@ contract Pool {
   mapping(uint => int) public xpDeltaAtCheckpoint;
   mapping(uint => uint) public poolBalanceAtCheckpoint;
 
+  enum Mode{ BURNING, MINTING }
+
   event NewEthPrice(int newEthPrice);
 
   /// @dev Check if msg.sender is the nft contract
   modifier onlyNFT() {
     require(msg.sender == address(dnft), "Pool: Only NFT can call this function");
     _;
+  }
+
+  // A convenient way to store the ouptput of the `calcMultis` function
+  struct Multis {
+    // Holds two different sort of values depending on wheather the 
+    // protocoll is burning or minting
+    //   Minting: xp mulit * deposit multi
+    //   Buring:  xp mulit * mintAvg  
+    uint[] multiProducts;
+
+    uint   multiProductsSum; // sum of the elements in `multiProducts`
+    uint[] xpMultis;         
   }
 
   constructor(address _dnft, address _dyad) {
@@ -164,11 +178,6 @@ contract Pool {
     MAX_XP = roundMaxXp;
   }
 
-  struct Multis {
-    uint[] multiProducts;
-    uint   multiProductsSum;
-    uint[] xpMultis;
-  }
 
   function calcMultis(bool isNegative) internal view returns (Multis memory) {
     uint multiProductsSum;
