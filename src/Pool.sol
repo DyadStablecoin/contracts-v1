@@ -122,7 +122,7 @@ contract Pool {
       uint xpAccrual;
       if (isNegative) {
         // normal accrual
-        xpAccrual = relativeDyadDelta * 100 / (multis.xpMultis[i]);
+        xpAccrual = relativeDyadDelta*100 / (multis.xpMultis[i]);
         // boost for the address calling this function
         if (!isBoosted && msg.sender == dnft.idToOwner(i)) {
           isBoosted = true;
@@ -135,9 +135,9 @@ contract Pool {
       console.logUint(nft.deposit);
 
       if (isNegative) {
-        // we cap nft.deposit at 0
+        // we cap nft.deposit at 0, so it can never become negative
         relativeDyadDelta > nft.deposit 
-          ? nft.deposit = 0 
+          ? nft.deposit  = 0 
           : nft.deposit -= relativeDyadDelta;
         nft.xp      += xpAccrual;
       } else {
