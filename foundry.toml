@@ -4,7 +4,8 @@ out = 'out'
 libs = ['lib']
 
 # MAKES COMPILATION VERY SLOW!!
-viaIR = true # ir optimizer 
+# ir optimizer
+# viaIR = true 
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
 
