@@ -16,7 +16,6 @@ contract Pool {
   // IMPORTANT: do not change the ordering of these variables
   // because some tests depend on this specific slot arrangement.
   uint public lastEthPrice;
-  uint public lastCheckpoint;
 
   IdNFT public dnft;
   DYAD public dyad;
@@ -24,16 +23,23 @@ contract Pool {
 
   uint256 constant private REDEEM_MINIMUM = 100000000;
 
-  mapping(uint => int) public dyadDeltaAtCheckpoint;
-  mapping(uint => int) public xpDeltaAtCheckpoint;
-  mapping(uint => uint) public poolBalanceAtCheckpoint;
+  // -------------------- ONLY FOR TESTING --------------------
+  uint TOTAL_SUPPLY = 10; // of dnfts
+  uint MAX_XP = 8000;
+  uint MIN_XP = 1079;
+  uint TOTAL_DYAD = 96003;
+  uint AVG_MINTED = TOTAL_DYAD / TOTAL_SUPPLY;
+  int OLD_ETH_PRICE = 100000000;
+  int NEW_ETH_PRICE = 95000000;  // 95000000  ->  -5%
+  // int NEW_ETH_PRICE = 110000000; // 110000000 -> +10%
+  // ---------------------------------------------------------
 
-  // when syncing the protocoll can be in two states.
-  //   BURNING: if the price of eth went down.
-  //   MINTING: if the price of eth went up.
+  // when syncing, the protocol can be in two states:
+  //   BURNING: if the price of eth went down
+  //   MINTING: if the price of eth went up
   enum Mode{ BURNING, MINTING }
 
-  event NewEthPrice(int newEthPrice);
+  event Synced(int newEthPrice);
 
   /// @dev Check if msg.sender is the nft contract
   modifier onlyNFT() {
@@ -67,22 +73,16 @@ contract Pool {
     newEthPrice = 115000000000;
   }
 
-  uint TOTAL_SUPPLY = 10; // of dnfts
-  uint MAX_XP = 8000;
-  uint MIN_XP = 1079;
-  uint TOTAL_DYAD = 96003;
 
-  uint AVG_MINTED = TOTAL_DYAD / TOTAL_SUPPLY;
-
-  function sync() public returns (int newEthPrice) {
-    int OLD_ETH_PRICE = 100000000;
-    int NEW_ETH_PRICE = 95000000;  // 95000000  ->  -5%
-    // int NEW_ETH_PRICE = 110000000; // 110000000 -> +10%
-
-    Mode mode = Mode.MINTING;
-    if (NEW_ETH_PRICE - OLD_ETH_PRICE < 0) {
-      mode = Mode.BURNING;
-    }
+  // The "heart" of the protocol.
+  // - Gets the latest eth price and determines if new dyad should be minted or
+  //   old dyad should be burned to keep the peg.
+  // - Updates each dnft metadata to reflect its updated xp, balance and deposit.
+  // - To incentivize nft holders to call this method, there is a xp boost to the first
+  //   nft of the owner calling it.
+  function sync() public {
+    // determine the mode we are in
+    Mode mode = NEW_ETH_PRICE-OLD_ETH_PRICE < 0 ? Mode.BURNING : Mode.MINTING;
  
     // stores the eth price change in basis points
     uint ethChange = uint(NEW_ETH_PRICE).mul(10000).div(uint(OLD_ETH_PRICE));
@@ -92,7 +92,7 @@ contract Pool {
     uint dyadDelta = updateNFTs(ethChange, mode);
     console.log("dyadDelta: %s", dyadDelta);
 
-    if (uint(newEthPrice) > lastEthPrice) {
+    if (mode == Mode.MINTING) {
       dyad.mint(address(this), dyadDelta);
     } else {
       // What happens if there is not enough to burn?
@@ -100,9 +100,8 @@ contract Pool {
       // dyad.burn(dyadDelta);
     }
 
-    lastEthPrice    = uint(newEthPrice);
-    lastCheckpoint += 1;
-    emit NewEthPrice(newEthPrice);
+    lastEthPrice = uint(NEW_ETH_PRICE);
+    emit Synced(NEW_ETH_PRICE);
   }
 
   /// @param ethChange  Eth price change in basis points
@@ -118,8 +117,8 @@ contract Pool {
 
     Multis memory multis = calcMultis(mode);
 
-    // we use these to keep track of the max/min xp values for this round, 
-    // so we can save them in storage to be used in the next round.
+    // we use these to keep track of the max/min xp values for this sync, 
+    // so we can save them in storage to be used in the next sync.
     uint minXp = type(uint256).max;
     uint maxXp = MAX_XP;
 
@@ -143,27 +142,21 @@ contract Pool {
         }
       }
 
-      //--------------- STATE UPDATE ----------------
       if (mode == Mode.BURNING) {
         // we cap nft.deposit at 0, so it can never become negative
-        relativeDyadDelta > nft.deposit 
-          ? nft.deposit  = 0 
-          : nft.deposit -= relativeDyadDelta;
+        nft.deposit  = nft.deposit < relativeDyadDelta ? 0 : nft.deposit - relativeDyadDelta;
         nft.xp      += xpAccrual;
       } else {
+        // NOTE: there is no xp accrual in Mode.MINTING
         nft.deposit += relativeDyadDelta;
       }
 
+      // update nft in storage
       dnft.updateNft(id, nft);
 
-      // check if this is a new xp minimum for this round
-      if (nft.xp < minXp) {
-        minXp = nft.xp;
-      }
-      // check if this is a new xp maximum for this round
-      if (nft.xp > maxXp) {
-        maxXp = nft.xp;
-      }
+      // check if this is a new xp minimum/maximum for this sync
+      if (nft.xp < minXp) { minXp = nft.xp; }
+      if (nft.xp > maxXp) { maxXp = nft.xp; }
     }
 
     // save new min/max xp in storage
