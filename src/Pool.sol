@@ -82,7 +82,7 @@ contract Pool {
   //   nft of the owner calling it.
   function sync() public {
     // determine the mode we are in
-    Mode mode = NEW_ETH_PRICE-OLD_ETH_PRICE < 0 ? Mode.BURNING : Mode.MINTING;
+    Mode mode = NEW_ETH_PRICE < OLD_ETH_PRICE ? Mode.BURNING : Mode.MINTING;
  
     // stores the eth price change in basis points
     uint ethChange = uint(NEW_ETH_PRICE).mul(10000).div(uint(OLD_ETH_PRICE));
@@ -186,9 +186,9 @@ contract Pool {
         multiProduct = xpMulti * depositMulti/100;
       }
 
-      multiProducts[id]   = multiProduct;
+      multiProducts[id]  = multiProduct;
       multiProductsSum  += multiProduct;
-      xpMultis[id] = xpMulti;
+      xpMultis[id]       = xpMulti;
     }
 
     return Multis(multiProducts, multiProductsSum, xpMultis);
