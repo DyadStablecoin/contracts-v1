@@ -92,22 +92,31 @@ contract Pool {
     emit NewEthPrice(newEthPrice);
   }
 
-  // TODO: input eth_change in basis points
-  function updateNFTs(uint ethChange, bool isNegative) internal returns (uint) {
-    // to make sure we only boost once
+  /// @param ethChange  Eth price change in basis points
+  /// @param isNegative Is the change negative or positive
+  /// @return dyadDelta The amount of dyad to mint or burn
+  function updateNFTs(uint ethChange, bool isNegative) internal returns (uint dyadDelta) {
+    // we boost the nft of the user calling this function with additional
+    // xp, but only once! If boosted was used already, it can not be used again.
     bool isBoosted = false;
 
-    uint wantedMint = PoolLibrary.percentageOf(TOTAL_DYAD, ethChange);
+    // the amount to mint/burn to keep the peg
+    dyadDelta = PoolLibrary.percentageOf(TOTAL_DYAD, ethChange);
 
     Multis memory multis = calcMultis(isNegative);
-    console.log("multisSum: ", multis.multisSum);
+
+    // we use these to keep track of the max/min xp values for this round, 
+    // so we can save them in storage to be used in the next round.
+    uint roundMinXp = type(uint256).max;
+    uint roundMaxXp = MAX_XP;
 
     for (uint i = 0; i < TOTAL_SUPPLY; i++) {
-      uint percentageChange = multis.multis[i]*10000/multis.multisSum;
-      uint mintingAllocation = PoolLibrary.percentageOf(wantedMint, percentageChange);
+      uint percentageChange  = multis.multis[i]*10000/multis.multisSum;
+      uint mintingAllocation = PoolLibrary.percentageOf(dyadDelta, percentageChange);
 
       IdNFT.Nft memory nft = dnft.idToNft(i);
 
+      // xp accrual happens only when there is a burn.
       uint xpAccrual;
       if (isNegative) {
         // normal accrual
@@ -115,19 +124,39 @@ contract Pool {
         // boost for the address calling this function
         if (!isBoosted && msg.sender == dnft.idToOwner(i)) {
           isBoosted = true;
-          xpAccrual += PoolLibrary.percentageOf(nft.xp, 10); // 0.1%
+          xpAccrual += PoolLibrary.percentageOf(nft.xp, 10); // 0.10%
         }
       }
 
       //--------------- STATE UPDATE ----------------
-      nft.deposit += mintingAllocation;
-      console.log(i);
-      console.log("mintingAllocation: ", mintingAllocation);
-      nft.xp      += xpAccrual;
+      console.logUint(i);
+      console.logUint(nft.deposit);
+
+      if (isNegative) {
+        nft.deposit -= mintingAllocation;
+        nft.xp      += xpAccrual;
+      } else {
+        nft.deposit += mintingAllocation;
+      }
+
+      console.logUint(nft.deposit);
+      console.log();
+
       dnft.updateNft(i, nft);
+
+      // is this a new round xp minimum?
+      if (nft.xp < roundMinXp) {
+        roundMinXp = nft.xp;
+      }
+      // is this a new round xp maximum?
+      if (nft.xp > roundMaxXp) {
+        roundMaxXp = nft.xp;
+      }
     }
 
-    return wantedMint;
+    // save new min/max xp in storage
+    MIN_XP = roundMinXp;
+    MAX_XP = roundMaxXp;
   }
 
   struct Multis {
