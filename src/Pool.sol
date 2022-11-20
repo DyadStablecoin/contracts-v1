@@ -123,21 +123,21 @@ contract Pool {
     uint minXp = type(uint256).max;
     uint maxXp = MAX_XP;
 
-    for (uint i = 0; i < TOTAL_SUPPLY; i++) {
+    for (uint id = 0; id < TOTAL_SUPPLY; id++) {
       // multi normalized by the multi sum
-      uint relativeMulti     = multis.multiProducts[i]*10000/multis.multiProductsSum;
+      uint relativeMulti     = multis.multiProducts[id]*10000/multis.multiProductsSum;
       // relative dyad delta for each nft
       uint relativeDyadDelta = PoolLibrary.percentageOf(dyadDelta, relativeMulti);
 
-      IdNFT.Nft memory nft = dnft.idToNft(i);
+      IdNFT.Nft memory nft = dnft.idToNft(id);
 
       // xp accrual happens only when there is a burn.
       uint xpAccrual;
       if (mode == Mode.BURNING) {
         // normal accrual
-        xpAccrual = relativeDyadDelta*100 / (multis.xpMultis[i]);
+        xpAccrual = relativeDyadDelta*100 / (multis.xpMultis[id]);
         // boost for the address calling this function
-        if (!isBoosted && msg.sender == dnft.idToOwner(i)) {
+        if (!isBoosted && msg.sender == dnft.idToOwner(id)) {
           isBoosted = true;
           xpAccrual += PoolLibrary.percentageOf(nft.xp, 10); // 0.10%
         }
@@ -154,7 +154,7 @@ contract Pool {
         nft.deposit += relativeDyadDelta;
       }
 
-      dnft.updateNft(i, nft);
+      dnft.updateNft(id, nft);
 
       // check if this is a new xp minimum for this round
       if (nft.xp < minXp) {
@@ -177,8 +177,8 @@ contract Pool {
     uint[] memory multiProducts = new uint[](TOTAL_SUPPLY);
     uint[] memory xpMultis      = new uint[](TOTAL_SUPPLY);
 
-    for (uint i = 0; i < TOTAL_SUPPLY; i++) {
-      IdNFT.Nft memory nft = dnft.idToNft(i);
+    for (uint id = 0; id < TOTAL_SUPPLY; id++) {
+      IdNFT.Nft memory nft = dnft.idToNft(id);
       uint xpScaled = (nft.xp-MIN_XP)*10000 / (MAX_XP-MIN_XP);
       uint mintAvgMinted = (nft.balance+nft.deposit)*10000 / (AVG_MINTED+1);
       uint xpMulti  = PoolLibrary.getXpMulti(xpScaled/100);
@@ -193,9 +193,9 @@ contract Pool {
         multiProduct = xpMulti * depositMulti/100;
       }
 
-      multiProducts[i]   = multiProduct;
+      multiProducts[id]   = multiProduct;
       multiProductsSum  += multiProduct;
-      xpMultis[i] = xpMulti;
+      xpMultis[id] = xpMulti;
     }
 
     return Multis(multiProducts, multiProductsSum, xpMultis);
