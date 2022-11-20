@@ -111,8 +111,10 @@ contract Pool {
     uint roundMaxXp = MAX_XP;
 
     for (uint i = 0; i < TOTAL_SUPPLY; i++) {
-      uint percentageChange  = multis.multis[i]*10000/multis.multisSum;
-      uint dyadAllocation = PoolLibrary.percentageOf(dyadDelta, percentageChange);
+      // multi normalized by the multi sum
+      uint relativeMulti     = multis.multiProducts[i]*10000/multis.multiProductsSum;
+      // relative dyad delta for each nft
+      uint relativeDyadDelta = PoolLibrary.percentageOf(dyadDelta, relativeMulti);
 
       IdNFT.Nft memory nft = dnft.idToNft(i);
 
@@ -120,7 +122,7 @@ contract Pool {
       uint xpAccrual;
       if (isNegative) {
         // normal accrual
-        xpAccrual = dyadAllocation * 100 / (multis.xpMultis[i]);
+        xpAccrual = relativeDyadDelta * 100 / (multis.xpMultis[i]);
         // boost for the address calling this function
         if (!isBoosted && msg.sender == dnft.idToOwner(i)) {
           isBoosted = true;
@@ -134,12 +136,12 @@ contract Pool {
 
       if (isNegative) {
         // we cap nft.deposit at 0
-        dyadAllocation > nft.deposit 
+        relativeDyadDelta > nft.deposit 
           ? nft.deposit = 0 
-          : nft.deposit -= dyadAllocation;
+          : nft.deposit -= relativeDyadDelta;
         nft.xp      += xpAccrual;
       } else {
-        nft.deposit += dyadAllocation;
+        nft.deposit += relativeDyadDelta;
       }
 
       console.logUint(nft.deposit);
@@ -147,11 +149,11 @@ contract Pool {
 
       dnft.updateNft(i, nft);
 
-      // is this a new round xp minimum?
+      // check if this is a new xp minimum for this round
       if (nft.xp < roundMinXp) {
         roundMinXp = nft.xp;
       }
-      // is this a new round xp maximum?
+      // check if this is a new xp maximum for this round
       if (nft.xp > roundMaxXp) {
         roundMaxXp = nft.xp;
       }
@@ -163,15 +165,15 @@ contract Pool {
   }
 
   struct Multis {
-    uint[] multis;
-    uint multisSum;
+    uint[] multiProducts;
+    uint   multiProductsSum;
     uint[] xpMultis;
   }
 
   function calcMultis(bool isNegative) internal view returns (Multis memory) {
-    uint multisSum;
-    uint[] memory multis   = new uint[](TOTAL_SUPPLY);
-    uint[] memory xpMultis = new uint[](TOTAL_SUPPLY);
+    uint multiProductsSum;
+    uint[] memory multiProducts = new uint[](TOTAL_SUPPLY);
+    uint[] memory xpMultis      = new uint[](TOTAL_SUPPLY);
 
     for (uint i = 0; i < TOTAL_SUPPLY; i++) {
       IdNFT.Nft memory nft = dnft.idToNft(i);
@@ -189,12 +191,12 @@ contract Pool {
         multiProduct = xpMulti * depositMulti/100;
       }
 
-      multisSum  += multiProduct;
-      multis[i]   = multiProduct;
+      multiProducts[i]   = multiProduct;
+      multiProductsSum  += multiProduct;
       xpMultis[i] = xpMulti;
     }
 
-    return Multis(multis, multisSum, xpMultis);
+    return Multis(multiProducts, multiProductsSum, xpMultis);
   }
 
   /// @notice Mint dyad to the NFT
