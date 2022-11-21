@@ -82,7 +82,7 @@ contract dNFT is ERC721Enumerable{
                       uint xp,
                       uint deposit,
                       uint balance) external {
-    idToNft[id] = IdNFT.Nft(balance, deposit, xp);
+    idToNft[id] = IdNFT.Nft(balance, deposit, xp, false);
   }
 
   function setPool(address newPool) external onlyOwner {
@@ -103,6 +103,16 @@ contract dNFT is ERC721Enumerable{
   // the pool needs a function to update nft info
   function updateNft(uint id, IdNFT.Nft memory nft) external onlyPool {
     idToNft[id] = nft;
+  }
+
+  // calim a liquidated nft
+  // transfer liquidated nft from old owner to new owner
+  function claimNft(uint id) external {
+    IdNFT.Nft memory nft = idToNft[id];
+    require(nft.isClaimable, "dNFT: NFT is not liquidated");
+    address owner = idToOwner[id];
+    this.transferFrom(owner, msg.sender, id);
+    idToOwner[id] = msg.sender;
   }
 
   // mint a new nft to the `receiver`

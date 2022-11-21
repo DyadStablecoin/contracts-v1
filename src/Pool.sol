@@ -30,8 +30,8 @@ contract Pool {
   uint TOTAL_DYAD = 96003;
   uint AVG_MINTED = TOTAL_DYAD / TOTAL_SUPPLY;
   int OLD_ETH_PRICE = 100000000;
-  // int NEW_ETH_PRICE = 95000000;  // 95000000  ->  -5%
-  int NEW_ETH_PRICE = 110000000; // 110000000 -> +10%
+  int NEW_ETH_PRICE = 95000000;  // 95000000  ->  -5%
+  // int NEW_ETH_PRICE = 110000000; // 110000000 -> +10%
   // ---------------------------------------------------------
 
   // when syncing, the protocol can be in two states:
@@ -143,6 +143,7 @@ contract Pool {
         }
       }
 
+      // update memory nft data
       if (mode == Mode.BURNING) {
         // we cap nft.deposit at 0, so it can never become negative
         nft.deposit  = nft.deposit < relativeDyadDelta ? 0 : nft.deposit - relativeDyadDelta;
@@ -150,6 +151,15 @@ contract Pool {
       } else {
         // NOTE: there is no xp accrual in Mode.MINTING
         nft.deposit += relativeDyadDelta;
+      }
+
+      // check for liquidation
+      if (mode == Mode.BURNING) {
+        // nft.balance could be 0
+        uint depositBalanceRatio = nft.deposit.mul(10000).div(nft.balance); 
+
+        // under 5%
+        if (depositBalanceRatio < 500) { nft.isClaimable = true; }
       }
 
       // update nft in storage
