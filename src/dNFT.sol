@@ -40,8 +40,6 @@ contract dNFT is ERC721Enumerable{
 
   // mapping from nft id to nft data
   mapping(uint => IdNFT.Nft) public idToNft;
-  // mapping from nft id to owner
-  mapping (uint => address) public idToOwner;
 
   event MintNft (address indexed to, uint indexed id);
   event MintDyad(address indexed to, uint indexed id, uint amount);
@@ -51,7 +49,7 @@ contract dNFT is ERC721Enumerable{
   /// @dev Check if owner of NFT is msg.sender
   /// @param id The id of the NFT
   modifier onlyNFTOwner(uint id) {
-    require(idToOwner[id] == msg.sender, "dNFT: Only NFT owner can call this function");
+    require(this.ownerOf(id) == msg.sender, "dNFT: Only NFT owner can call this function");
     _;
   }
 
@@ -83,6 +81,7 @@ contract dNFT is ERC721Enumerable{
                       uint deposit,
                       uint balance) external {
     idToNft[id] = IdNFT.Nft(balance, deposit, xp, false);
+    _mintNft(msg.sender);
   }
 
   function setPool(address newPool) external onlyOwner {
@@ -110,9 +109,9 @@ contract dNFT is ERC721Enumerable{
   function claimNft(uint id) external {
     IdNFT.Nft memory nft = idToNft[id];
     require(nft.isClaimable, "dNFT: NFT is not liquidated");
-    address owner = idToOwner[id];
+    address owner = this.ownerOf(id);
+    // this will fail without approval
     this.transferFrom(owner, msg.sender, id);
-    idToOwner[id] = msg.sender;
   }
 
   // mint a new nft to the `receiver`
@@ -130,15 +129,15 @@ contract dNFT is ERC721Enumerable{
     uint id = totalSupply();
     require(id < MAX_SUPPLY, "Max supply reached");
     _mint(receiver, id); // nft mint
-    idToOwner[id] = receiver;
 
     IdNFT.Nft storage nft = idToNft[id];
     // add 100 xp to the nft to start with
     // TODO: for testing
     // nft.xp = nft.xp.add(100);
 
-    nft.xp = nft.xp.add(90000);
-    totalXp = totalXp.add(nft.xp);
+    // TODO: commented out for testing
+    // nft.xp = nft.xp.add(90000);
+    // totalXp = totalXp.add(nft.xp);
 
     emit MintNft(receiver, id);
     return id;

@@ -56,7 +56,7 @@ contract dNFTTest is Test {
     assertEq(dnft.totalSupply(), 1);
 
     dnft.mintNft{value: 5 ether}(address(this));
-    assertEq(dnft.idToOwner(1), address(this));
+    assertEq(dnft.ownerOf(1), address(this));
 
     IdNFT.Nft memory metadata = dnft.idToNft(1);
     assertEq(metadata.xp, 100);

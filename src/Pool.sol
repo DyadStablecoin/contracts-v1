@@ -137,7 +137,7 @@ contract Pool {
         // normal accrual
         xpAccrual = relativeDyadDelta*100 / (multis.xpMultis[id]);
         // boost for the address calling this function
-        if (!isBoosted && msg.sender == dnft.idToOwner(id)) {
+        if (!isBoosted && msg.sender == dnft.ownerOf(id)) {
           isBoosted = true;
           xpAccrual += PoolLibrary.percentageOf(nft.xp, 10); // 0.10%
         }
