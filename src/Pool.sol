@@ -155,11 +155,9 @@ contract Pool {
 
       // check for liquidation
       if (mode == Mode.BURNING) {
-        // nft.balance could be 0
-        uint depositBalanceRatio = nft.deposit.mul(10000).div(nft.balance); 
-
-        // under 5%
-        if (depositBalanceRatio < 500) { nft.isClaimable = true; }
+        // liquidation limit is 5% of the minted dyad
+        uint liquidationLimit = PoolLibrary.percentageOf(nft.deposit+nft.balance, 500);
+        if (nft.deposit < liquidationLimit) { nft.isClaimable = true; }
       }
 
       // update nft in storage
