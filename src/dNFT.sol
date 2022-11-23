@@ -14,7 +14,7 @@ contract dNFT is ERC721Enumerable{
   using SafeMath for uint256;
 
   // maximum number of nfts that can be minted
-  uint public constant MAX_SUPPLY = 1000;
+  uint public constant MAX_SUPPLY = 200;
   // to mint a dnft $ 5k in eth are required
   uint public constant DEPOSIT_MINIMUM = 5000000000000000000000;
 
@@ -36,10 +36,10 @@ contract dNFT is ERC721Enumerable{
   uint public MAX_BALANCE = 100;
   uint public MAX_DEPOSIT = 100;
 
+  uint public totalXp     = 0;
+
   // mapping from nft id to nft data
   mapping(uint => IdNFT.Nft) public idToNft;
-  // mapping from nft id to owner
-  mapping (uint => address) public idToOwner;
 
   event MintNft (address indexed to, uint indexed id);
   event MintDyad(address indexed to, uint indexed id, uint amount);
@@ -49,7 +49,7 @@ contract dNFT is ERC721Enumerable{
   /// @dev Check if owner of NFT is msg.sender
   /// @param id The id of the NFT
   modifier onlyNFTOwner(uint id) {
-    require(idToOwner[id] == msg.sender, "dNFT: Only NFT owner can call this function");
+    require(this.ownerOf(id) == msg.sender, "dNFT: Only NFT owner can call this function");
     _;
   }
 
@@ -75,6 +75,15 @@ contract dNFT is ERC721Enumerable{
     // _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
   }
 
+  // ONLY FOR TESTING
+  function addTestNft(uint id,
+                      uint xp,
+                      uint deposit,
+                      uint balance) external {
+    idToNft[id] = IdNFT.Nft(balance, deposit, xp, false);
+    _mintNft(msg.sender);
+  }
+
   function setPool(address newPool) external onlyOwner {
     require(!isPoolSet,            "dNFT: Pool is already set");
     require(msg.sender == owner,   "dNFT: Only owner can set pool");
@@ -95,27 +104,43 @@ contract dNFT is ERC721Enumerable{
     idToNft[id] = nft;
   }
 
+  // calim a liquidated nft
+  // transfer liquidated nft from old owner to new owner
+  function claimNft(uint id) external {
+    IdNFT.Nft memory nft = idToNft[id];
+    require(nft.isClaimable, "dNFT: NFT is not liquidated");
+    address owner = this.ownerOf(id);
+    // this will fail without approval
+    this.transferFrom(owner, msg.sender, id);
+  }
+
   // mint a new nft to the `receiver`
   // to mint a new nft a minimum of $`DEPOSIT_MINIMUM` in eth is required
-  function mintNft(address receiver) external payable returns (uint id) {
-    _mintNft(receiver);
+  function mintNft(address receiver) external payable returns (uint) {
+    uint id = _mintNft(receiver);
     _mintDyad(id, DEPOSIT_MINIMUM);
+    return id;
   }
 
   // the main reason for this method is that we need to be able to mint
   // nfts for the core team and investors without the deposit minimum,
   // this happens in the constructor where we call this method directly.
-  function _mintNft(address receiver) private {
+  function _mintNft(address receiver) private returns (uint) {
     uint id = totalSupply();
     require(id < MAX_SUPPLY, "Max supply reached");
     _mint(receiver, id); // nft mint
-    idToOwner[id] = receiver;
 
     IdNFT.Nft storage nft = idToNft[id];
     // add 100 xp to the nft to start with
-    nft.xp = nft.xp.add(100);
+    // TODO: for testing
+    // nft.xp = nft.xp.add(100);
+
+    // TODO: commented out for testing
+    // nft.xp = nft.xp.add(90000);
+    // totalXp = totalXp.add(nft.xp);
 
     emit MintNft(receiver, id);
+    return id;
   }
 
   // mint new dyad to the respective nft

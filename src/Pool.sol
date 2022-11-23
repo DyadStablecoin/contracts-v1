@@ -16,7 +16,6 @@ contract Pool {
   // IMPORTANT: do not change the ordering of these variables
   // because some tests depend on this specific slot arrangement.
   uint public lastEthPrice;
-  uint public lastCheckpoint;
 
   IdNFT public dnft;
   DYAD public dyad;
@@ -24,16 +23,40 @@ contract Pool {
 
   uint256 constant private REDEEM_MINIMUM = 100000000;
 
-  mapping(uint => int) public dyadDeltaAtCheckpoint;
-  mapping(uint => int) public xpDeltaAtCheckpoint;
-  mapping(uint => uint) public poolBalanceAtCheckpoint;
+  // -------------------- ONLY FOR TESTING --------------------
+  uint TOTAL_SUPPLY = 10; // of dnfts
+  uint MAX_XP = 8000;
+  uint MIN_XP = 1079;
+  uint TOTAL_DYAD = 96003;
+  uint AVG_MINTED = TOTAL_DYAD / TOTAL_SUPPLY;
+  int OLD_ETH_PRICE = 100000000;
+  int NEW_ETH_PRICE = 95000000;  // 95000000  ->  -5%
+  // int NEW_ETH_PRICE = 110000000; // 110000000 -> +10%
+  // ---------------------------------------------------------
 
-  event NewEthPrice(int newEthPrice);
+  // when syncing, the protocol can be in two states:
+  //   BURNING: if the price of eth went down
+  //   MINTING: if the price of eth went up
+  enum Mode{ BURNING, MINTING }
+
+  event Synced(int newEthPrice);
 
   /// @dev Check if msg.sender is the nft contract
   modifier onlyNFT() {
     require(msg.sender == address(dnft), "Pool: Only NFT can call this function");
     _;
+  }
+
+  // A convenient way to store the ouptput of the `calcMultis` function
+  struct Multis {
+    // Holds two different sort of values depending on wheather the 
+    // protocoll is in BURNING or MINTING mode.
+    //   Mode.MINTING: xp mulit * deposit multi
+    //   Mode.BURNING: xp mulit * mintAvg  
+    uint[] multiProducts;
+
+    uint   multiProductsSum; // sum of the elements in `multiProducts`
+    uint[] xpMultis;         
   }
 
   constructor(address _dnft, address _dyad) {
@@ -45,114 +68,139 @@ contract Pool {
 
   /// @notice get the latest eth price from oracle
   function getNewEthPrice() internal view returns (int newEthPrice) {
-    ( , newEthPrice, , , ) = priceFeed.latestRoundData();
+    // TODO: testing
+    // ( , newEthPrice, , , ) = priceFeed.latestRoundData();
+    newEthPrice = 115000000000;
   }
 
-  /// @notice returns the amount that we need to mint/burn depending on the new eth price
-  function getDeltaAmount(int newEthPrice) internal view returns (int deltaAmountSigned) {
-    int  deltaPrice        = newEthPrice - int(lastEthPrice) ;
-    uint deltaPricePercent = uint(newEthPrice).mul(10000).div(lastEthPrice);
 
-    // we have to do this to get basis points in the correct range
-    if (deltaPrice < 0) {
-      deltaPricePercent = 10000 - deltaPricePercent;
-    } else {
-      deltaPricePercent -= 10000;
-    }
+  // The "heart" of the protocol.
+  // - Gets the latest eth price and determines if new dyad should be minted or
+  //   old dyad should be burned to keep the peg.
+  // - Updates each dnft metadata to reflect its updated xp, balance and deposit.
+  // - To incentivize nft holders to call this method, there is a xp boost to the first
+  //   nft of the owner calling it.
+  function sync() public {
+    // determine the mode we are in
+    Mode mode = NEW_ETH_PRICE > OLD_ETH_PRICE ? Mode.MINTING : Mode.BURNING;
+ 
+    // stores the eth price change in basis points
+    uint ethChange = uint(NEW_ETH_PRICE).mul(10000).div(uint(OLD_ETH_PRICE));
+    // we have to do this to get the percentage in basis points
+    mode == Mode.BURNING ? ethChange = 10000 - ethChange : ethChange -= 10000;
 
-    uint poolBalance = dyad.balanceOf(address(this));
-    uint deltaAmount = PoolLibrary.percentageOf(poolBalance, deltaPricePercent);
+    // the amount of dyad to burn/mint
+    uint dyadDelta = updateNFTs(ethChange, mode);
+    console.log("dyadDelta: %s", dyadDelta);
 
-    // if the delta is negative we have to make deltaAmount negative as well
-    if (deltaPrice < 0) {
-      deltaAmountSigned = int(deltaAmount) * -1;
-    }
-  }
-
-  function sync() public returns (int newEthPrice) {
-    newEthPrice = getNewEthPrice();
-
-    int  deltaAmount    = getDeltaAmount(newEthPrice);
-    uint deltaAmountAbs = PoolLibrary.abs(deltaAmount);
-
-    if (uint(newEthPrice) > lastEthPrice) {
-      dyad.mint(address(this), deltaAmountAbs);
+    if (mode == Mode.MINTING) {
+      dyad.mint(address(this), dyadDelta);
     } else {
       // What happens if there is not enough to burn?
-      dyad.burn(deltaAmountAbs);
+      // TODO
+      // dyad.burn(dyadDelta);
     }
 
-    updateNFTs(deltaAmount);
-
-    lastEthPrice    = uint(newEthPrice);
-    lastCheckpoint += 1;
-    emit NewEthPrice(newEthPrice);
+    lastEthPrice = uint(NEW_ETH_PRICE);
+    emit Synced(NEW_ETH_PRICE);
   }
 
-  function updateNFTs(int deltaAmount) internal {
-    uint nftTotalSupply  = dnft.totalSupply();
+  /// @param ethChange  Eth price change in basis points
+  /// @param mode Is the change negative or positive
+  /// @return dyadDelta The amount of dyad to mint or burn
+  function updateNFTs(uint ethChange, Mode mode) internal returns (uint dyadDelta) {
+    // we boost the nft of the user calling this function with additional
+    // xp, but only once! If boosted was used already, it can not be used again.
+    bool isBoosted = false;
 
-    for (uint i = 0; i < nftTotalSupply; i++) {
-      // TODO: delta amount relative to each nft
-      updateNFT(i, deltaAmount);
+    // the amount to mint/burn to keep the peg
+    dyadDelta = PoolLibrary.percentageOf(TOTAL_DYAD, ethChange);
+
+    Multis memory multis = calcMultis(mode);
+
+    // we use these to keep track of the max/min xp values for this sync, 
+    // so we can save them in storage to be used in the next sync.
+    uint minXp = type(uint256).max;
+    uint maxXp = MAX_XP;
+
+    for (uint id = 0; id < TOTAL_SUPPLY; id++) {
+      // multi normalized by the multi sum
+      uint relativeMulti     = multis.multiProducts[id]*10000/multis.multiProductsSum;
+      // relative dyad delta for each nft
+      uint relativeDyadDelta = PoolLibrary.percentageOf(dyadDelta, relativeMulti);
+
+      IdNFT.Nft memory nft = dnft.idToNft(id);
+
+      // xp accrual happens only when there is a burn.
+      uint xpAccrual;
+      if (mode == Mode.BURNING) {
+        // normal accrual
+        xpAccrual = relativeDyadDelta*100 / (multis.xpMultis[id]);
+        // boost for the address calling this function
+        if (!isBoosted && msg.sender == dnft.ownerOf(id)) {
+          isBoosted = true;
+          xpAccrual += PoolLibrary.percentageOf(nft.xp, 10); // 0.10%
+        }
+      }
+
+      // update memory nft data
+      if (mode == Mode.BURNING) {
+        // we cap nft.deposit at 0, so it can never become negative
+        nft.deposit  = nft.deposit < relativeDyadDelta ? 0 : nft.deposit - relativeDyadDelta;
+        nft.xp      += xpAccrual;
+      } else {
+        // NOTE: there is no xp accrual in Mode.MINTING
+        nft.deposit += relativeDyadDelta;
+      }
+
+      // check for liquidation
+      if (mode == Mode.BURNING) {
+        // liquidation limit is 5% of the minted dyad
+        uint liquidationLimit = PoolLibrary.percentageOf(nft.deposit+nft.balance, 500);
+        if (nft.deposit < liquidationLimit) { nft.isClaimable = true; }
+      }
+
+      // update nft in storage
+      dnft.updateNft(id, nft);
+
+      // check if this is a new xp minimum/maximum for this sync
+      if (nft.xp < minXp) { minXp = nft.xp; }
+      if (nft.xp > maxXp) { maxXp = nft.xp; }
     }
+
+    // save new min/max xp in storage
+    MIN_XP = minXp;
+    MAX_XP = maxXp;
   }
 
-  function updateNFT(uint id, int deltaAmount) internal {
-    IdNFT.Nft memory nft = dnft.idToNft(id);
 
-    // --------------- calculte factors -------------
-    // boost factor
-    uint  boostFactor   = getBoostFactor(id);
+  // NOTE: calculation of the multis is determined by the `mode`
+  function calcMultis(Mode mode) internal view returns (Multis memory) {
+    uint multiProductsSum;
+    uint[] memory multiProducts = new uint[](TOTAL_SUPPLY);
+    uint[] memory xpMultis      = new uint[](TOTAL_SUPPLY);
 
-    // xp factor
-    uint8 xpNormal      = PoolLibrary.normalize(nft.xp, dnft.MAX_XP());
-    uint  xpFactor      = PoolLibrary.getXpMulti(xpNormal);
+    for (uint id = 0; id < TOTAL_SUPPLY; id++) {
+      IdNFT.Nft memory nft = dnft.idToNft(id);
 
-    if (deltaAmount < 0) {
-      xpFactor = 292 - xpFactor;
+      uint xpScaled      = (nft.xp-MIN_XP)*10000 / (MAX_XP-MIN_XP);
+      uint mintAvgMinted = (nft.balance+nft.deposit)*10000 / (AVG_MINTED+1);
+      uint xpMulti       = PoolLibrary.getXpMulti(xpScaled/100);
+      if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; }
+      uint depositMulti = nft.deposit*10000 / (nft.deposit+nft.balance+1);
+      uint multiProduct = xpMulti/100 * (mode == Mode.BURNING ? mintAvgMinted : depositMulti);
+
+      multiProducts[id]  = multiProduct;
+      multiProductsSum  += multiProduct;
+      xpMultis[id]       = xpMulti;
     }
 
-    // balance factor
-    uint8 balanceNormal = PoolLibrary.normalize(nft.balance, dnft.MAX_BALANCE());
-    uint  balanceFactor = PoolLibrary.getBalanceMulti(balanceNormal);
-
-    // deposit factor
-    uint8 depositNormal = PoolLibrary.normalize(nft.deposit, dnft.MAX_DEPOSIT());
-    uint  depositFactor = PoolLibrary.getDepositMulti(depositNormal);
-
-    // --------------- update -------------
-    // IMPORTANT: deposit can not be < 0
-    console.log("deposit: %s", nft.deposit);
-    console.log("xpNormal: %s", xpNormal);
-    console.logInt(deltaAmount);
-    nft.deposit = uint(int(nft.deposit) + (int(uint256(xpNormal)) * deltaAmount));
-
-    // update xp
-    uint factors = xpFactor * balanceFactor * depositFactor * boostFactor;
-    uint newXP   = nft.xp + (nft.xp * factors);
-    nft.xp       = newXP;
-
-    dnft.updateNft(id, nft);
-
-    // update xp max value
-    dnft.updateMaxXP(newXP);
-  }
-
-  // As a reward for calling the `getNewEthPrice` function, we give the caller
-  // a special xp boost.
-  function getBoostFactor(uint id) internal view returns (uint boostFactor) {
-    if (dnft.idToOwner(id) == msg.sender) {
-      boostFactor = 2;
-    } else {
-      // if the dnft holder is not the owner the boost factor is 1;
-      boostFactor = 1;
-    }
+    return Multis(multiProducts, multiProductsSum, xpMultis);
   }
 
   /// @notice Mint dyad to the NFT
   function mintDyad(uint minAmount) payable external onlyNFT returns (uint) {
-    require(msg.value > 0,        "Pool: You need to send some ETH");
+    require(msg.value > 0, "Pool: You need to send some ETH");
     uint newDyad = lastEthPrice.mul(msg.value).div(100000000);
     require(newDyad >= minAmount, "Pool: mintDyad: minAmount not reached");
     dyad.mint(msg.sender, newDyad);

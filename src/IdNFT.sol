@@ -7,15 +7,17 @@ interface IdNFT {
     uint balance; // dyad directly owned by the dnft holder 
     uint deposit; // dyad balance in pool
     uint xp;      // always positive, always inflationary
+    bool isClaimable; // is true after liquidation
   }
 
   function updateMaxXP(uint newMaxXP) external;
   function MAX_XP() external view returns (uint);
   function MAX_BALANCE() external view returns (uint);
   function MAX_DEPOSIT() external view returns (uint);
+  function totalXp() external view returns (uint);
 
   function pool() external view returns (address);
-  function idToOwner(uint id) external view returns (address);
+  function ownerOf(uint tokenId) external view returns (address);
   function updateNft(uint id, Nft memory metadata) external;
   function mintDyad(uint id) external payable;
   function withdraw(uint id, uint amount) external;
@@ -31,5 +33,9 @@ interface IdNFT {
   function lastCheckpointForIdOf(uint id) external view returns (uint);
   function totalSupply() external view returns (uint);
   function idToNft(uint) external view returns (Nft memory);
+
+
+  // ONLY FOR TESTING
+  function addTestNft(uint id, uint xp, uint deposit, uint balance) external;
 }
 

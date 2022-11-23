@@ -26,7 +26,7 @@ library PoolLibrary {
     return uint8(value / (maxValue / 100));
   }
 
-  function getXpMulti(uint8 xp) public pure returns (uint) {
+  function getXpMulti(uint xp) public pure returns (uint) {
     // xp is like an index which maps exactly to one value in the table. That is why
     // xp must be uint and between 0 and 100.
     require(xp >= 0 && xp <= 100, "PoolLibrary: xp must be between 0 and 100");
