@@ -60,10 +60,7 @@ contract Pool {
 
   /// @notice get the latest eth price from oracle
   function getNewEthPrice() internal view returns (int newEthPrice) {
-    // TODO: remove in prod
-    // ( , newEthPrice, , , ) = priceFeed.latestRoundData();
-    // newEthPrice = 110000000; // 110000000 -> +10%
-    newEthPrice = 95000000; // 95000000 -> -5%
+    ( , newEthPrice, , , ) = priceFeed.latestRoundData();
   }
 
 
