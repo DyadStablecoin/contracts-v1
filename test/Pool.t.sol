@@ -42,7 +42,10 @@ contract PoolTest is Test {
 
   // set balance, deposit, xp
   // NOTE: I get a slot error for isClaimable
-  function overwriteNft(uint id, IdNFT.Nft memory nft) public {
+  function overwriteNft(uint id, uint xp, uint deposit, uint balance) public {
+    IdNFT.Nft memory nft = dnft.idToNft(id);
+    nft.balance = balance; nft.deposit = deposit; nft.xp = xp;
+
     stdstore.target(address(dnft))
       .sig("idToNft(uint256)")
       .with_key(id)
@@ -66,36 +69,29 @@ contract PoolTest is Test {
   }
 
   function testSync() public {
-    dnft.addTestNft(0, 2161, 146,  3920);
-    dnft.addTestNft(1, 7588, 4616, 7496);
-    dnft.addTestNft(2, 3892, 2731, 10644);
-    dnft.addTestNft(3, 3350, 4515, 2929);
-    dnft.addTestNft(4, 3012, 2086, 3149);
-    dnft.addTestNft(5, 5496, 7241, 7127);
-    dnft.addTestNft(6, 8000, 8197, 7548);
-    dnft.addTestNft(7, 7000, 5873, 9359);
-    dnft.addTestNft(8, 3435, 1753, 4427);
-    dnft.addTestNft(9, 1079, 2002, 244);
+    for (uint i = 0; i < 10; i++) {
+      dnft.mintNft{value: 1000 ether}(cheats.addr(i+1)); // i+1 to avoid 0x0 address
+    }
 
-    IdNFT.Nft memory nft = dnft.idToNft(1);
-    nft.balance = 1111111;
-    nft.deposit = 9999999;
-    nft.xp = 7589;
-    console.log(nft.deposit);
+    // id, xp, deposit, balance
+    overwriteNft(0, 2161, 146,  3920);
+    overwriteNft(1, 7588, 4616, 7496);
+    overwriteNft(2, 3892, 2731, 10644);
+    overwriteNft(3, 3350, 4515, 2929);
+    overwriteNft(4, 3012, 2086, 3149);
+    overwriteNft(5, 5496, 7241, 7127);
+    overwriteNft(6, 8000, 8197, 7548);
+    overwriteNft(7, 7000, 5873, 9359);
+    overwriteNft(8, 3435, 1753, 4427);
+    overwriteNft(9, 1079, 2002, 244);
 
-    // stdstore.target(address(dnft))
-    //   .sig("idToNft(uint256)")
-    //   .with_key(1)
-    //   .depth(1)
-    //   .checked_write(99999);
-    overwriteNft(1, nft);
+    vm.store(address(pool), bytes32(uint(0)), bytes32(uint(100000000))); // lastEthPrice
+    vm.store(address(pool), bytes32(uint(1)), bytes32(uint(1079)));      // min xp
+    vm.store(address(pool), bytes32(uint(2)), bytes32(uint(8000)));      // max xp
 
-    nft = dnft.idToNft(1);
-    console.log(nft.balance);
-    console.log(nft.deposit);
-    console.log(nft.xp);
 
     pool.sync();
+
 
     // dnft.addTestNft(1, 2161, 146, 3920);
     // pool.sync();

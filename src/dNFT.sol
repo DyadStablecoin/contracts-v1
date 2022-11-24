@@ -75,15 +75,6 @@ contract dNFT is ERC721Enumerable{
     // _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
   }
 
-  // ONLY FOR TESTING
-  function addTestNft(uint id,
-                      uint xp,
-                      uint deposit,
-                      uint balance) external {
-    idToNft[id] = IdNFT.Nft(balance, deposit, xp, false);
-    _mintNft(msg.sender);
-  }
-
   function setPool(address newPool) external onlyOwner {
     require(!isPoolSet,            "dNFT: Pool is already set");
     require(msg.sender == owner,   "dNFT: Only owner can set pool");

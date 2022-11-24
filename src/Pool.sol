@@ -16,6 +16,8 @@ contract Pool {
   // IMPORTANT: do not change the ordering of these variables
   // because some tests depend on this specific slot arrangement.
   uint public lastEthPrice;
+  uint MIN_XP;
+  uint MAX_XP;
 
   IdNFT public dnft;
   DYAD public dyad;
@@ -24,12 +26,7 @@ contract Pool {
   uint256 constant private REDEEM_MINIMUM = 100000000;
 
   // -------------------- ONLY FOR TESTING --------------------
-  uint TOTAL_SUPPLY = 10; // of dnfts
-  uint MAX_XP = 8000;
-  uint MIN_XP = 1079;
   uint TOTAL_DYAD = 96003;
-  uint AVG_MINTED = TOTAL_DYAD / TOTAL_SUPPLY;
-  int OLD_ETH_PRICE = 100000000;
   int NEW_ETH_PRICE = 95000000;  // 95000000  ->  -5%
   // int NEW_ETH_PRICE = 110000000; // 110000000 -> +10%
   // ---------------------------------------------------------
@@ -83,10 +80,10 @@ contract Pool {
   //   nft of the owner calling it.
   function sync() public {
     // determine the mode we are in
-    Mode mode = NEW_ETH_PRICE > OLD_ETH_PRICE ? Mode.MINTING : Mode.BURNING;
+    Mode mode = uint(NEW_ETH_PRICE) > lastEthPrice ? Mode.MINTING : Mode.BURNING;
  
     // stores the eth price change in basis points
-    uint ethChange = uint(NEW_ETH_PRICE).mul(10000).div(uint(OLD_ETH_PRICE));
+    uint ethChange = uint(NEW_ETH_PRICE).mul(10000).div(lastEthPrice);
     // we have to do this to get the percentage in basis points
     mode == Mode.BURNING ? ethChange = 10000 - ethChange : ethChange -= 10000;
 
@@ -124,7 +121,7 @@ contract Pool {
     uint minXp = type(uint256).max;
     uint maxXp = MAX_XP;
 
-    for (uint id = 0; id < TOTAL_SUPPLY; id++) {
+    for (uint id = 0; id < dnft.totalSupply(); id++) {
       // multi normalized by the multi sum
       uint relativeMulti     = multis.multiProducts[id]*10000/multis.multiProductsSum;
       // relative dyad delta for each nft
@@ -177,15 +174,16 @@ contract Pool {
 
   // NOTE: calculation of the multis is determined by the `mode`
   function calcMultis(Mode mode) internal view returns (Multis memory) {
+    uint nftTotalSupply = dnft.totalSupply();
     uint multiProductsSum;
-    uint[] memory multiProducts = new uint[](TOTAL_SUPPLY);
-    uint[] memory xpMultis      = new uint[](TOTAL_SUPPLY);
+    uint[] memory multiProducts = new uint[](nftTotalSupply);
+    uint[] memory xpMultis      = new uint[](nftTotalSupply);
 
-    for (uint id = 0; id < TOTAL_SUPPLY; id++) {
+    for (uint id = 0; id < nftTotalSupply; id++) {
       IdNFT.Nft memory nft = dnft.idToNft(id);
 
       uint xpScaled      = (nft.xp-MIN_XP)*10000 / (MAX_XP-MIN_XP);
-      uint mintAvgMinted = (nft.balance+nft.deposit)*10000 / (AVG_MINTED+1);
+      uint mintAvgMinted = (nft.balance+nft.deposit)*10000 / (TOTAL_DYAD/nftTotalSupply+1);
       uint xpMulti       = PoolLibrary.getXpMulti(xpScaled/100);
       if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; }
       uint depositMulti = nft.deposit*10000 / (nft.deposit+nft.balance+1);
