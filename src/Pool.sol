@@ -51,22 +51,19 @@ contract Pool {
     uint[] xpMultis;         
   }
 
-  constructor(address _dnft, address _dyad) {
+  constructor(address _dnft, address _dyad, address oracle) {
     dnft         = IdNFT(_dnft);
     dyad         = DYAD(_dyad);
-    priceFeed    = IAggregatorV3(PoolLibrary.PRICE_ORACLE_ADDRESS);
+    priceFeed    = IAggregatorV3(oracle);
     lastEthPrice = uint(getNewEthPrice());
   }
 
   /// @notice get the latest eth price from oracle
   function getNewEthPrice() internal view returns (int newEthPrice) {
-    // TODO: testing
+    // TODO: remove in prod
     // ( , newEthPrice, , , ) = priceFeed.latestRoundData();
-    // newEthPrice = 115000000000;
-    // int NEW_ETH_PRICE = 110000000; // 110000000 -> +10%
-    // int NEW_ETH_PRICE = 95000000; // 95000000 -> -5%
-    // newEthPrice = 110000000;
-    newEthPrice = 95000000;
+    // newEthPrice = 110000000; // 110000000 -> +10%
+    newEthPrice = 95000000; // 95000000 -> -5%
   }
 
 
