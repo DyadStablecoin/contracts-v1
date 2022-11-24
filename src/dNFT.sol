@@ -123,13 +123,10 @@ contract dNFT is ERC721Enumerable{
     _mint(receiver, id); // nft mint
 
     IdNFT.Nft storage nft = idToNft[id];
-    // add 100 xp to the nft to start with
-    // TODO: for testing
-    // nft.xp = nft.xp.add(100);
 
-    // TODO: commented out for testing
-    // nft.xp = nft.xp.add(90000);
-    // totalXp = totalXp.add(nft.xp);
+    // add 9k xp to the nft to start with
+    nft.xp = nft.xp.add(90000);
+    totalXp = totalXp.add(nft.xp);
 
     emit MintNft(receiver, id);
     return id;
