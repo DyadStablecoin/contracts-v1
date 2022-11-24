@@ -39,7 +39,8 @@ contract Pool {
   //   MINTING: if the price of eth went up
   enum Mode{ BURNING, MINTING }
 
-  event Synced(int newEthPrice);
+  event Synced (int newEthPrice);
+  event Claimed(uint indexed id, address indexed from, address indexed to);
 
   /// @dev Check if msg.sender is the nft contract
   modifier onlyNFT() {
@@ -239,9 +240,10 @@ contract Pool {
   function claim(uint id, address recipient) external {
     IdNFT.Nft memory nft = dnft.idToNft(id);
     require(nft.isClaimable, "dNFT: NFT is not liquidated");
+    nft.isClaimable = false;
+    dnft.updateNft(id, nft);
     address owner = dnft.ownerOf(id);
     dnft.transferFrom(owner, recipient, id);
+    emit Claimed(id, owner, recipient);
   }
-
 }
-
