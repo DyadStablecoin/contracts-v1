@@ -64,7 +64,9 @@ contract Pool {
     // ( , newEthPrice, , , ) = priceFeed.latestRoundData();
     // newEthPrice = 115000000000;
     // int NEW_ETH_PRICE = 110000000; // 110000000 -> +10%
-    newEthPrice = 95000000;
+    // int NEW_ETH_PRICE = 95000000; // 95000000 -> -5%
+    newEthPrice = 110000000;
+    // newEthPrice = 95000000;
   }
 
 
@@ -198,6 +200,7 @@ contract Pool {
   function mintDyad(uint minAmount) payable external onlyNFT returns (uint) {
     require(msg.value > 0, "Pool: You need to send some ETH");
     uint newDyad = lastEthPrice.mul(msg.value).div(100000000);
+    // TODO: uncomment for prod!!!!
     // require(newDyad >= minAmount, "Pool: mintDyad: minAmount not reached");
     dyad.mint(msg.sender, newDyad);
     return newDyad;
