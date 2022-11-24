@@ -14,9 +14,10 @@ contract dNFT is ERC721Enumerable{
   using SafeMath for uint256;
 
   // maximum number of nfts that can be minted
-  uint public constant MAX_SUPPLY = 200;
+  uint public MAX_SUPPLY = 300;
+
   // to mint a dnft $ 5k in eth are required
-  uint public constant DEPOSIT_MINIMUM = 5000000000000000000000;
+  uint public DEPOSIT_MINIMUM = 5000000000000000000000;
 
   // the only ability the owner has is to set the pool once.
   // once it is set it is impossible to change it.

@@ -71,6 +71,9 @@ contract PoolTest is Test {
   // reproduce eikes equations
   function testSync() public {
     vm.store(address(pool), bytes32(uint(0)), bytes32(uint(95000000))); // lastEthPrice
+    // set DEPOSIT_MINIMUM to something super low
+    stdstore.target(address(dnft)).sig("DEPOSIT_MINIMUM()").checked_write(77);
+
     for (uint i = 0; i < 10; i++) {
       dnft.mintNft{value: 10106 wei}(cheats.addr(i+1)); // i+1 to avoid 0x0 address
     }
