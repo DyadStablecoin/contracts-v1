@@ -199,6 +199,7 @@ contract Pool {
   /// @notice Mint dyad to the NFT
   function mintDyad(uint minAmount) payable external onlyNFT returns (uint) {
     require(msg.value > 0, "Pool: You need to send some ETH");
+    // TODO: this should use the latest eth price
     uint newDyad = lastEthPrice.mul(msg.value).div(100000000);
     // TODO: uncomment for prod!!!!
     // require(newDyad >= minAmount, "Pool: mintDyad: minAmount not reached");
