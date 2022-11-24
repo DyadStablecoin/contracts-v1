@@ -77,6 +77,8 @@ contract PoolTest is Test {
     }
 
 
+    console.log(address(this));
+
     // id, xp, deposit, balance
     overwriteNft(0, 2161, 146,  3920);
     overwriteNft(1, 7588, 4616, 7496);
@@ -92,7 +94,7 @@ contract PoolTest is Test {
     vm.store(address(pool), bytes32(uint(0)), bytes32(uint(100000000))); // lastEthPrice
     vm.store(address(pool), bytes32(uint(1)), bytes32(uint(1079)));      // min xp
     vm.store(address(pool), bytes32(uint(2)), bytes32(uint(8000)));      // max xp
-    console.log("lastEthPrice: %s", dyad.totalSupply());
+    console.log("dyad total supply: %s", dyad.totalSupply());
 
     pool.sync();
 

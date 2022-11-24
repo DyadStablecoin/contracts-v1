@@ -65,11 +65,10 @@ contract Pool {
   /// @notice get the latest eth price from oracle
   function getNewEthPrice() internal view returns (int newEthPrice) {
     // TODO: testing
-    // NOTE: you have to fork goerli/mainnet for this to work
     // ( , newEthPrice, , , ) = priceFeed.latestRoundData();
     // newEthPrice = 115000000000;
-    newEthPrice = 95000000;  // 95000000  ->  -5%
-    // int newEthPrice = 110000000; // 110000000 -> +10%
+    // int NEW_ETH_PRICE = 110000000; // 110000000 -> +10%
+    newEthPrice = 95000000;
   }
 
 
