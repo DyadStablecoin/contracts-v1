@@ -65,8 +65,8 @@ contract Pool {
     // newEthPrice = 115000000000;
     // int NEW_ETH_PRICE = 110000000; // 110000000 -> +10%
     // int NEW_ETH_PRICE = 95000000; // 95000000 -> -5%
-    newEthPrice = 110000000;
-    // newEthPrice = 95000000;
+    // newEthPrice = 110000000;
+    newEthPrice = 95000000;
   }
 
 

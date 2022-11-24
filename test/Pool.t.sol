@@ -69,6 +69,7 @@ contract PoolTest is Test {
   }
 
   function testSync() public {
+    vm.store(address(pool), bytes32(uint(0)), bytes32(uint(95000000))); // lastEthPrice
     for (uint i = 0; i < 10; i++) {
       dnft.mintNft{value: 10106 wei}(cheats.addr(i+1)); // i+1 to avoid 0x0 address
     }
