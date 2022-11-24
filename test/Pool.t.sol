@@ -73,7 +73,7 @@ contract PoolTest is Test {
     //          bytes32(uint(2)), bytes32(uint(8000)));      // max xp
 
     for (uint i = 0; i < 10; i++) {
-      dnft.mintNft{value: 100000000 ether}(cheats.addr(i+1)); // i+1 to avoid 0x0 address
+      dnft.mintNft{value: 10106 wei}(cheats.addr(i+1)); // i+1 to avoid 0x0 address
     }
 
 

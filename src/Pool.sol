@@ -25,10 +25,6 @@ contract Pool {
 
   uint256 constant private REDEEM_MINIMUM = 100000000;
 
-  // -------------------- ONLY FOR TESTING --------------------
-  uint TOTAL_DYAD = 96003;
-  // ---------------------------------------------------------
-
   // when syncing, the protocol can be in two states:
   //   BURNING: if the price of eth went down
   //   MINTING: if the price of eth went up
@@ -113,7 +109,7 @@ contract Pool {
     bool isBoosted = false;
 
     // the amount to mint/burn to keep the peg
-    dyadDelta = PoolLibrary.percentageOf(TOTAL_DYAD, ethChange);
+    dyadDelta = PoolLibrary.percentageOf(dyad.totalSupply(), ethChange);
 
     Multis memory multis = calcMultis(mode);
 
@@ -184,7 +180,7 @@ contract Pool {
       IdNFT.Nft memory nft = dnft.idToNft(id);
 
       uint xpScaled      = (nft.xp-MIN_XP)*10000 / (MAX_XP-MIN_XP);
-      uint mintAvgMinted = (nft.balance+nft.deposit)*10000 / (TOTAL_DYAD/nftTotalSupply+1);
+      uint mintAvgMinted = (nft.balance+nft.deposit)*10000 / (dyad.totalSupply()/nftTotalSupply+1);
       uint xpMulti       = PoolLibrary.getXpMulti(xpScaled/100);
       if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; }
       uint depositMulti = nft.deposit*10000 / (nft.deposit+nft.balance+1);
@@ -202,7 +198,7 @@ contract Pool {
   function mintDyad(uint minAmount) payable external onlyNFT returns (uint) {
     require(msg.value > 0, "Pool: You need to send some ETH");
     uint newDyad = lastEthPrice.mul(msg.value).div(100000000);
-    require(newDyad >= minAmount, "Pool: mintDyad: minAmount not reached");
+    // require(newDyad >= minAmount, "Pool: mintDyad: minAmount not reached");
     dyad.mint(msg.sender, newDyad);
     return newDyad;
   }
