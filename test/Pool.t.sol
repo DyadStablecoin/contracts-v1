@@ -69,9 +69,13 @@ contract PoolTest is Test {
   }
 
   function testSync() public {
+    // vm.store(address(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419),
+    //          bytes32(uint(2)), bytes32(uint(8000)));      // max xp
+
     for (uint i = 0; i < 10; i++) {
-      dnft.mintNft{value: 1000 ether}(cheats.addr(i+1)); // i+1 to avoid 0x0 address
+      dnft.mintNft{value: 100000000 ether}(cheats.addr(i+1)); // i+1 to avoid 0x0 address
     }
+
 
     // id, xp, deposit, balance
     overwriteNft(0, 2161, 146,  3920);
@@ -88,7 +92,7 @@ contract PoolTest is Test {
     vm.store(address(pool), bytes32(uint(0)), bytes32(uint(100000000))); // lastEthPrice
     vm.store(address(pool), bytes32(uint(1)), bytes32(uint(1079)));      // min xp
     vm.store(address(pool), bytes32(uint(2)), bytes32(uint(8000)));      // max xp
-
+    console.log("lastEthPrice: %s", dyad.totalSupply());
 
     pool.sync();
 

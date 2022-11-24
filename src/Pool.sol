@@ -27,8 +27,6 @@ contract Pool {
 
   // -------------------- ONLY FOR TESTING --------------------
   uint TOTAL_DYAD = 96003;
-  int NEW_ETH_PRICE = 95000000;  // 95000000  ->  -5%
-  // int NEW_ETH_PRICE = 110000000; // 110000000 -> +10%
   // ---------------------------------------------------------
 
   // when syncing, the protocol can be in two states:
@@ -36,7 +34,7 @@ contract Pool {
   //   MINTING: if the price of eth went up
   enum Mode{ BURNING, MINTING }
 
-  event Synced (int newEthPrice);
+  event Synced (uint newEthPrice);
   event Claimed(uint indexed id, address indexed from, address indexed to);
 
   /// @dev Check if msg.sender is the nft contract
@@ -67,8 +65,11 @@ contract Pool {
   /// @notice get the latest eth price from oracle
   function getNewEthPrice() internal view returns (int newEthPrice) {
     // TODO: testing
+    // NOTE: you have to fork goerli/mainnet for this to work
     // ( , newEthPrice, , , ) = priceFeed.latestRoundData();
-    newEthPrice = 115000000000;
+    // newEthPrice = 115000000000;
+    newEthPrice = 95000000;  // 95000000  ->  -5%
+    // int newEthPrice = 110000000; // 110000000 -> +10%
   }
 
 
@@ -79,11 +80,12 @@ contract Pool {
   // - To incentivize nft holders to call this method, there is a xp boost to the first
   //   nft of the owner calling it.
   function sync() public {
+    uint newEthPrice = uint(getNewEthPrice());
     // determine the mode we are in
-    Mode mode = uint(NEW_ETH_PRICE) > lastEthPrice ? Mode.MINTING : Mode.BURNING;
+    Mode mode = newEthPrice > lastEthPrice ? Mode.MINTING : Mode.BURNING;
  
     // stores the eth price change in basis points
-    uint ethChange = uint(NEW_ETH_PRICE).mul(10000).div(lastEthPrice);
+    uint ethChange = newEthPrice.mul(10000).div(lastEthPrice);
     // we have to do this to get the percentage in basis points
     mode == Mode.BURNING ? ethChange = 10000 - ethChange : ethChange -= 10000;
 
@@ -99,8 +101,8 @@ contract Pool {
       // dyad.burn(dyadDelta);
     }
 
-    lastEthPrice = uint(NEW_ETH_PRICE);
-    emit Synced(NEW_ETH_PRICE);
+    lastEthPrice = newEthPrice;
+    emit Synced(newEthPrice);
   }
 
   /// @param ethChange  Eth price change in basis points
