@@ -15,6 +15,8 @@ interface CheatCodes {
 }
 
 contract PoolTest is Test {
+  using stdStorage for StdStorage;
+
   DYAD public dyad;
   Pool public pool;
   IdNFT public dnft;
@@ -38,6 +40,31 @@ contract PoolTest is Test {
     vm.store(address(pool), 0, bytes32(newPrice));
   }
 
+  // set balance, deposit, xp
+  // NOTE: I get a slot error for isClaimable
+  function overwriteNft(uint id, IdNFT.Nft memory nft) public {
+    stdstore.target(address(dnft))
+      .sig("idToNft(uint256)")
+      .with_key(id)
+      .depth(0)
+      .checked_write(nft.balance);
+    stdstore.target(address(dnft))
+      .sig("idToNft(uint256)")
+      .with_key(id)
+      .depth(1)
+      .checked_write(nft.deposit);
+    stdstore.target(address(dnft))
+      .sig("idToNft(uint256)")
+      .with_key(id)
+      .depth(2)
+      .checked_write(nft.xp);
+    // stdstore.target(address(dnft))
+    //   .sig("idToNft(uint256)")
+    //   .with_key(id)
+    //   .depth(3)
+    //   .checked_write(nft.isClaimable);
+  }
+
   function testSync() public {
     dnft.addTestNft(0, 2161, 146,  3920);
     dnft.addTestNft(1, 7588, 4616, 7496);
@@ -49,6 +76,24 @@ contract PoolTest is Test {
     dnft.addTestNft(7, 7000, 5873, 9359);
     dnft.addTestNft(8, 3435, 1753, 4427);
     dnft.addTestNft(9, 1079, 2002, 244);
+
+    IdNFT.Nft memory nft = dnft.idToNft(1);
+    nft.balance = 1111111;
+    nft.deposit = 9999999;
+    nft.xp = 7589;
+    console.log(nft.deposit);
+
+    // stdstore.target(address(dnft))
+    //   .sig("idToNft(uint256)")
+    //   .with_key(1)
+    //   .depth(1)
+    //   .checked_write(99999);
+    overwriteNft(1, nft);
+
+    nft = dnft.idToNft(1);
+    console.log(nft.balance);
+    console.log(nft.deposit);
+    console.log(nft.xp);
 
     pool.sync();
 
