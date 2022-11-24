@@ -8,6 +8,7 @@ import "../src/pool.sol";
 import "ds-test/test.sol";
 import {IdNFT} from "../src/IdNFT.sol";
 import {dNFT} from "../src/dNFT.sol";
+import {PoolLibrary} from "../src/PoolLibrary.sol";
 
 interface CheatCodes {
    // Gets address for a given private key, (privateKey) => (address)
@@ -31,7 +32,7 @@ contract dNFTTest is Test {
     dNFT _dnft = new dNFT(address(dyad));
     dnft = IdNFT(address(_dnft));
 
-    pool = new Pool(address(dnft), address(dyad));
+    pool = new Pool(address(dnft), address(dyad), PoolLibrary.PRICE_ORACLE_ADDRESS);
     dnft.setPool(address(pool));
 
     dyad.setMinter(address(pool));

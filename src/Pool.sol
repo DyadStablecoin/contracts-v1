@@ -16,6 +16,8 @@ contract Pool {
   // IMPORTANT: do not change the ordering of these variables
   // because some tests depend on this specific slot arrangement.
   uint public lastEthPrice;
+  uint MIN_XP;
+  uint MAX_XP;
 
   IdNFT public dnft;
   DYAD public dyad;
@@ -23,23 +25,12 @@ contract Pool {
 
   uint256 constant private REDEEM_MINIMUM = 100000000;
 
-  // -------------------- ONLY FOR TESTING --------------------
-  uint TOTAL_SUPPLY = 10; // of dnfts
-  uint MAX_XP = 8000;
-  uint MIN_XP = 1079;
-  uint TOTAL_DYAD = 96003;
-  uint AVG_MINTED = TOTAL_DYAD / TOTAL_SUPPLY;
-  int OLD_ETH_PRICE = 100000000;
-  int NEW_ETH_PRICE = 95000000;  // 95000000  ->  -5%
-  // int NEW_ETH_PRICE = 110000000; // 110000000 -> +10%
-  // ---------------------------------------------------------
-
   // when syncing, the protocol can be in two states:
   //   BURNING: if the price of eth went down
   //   MINTING: if the price of eth went up
   enum Mode{ BURNING, MINTING }
 
-  event Synced (int newEthPrice);
+  event Synced (uint newEthPrice);
   event Claimed(uint indexed id, address indexed from, address indexed to);
 
   /// @dev Check if msg.sender is the nft contract
@@ -60,18 +51,16 @@ contract Pool {
     uint[] xpMultis;         
   }
 
-  constructor(address _dnft, address _dyad) {
+  constructor(address _dnft, address _dyad, address oracle) {
     dnft         = IdNFT(_dnft);
     dyad         = DYAD(_dyad);
-    priceFeed    = IAggregatorV3(PoolLibrary.PRICE_ORACLE_ADDRESS);
+    priceFeed    = IAggregatorV3(oracle);
     lastEthPrice = uint(getNewEthPrice());
   }
 
   /// @notice get the latest eth price from oracle
   function getNewEthPrice() internal view returns (int newEthPrice) {
-    // TODO: testing
-    // ( , newEthPrice, , , ) = priceFeed.latestRoundData();
-    newEthPrice = 115000000000;
+    ( , newEthPrice, , , ) = priceFeed.latestRoundData();
   }
 
 
@@ -82,11 +71,12 @@ contract Pool {
   // - To incentivize nft holders to call this method, there is a xp boost to the first
   //   nft of the owner calling it.
   function sync() public {
+    uint newEthPrice = uint(getNewEthPrice());
     // determine the mode we are in
-    Mode mode = NEW_ETH_PRICE > OLD_ETH_PRICE ? Mode.MINTING : Mode.BURNING;
+    Mode mode = newEthPrice > lastEthPrice ? Mode.MINTING : Mode.BURNING;
  
     // stores the eth price change in basis points
-    uint ethChange = uint(NEW_ETH_PRICE).mul(10000).div(uint(OLD_ETH_PRICE));
+    uint ethChange = newEthPrice.mul(10000).div(lastEthPrice);
     // we have to do this to get the percentage in basis points
     mode == Mode.BURNING ? ethChange = 10000 - ethChange : ethChange -= 10000;
 
@@ -102,8 +92,8 @@ contract Pool {
       // dyad.burn(dyadDelta);
     }
 
-    lastEthPrice = uint(NEW_ETH_PRICE);
-    emit Synced(NEW_ETH_PRICE);
+    lastEthPrice = newEthPrice;
+    emit Synced(newEthPrice);
   }
 
   /// @param ethChange  Eth price change in basis points
@@ -115,7 +105,7 @@ contract Pool {
     bool isBoosted = false;
 
     // the amount to mint/burn to keep the peg
-    dyadDelta = PoolLibrary.percentageOf(TOTAL_DYAD, ethChange);
+    dyadDelta = PoolLibrary.percentageOf(dyad.totalSupply(), ethChange);
 
     Multis memory multis = calcMultis(mode);
 
@@ -124,7 +114,7 @@ contract Pool {
     uint minXp = type(uint256).max;
     uint maxXp = MAX_XP;
 
-    for (uint id = 0; id < TOTAL_SUPPLY; id++) {
+    for (uint id = 0; id < dnft.totalSupply(); id++) {
       // multi normalized by the multi sum
       uint relativeMulti     = multis.multiProducts[id]*10000/multis.multiProductsSum;
       // relative dyad delta for each nft
@@ -177,15 +167,16 @@ contract Pool {
 
   // NOTE: calculation of the multis is determined by the `mode`
   function calcMultis(Mode mode) internal view returns (Multis memory) {
+    uint nftTotalSupply = dnft.totalSupply();
     uint multiProductsSum;
-    uint[] memory multiProducts = new uint[](TOTAL_SUPPLY);
-    uint[] memory xpMultis      = new uint[](TOTAL_SUPPLY);
+    uint[] memory multiProducts = new uint[](nftTotalSupply);
+    uint[] memory xpMultis      = new uint[](nftTotalSupply);
 
-    for (uint id = 0; id < TOTAL_SUPPLY; id++) {
+    for (uint id = 0; id < nftTotalSupply; id++) {
       IdNFT.Nft memory nft = dnft.idToNft(id);
 
       uint xpScaled      = (nft.xp-MIN_XP)*10000 / (MAX_XP-MIN_XP);
-      uint mintAvgMinted = (nft.balance+nft.deposit)*10000 / (AVG_MINTED+1);
+      uint mintAvgMinted = (nft.balance+nft.deposit)*10000 / (dyad.totalSupply()/nftTotalSupply+1);
       uint xpMulti       = PoolLibrary.getXpMulti(xpScaled/100);
       if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; }
       uint depositMulti = nft.deposit*10000 / (nft.deposit+nft.balance+1);
@@ -202,7 +193,7 @@ contract Pool {
   /// @notice Mint dyad to the NFT
   function mintDyad(uint minAmount) payable external onlyNFT returns (uint) {
     require(msg.value > 0, "Pool: You need to send some ETH");
-    uint newDyad = lastEthPrice.mul(msg.value).div(100000000);
+    uint newDyad = uint(getNewEthPrice()).mul(msg.value).div(100000000);
     require(newDyad >= minAmount, "Pool: mintDyad: minAmount not reached");
     dyad.mint(msg.sender, newDyad);
     return newDyad;

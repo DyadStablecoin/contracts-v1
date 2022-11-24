@@ -14,9 +14,10 @@ contract dNFT is ERC721Enumerable{
   using SafeMath for uint256;
 
   // maximum number of nfts that can be minted
-  uint public constant MAX_SUPPLY = 200;
+  uint public MAX_SUPPLY = 300;
+
   // to mint a dnft $ 5k in eth are required
-  uint public constant DEPOSIT_MINIMUM = 5000000000000000000000;
+  uint public DEPOSIT_MINIMUM = 5000000000000000000000;
 
   // the only ability the owner has is to set the pool once.
   // once it is set it is impossible to change it.
@@ -75,15 +76,6 @@ contract dNFT is ERC721Enumerable{
     // _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
   }
 
-  // ONLY FOR TESTING
-  function addTestNft(uint id,
-                      uint xp,
-                      uint deposit,
-                      uint balance) external {
-    idToNft[id] = IdNFT.Nft(balance, deposit, xp, false);
-    _mintNft(msg.sender);
-  }
-
   function setPool(address newPool) external onlyOwner {
     require(!isPoolSet,            "dNFT: Pool is already set");
     require(msg.sender == owner,   "dNFT: Only owner can set pool");
@@ -131,13 +123,10 @@ contract dNFT is ERC721Enumerable{
     _mint(receiver, id); // nft mint
 
     IdNFT.Nft storage nft = idToNft[id];
-    // add 100 xp to the nft to start with
-    // TODO: for testing
-    // nft.xp = nft.xp.add(100);
 
-    // TODO: commented out for testing
-    // nft.xp = nft.xp.add(90000);
-    // totalXp = totalXp.add(nft.xp);
+    // add 9k xp to the nft to start with
+    nft.xp = nft.xp.add(90000);
+    totalXp = totalXp.add(nft.xp);
 
     emit MintNft(receiver, id);
     return id;
