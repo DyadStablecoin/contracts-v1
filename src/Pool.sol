@@ -222,6 +222,7 @@ contract Pool {
 
   /// @notice Redeem dyad for eth
   function redeem(uint amount) public {
+    // we do this to avoid rounding errors
     require(amount > REDEEM_MINIMUM, "Pool: Amount must be greater than 100000000");
     // msg.sender has to approve pool to spend its tokens
     dyad.transferFrom(msg.sender, address(this), amount);
@@ -230,5 +231,17 @@ contract Pool {
     uint usdInEth = amount.mul(100000000).div(lastEthPrice);
     payable(msg.sender).transfer(usdInEth);
   }
+
+  /// @notice Calim a liquidated nft
+  // transfer liquidated nft from the old owner to new owner
+  // IMPORTANT: the pool has the ability to transfer any nft without
+  // any approvals.
+  function claim(uint id, address recipient) external {
+    IdNFT.Nft memory nft = dnft.idToNft(id);
+    require(nft.isClaimable, "dNFT: NFT is not liquidated");
+    address owner = dnft.ownerOf(id);
+    dnft.transferFrom(owner, recipient, id);
+  }
+
 }
 

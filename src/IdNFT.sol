@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 interface IdNFT {
   struct Nft {
-    // TODO: remove this!
+    // TODO: remove this! can be replaced by dyad.balanceOf(id)
     uint balance; // dyad directly owned by the dnft holder 
     uint deposit; // dyad balance in pool
     uint xp;      // always positive, always inflationary
@@ -33,6 +33,7 @@ interface IdNFT {
   function lastCheckpointForIdOf(uint id) external view returns (uint);
   function totalSupply() external view returns (uint);
   function idToNft(uint) external view returns (Nft memory);
+  function transferFrom(address from, address to, uint tokenId) external view returns (uint);
 
 
   // ONLY FOR TESTING

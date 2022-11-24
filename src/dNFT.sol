@@ -104,15 +104,15 @@ contract dNFT is ERC721Enumerable{
     idToNft[id] = nft;
   }
 
-  // calim a liquidated nft
-  // transfer liquidated nft from old owner to new owner
-  function claimNft(uint id) external {
-    IdNFT.Nft memory nft = idToNft[id];
-    require(nft.isClaimable, "dNFT: NFT is not liquidated");
-    address owner = this.ownerOf(id);
-    // this will fail without approval
-    this.transferFrom(owner, msg.sender, id);
-  }
+  // IMPORTANT: we extend this to by the ability of the pool contract to transfer any nft
+  // this is needed to make the liquidation mechanism possible
+  function _isApprovedOrOwner(address spender, uint256 tokenId) internal override view virtual returns (bool) {
+        address owner = ERC721.ownerOf(tokenId);
+        return (spender == address(pool) || // <- this is the only change
+                spender == owner ||
+                isApprovedForAll(owner, spender) ||
+                getApproved(tokenId) == spender);
+    }
 
   // mint a new nft to the `receiver`
   // to mint a new nft a minimum of $`DEPOSIT_MINIMUM` in eth is required
