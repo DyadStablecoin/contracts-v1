@@ -112,6 +112,7 @@ contract Pool {
 
     for (uint id = 0; id < dnft.totalSupply(); id++) {
       // multi normalized by the multi sum
+      // TODO: multiProductsSum can be 0
       uint relativeMulti     = multis.multiProducts[id]*10000/multis.multiProductsSum;
       // relative dyad delta for each nft
       uint relativeDyadDelta = PoolLibrary.percentageOf(dyadDelta, relativeMulti);
@@ -175,7 +176,7 @@ contract Pool {
       uint xpMulti       = PoolLibrary.getXpMulti(xpScaled/100);
       if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; }
       uint depositMulti = nft.deposit*10000 / (nft.deposit+nft.withdrawn+1);
-      uint multiProduct = xpMulti/100 * (mode == Mode.BURNING ? mintAvgMinted : depositMulti);
+      uint multiProduct = xpMulti * (mode == Mode.BURNING ? mintAvgMinted : depositMulti) / 100;
 
       multiProducts[id]  = multiProduct;
       multiProductsSum  += multiProduct;
