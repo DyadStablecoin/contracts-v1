@@ -70,7 +70,7 @@ contract Pool {
   // - Updates each dnft metadata to reflect its updated xp, balance and deposit.
   // - To incentivize nft holders to call this method, there is a xp boost to the first
   //   nft of the owner calling it.
-  function sync() public {
+  function sync() public returns (uint) {
     uint newEthPrice = uint(getNewEthPrice());
     // determine the mode we are in
     Mode mode = newEthPrice > lastEthPrice ? Mode.MINTING : Mode.BURNING;
@@ -82,7 +82,6 @@ contract Pool {
 
     // the amount of dyad to burn/mint
     uint dyadDelta = updateNFTs(ethChange, mode);
-    console.log("dyadDelta: %s", dyadDelta);
 
     if (mode == Mode.MINTING) {
       dyad.mint(address(this), dyadDelta);
@@ -94,6 +93,7 @@ contract Pool {
 
     lastEthPrice = newEthPrice;
     emit Synced(newEthPrice);
+    return dyadDelta;
   }
 
   /// @param ethChange  Eth price change in basis points

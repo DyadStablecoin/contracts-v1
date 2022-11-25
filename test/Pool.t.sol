@@ -9,34 +9,55 @@ import "ds-test/test.sol";
 import {IdNFT} from "../src/IdNFT.sol";
 import {dNFT} from "../src/dNFT.sol";
 import {PoolLibrary} from "../src/PoolLibrary.sol";
-import {IAggregatorV3Test} from "../src/AggregatorV3Interface.t.sol";
+import {OracleMock} from "../src/AggregatorV3Interface.t.sol";
 
 interface CheatCodes {
    // Gets address for a given private key, (privateKey) => (address)
    function addr(uint256) external returns (address);
 }
 
+// reproduce eikes equations
+// https://docs.google.com/spreadsheets/d/1pegDYo8hrOQZ7yZY428F_aQ_mCvK0d701mygZy-P04o/edit#gid=0
+// There are many hard coded values here that are based on the equations in the 
+// google sheet.
 contract PoolTest is Test {
   using stdStorage for StdStorage;
 
   DYAD public dyad;
   Pool public pool;
   IdNFT public dnft;
+  OracleMock public oracle;
 
   CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
 
   function setUp() public {
-    IAggregatorV3Test agt = new IAggregatorV3Test();
+    oracle = new OracleMock();
     dyad = new DYAD();
 
     // init dNFT contract
     dNFT _dnft = new dNFT(address(dyad));
     dnft = IdNFT(address(_dnft));
 
-    pool = new Pool(address(dnft), address(dyad), address(agt));
+    pool = new Pool(address(dnft), address(dyad), address(oracle));
 
     dyad.setMinter(address(pool));
     dnft.setPool(address(pool));
+
+    // set oracle price
+    vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(95000000))); 
+    // set DEPOSIT_MINIMUM to something super low, so we do not run into the $5k limit
+    stdstore.target(address(dnft)).sig("DEPOSIT_MINIMUM()").checked_write(77);
+
+    // mint 10 nfts with a specific deposit to re-create the equations
+    for (uint i = 0; i < 10; i++) {
+      dnft.mintNft{value: 10106 wei}(cheats.addr(i+1)); // i+1 to avoid 0x0 address
+    }
+
+    setNfts();
+
+    vm.store(address(pool), bytes32(uint(0)), bytes32(uint(100000000))); // lastEthPrice
+    vm.store(address(pool), bytes32(uint(1)), bytes32(uint(1079)));      // min xp
+    vm.store(address(pool), bytes32(uint(2)), bytes32(uint(8000)));      // max xp
   }
 
   function overwriteLastEthPrice(uint newPrice) public {
@@ -44,44 +65,22 @@ contract PoolTest is Test {
   }
 
   // set balance, deposit, xp
-  // NOTE: I get a slot error for isClaimable
+  // NOTE: I get a slot error for isClaimable so we do not set it here and 
+  // leave it as it is.
   function overwriteNft(uint id, uint xp, uint deposit, uint balance) public {
     IdNFT.Nft memory nft = dnft.idToNft(id);
     nft.balance = balance; nft.deposit = deposit; nft.xp = xp;
 
-    stdstore.target(address(dnft))
-      .sig("idToNft(uint256)")
-      .with_key(id)
-      .depth(0)
-      .checked_write(nft.balance);
-    stdstore.target(address(dnft))
-      .sig("idToNft(uint256)")
-      .with_key(id)
-      .depth(1)
-      .checked_write(nft.deposit);
-    stdstore.target(address(dnft))
-      .sig("idToNft(uint256)")
-      .with_key(id)
-      .depth(2)
-      .checked_write(nft.xp);
-    // stdstore.target(address(dnft))
-    //   .sig("idToNft(uint256)")
-    //   .with_key(id)
-    //   .depth(3)
-    //   .checked_write(nft.isClaimable);
+    stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
+      .depth(0).checked_write(nft.balance);
+    stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
+      .depth(1).checked_write(nft.deposit);
+    stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
+      .depth(2).checked_write(nft.xp);
   }
 
-  // reproduce eikes equations
-  function testSync() public {
-    vm.store(address(pool), bytes32(uint(0)), bytes32(uint(95000000))); // lastEthPrice
-    // set DEPOSIT_MINIMUM to something super low
-    stdstore.target(address(dnft)).sig("DEPOSIT_MINIMUM()").checked_write(77);
-
-    for (uint i = 0; i < 10; i++) {
-      dnft.mintNft{value: 10106 wei}(cheats.addr(i+1)); // i+1 to avoid 0x0 address
-    }
-
-    // id, xp, deposit, balance
+  function setNfts() internal {
+    // overwrite id, xp, deposit, balance for each nft
     overwriteNft(0, 2161, 146,  3920);
     overwriteNft(1, 7588, 4616, 7496);
     overwriteNft(2, 3892, 2731, 10644);
@@ -92,56 +91,19 @@ contract PoolTest is Test {
     overwriteNft(7, 7000, 5873, 9359);
     overwriteNft(8, 3435, 1753, 4427);
     overwriteNft(9, 1079, 2002, 244);
+  }
 
-    vm.store(address(pool), bytes32(uint(0)), bytes32(uint(100000000))); // lastEthPrice
-    vm.store(address(pool), bytes32(uint(1)), bytes32(uint(1079)));      // min xp
-    vm.store(address(pool), bytes32(uint(2)), bytes32(uint(8000)));      // max xp
-    console.log("dyad total supply: %s", dyad.totalSupply());
+  function testSyncEikesEquationsBurn() public {
+    // change new oracle price to something lower so we trigger the burn
+    vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(95000000))); 
+    uint dyadDelta = pool.sync();
+    assertEq(dyadDelta, 4800);
+  }
 
-    pool.sync();
-
-
-    // dnft.addTestNft(1, 2161, 146, 3920);
-    // pool.sync();
-
-    // // sanity check
-    // assertTrue(pool.lastEthPrice() > 0);
-
-    // overwriteLastEthPrice(100000000000);
-    // for (uint i = 0; i < 10; i++) {
-    //   dnft.mintNft{value: 1000 ether}(cheats.addr(i+1)); // i+1 to avoid 0x0 address
-    // }
-
-    // for (uint i = 0; i < 10; i++) {
-    //   vm.prank(cheats.addr(i+1)); 
-    //   dnft.withdraw(i, 200000000000000000000000); 
-    // }
-
-    // IdNFT.Nft memory metadata = dnft.idToNft(1);
-
-    // overwriteLastEthPrice(100000000000);
-    // // overwriteLastEthPrice(130000000000);
-    // pool.sync();
-
-    // mint some dyad
-    // dnft.mintNft{value: 5 ether}(address(this));
-    // dnft.mintDyad{value: 2 ether}(0); 
-
-    // dnft.mintNft{value: 10 ether}(address(this));
-    // dnft.mintDyad{value: 3 ether}(1); 
-
-    // dnft.mintNft{value: 8 ether}(address(this));
-    // dnft.mintDyad{value: 1 ether}(2); 
-
-    // IdNFT.Nft memory nft0 = dnft.idToNft(0);
-    // console.log(nft0.deposit);
-    // console.log(nft0.xp);
-
-    // overwriteLastEthPrice(130000000000);
-    // pool.sync();
-
-    // nft0 = dnft.idToNft(0);
-    // console.log(nft0.deposit);
-    // console.log(nft0.xp);
+  function testSyncEikesEquationsMint() public {
+    // change new oracle price to something higher so we trigger the mint
+    vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(110000000))); 
+    uint dyadDelta = pool.sync();
+    assertEq(dyadDelta, 9600);
   }
 }
