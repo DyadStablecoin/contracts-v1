@@ -4,9 +4,9 @@ pragma solidity ^0.8.13;
 interface IdNFT {
   struct Nft {
     // TODO: rename to withdrawn
-    uint balance; // dyad directly owned by the dnft holder 
-    uint deposit; // dyad balance in pool
-    uint xp;      // always positive, always inflationary
+    uint withdrawn; // dyad directly owned by the dnft holder 
+    uint deposit;   // dyad balance in pool
+    uint xp;        // always positive, always inflationary
     bool isClaimable; // is true after liquidation
   }
 

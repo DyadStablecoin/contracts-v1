@@ -117,8 +117,8 @@ contract dNFTTest is Test {
     IdNFT.Nft memory nft = dnft.idToNft(0);
     // after the mint, the nft should have a deposit
     assertTrue(nft.deposit >  0);
-    // but no balance, 
-    assertTrue(nft.balance == 0);
+    // but no withdrawn, 
+    assertTrue(nft.withdrawn == 0);
     // because all dyad is in the pool.
     assertTrue(dyad.balanceOf(address(pool)) > 0);
 

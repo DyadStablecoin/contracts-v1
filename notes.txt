@@ -4,7 +4,7 @@ eth at 1.2k = 120000000000
 120148000000
 
 TODO:
-- [ ] Remove balance because we can not keep track of it
+- [X] Remove balance because we can not keep track of it
       Balance is more like a virtual thing
       This should be called withdrawn
 

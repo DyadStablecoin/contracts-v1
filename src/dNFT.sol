@@ -166,11 +166,11 @@ contract dNFT is ERC721Enumerable{
 
     // update nft
     nft.deposit = nft.deposit.sub(amount);
-    nft.balance = nft.balance.add(amount);
+    nft.withdrawn = nft.withdrawn.add(amount);
 
     // update max value
-    if (nft.balance > MAX_BALANCE) {
-      MAX_BALANCE = nft.balance;
+    if (nft.withdrawn > MAX_BALANCE) {
+      MAX_BALANCE = nft.withdrawn;
     }
 
     emit Withdraw(msg.sender, id, amount);
@@ -181,7 +181,6 @@ contract dNFT is ERC721Enumerable{
   /// @param amount The amount of dyad to deposit
   function deposit(uint id, uint amount) external onlyNFTOwner(id) {
     IdNFT.Nft storage nft = idToNft[id];
-    require(amount <= nft.balance, "Not enough dyad in balance to deposit");
 
     // transfer dyad to the nft
     // approve the pool to spend the dyad of this contract
@@ -191,8 +190,8 @@ contract dNFT is ERC721Enumerable{
     pool.deposit(amount);
 
     // update nft
-    nft.deposit = nft.deposit.add(amount);
-    nft.balance = nft.balance.sub(amount);
+    nft.deposit   = nft.deposit.add(amount);
+    nft.withdrawn = nft.withdrawn.sub(amount);
 
     // update max value
     if (nft.deposit > MAX_DEPOSIT) {

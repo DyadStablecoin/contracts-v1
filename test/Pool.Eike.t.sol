@@ -64,15 +64,15 @@ contract PoolTest is Test {
     vm.store(address(pool), 0, bytes32(newPrice));
   }
 
-  // set balance, deposit, xp
+  // set withdrawn, deposit, xp
   // NOTE: I get a slot error for isClaimable so we do not set it here and 
   // leave it as it is.
-  function overwriteNft(uint id, uint xp, uint deposit, uint balance) public {
+  function overwriteNft(uint id, uint xp, uint deposit, uint withdrawn) public {
     IdNFT.Nft memory nft = dnft.idToNft(id);
-    nft.balance = balance; nft.deposit = deposit; nft.xp = xp;
+    nft.withdrawn = withdrawn; nft.deposit = deposit; nft.xp = xp;
 
     stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
-      .depth(0).checked_write(nft.balance);
+      .depth(0).checked_write(nft.withdrawn);
     stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
       .depth(1).checked_write(nft.deposit);
     stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
@@ -80,7 +80,7 @@ contract PoolTest is Test {
   }
 
   function setNfts() internal {
-    // overwrite id, xp, deposit, balance for each nft to the hard-coded
+    // overwrite id, xp, deposit, withdrawn for each nft to the hard-coded
     // values in the google sheet
     overwriteNft(0, 2161, 146,  3920 );
     overwriteNft(1, 7588, 4616, 7496 );

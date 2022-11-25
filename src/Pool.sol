@@ -65,7 +65,7 @@ contract Pool {
   // The "heart" of the protocol.
   // - Gets the latest eth price and determines if new dyad should be minted or
   //   old dyad should be burned to keep the peg.
-  // - Updates each dnft metadata to reflect its updated xp, balance and deposit.
+  // - Updates each dnft metadata to reflect its updated xp, withdrawn and deposit.
   // - To incentivize nft holders to call this method, there is a xp boost to the first
   //   nft of the owner calling it.
   function sync() public returns (uint) {
@@ -145,7 +145,7 @@ contract Pool {
       // check for liquidation
       if (mode == Mode.BURNING) {
         // liquidation limit is 5% of the minted dyad
-        uint liquidationLimit = PoolLibrary.percentageOf(nft.deposit+nft.balance, 500);
+        uint liquidationLimit = PoolLibrary.percentageOf(nft.deposit+nft.withdrawn, 500);
         if (nft.deposit < liquidationLimit) { nft.isClaimable = true; }
       }
 
@@ -174,10 +174,10 @@ contract Pool {
       IdNFT.Nft memory nft = dnft.idToNft(id);
 
       uint xpScaled      = (nft.xp-MIN_XP)*10000 / (MAX_XP-MIN_XP);
-      uint mintAvgMinted = (nft.balance+nft.deposit)*10000 / (dyad.totalSupply()/nftTotalSupply+1);
+      uint mintAvgMinted = (nft.withdrawn+nft.deposit)*10000 / (dyad.totalSupply()/nftTotalSupply+1);
       uint xpMulti       = PoolLibrary.getXpMulti(xpScaled/100);
       if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; }
-      uint depositMulti = nft.deposit*10000 / (nft.deposit+nft.balance+1);
+      uint depositMulti = nft.deposit*10000 / (nft.deposit+nft.withdrawn+1);
       uint multiProduct = xpMulti/100 * (mode == Mode.BURNING ? mintAvgMinted : depositMulti);
 
       multiProducts[id]  = multiProduct;
