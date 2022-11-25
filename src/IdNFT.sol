@@ -11,6 +11,7 @@ interface IdNFT {
   }
 
   function updateMaxXP(uint newMaxXP) external;
+  function MIN_XP() external view returns (uint);
   function MAX_XP() external view returns (uint);
   function MAX_BALANCE() external view returns (uint);
   function MAX_DEPOSIT() external view returns (uint);
@@ -35,6 +36,8 @@ interface IdNFT {
   function totalSupply() external view returns (uint);
   function idToNft(uint) external view returns (Nft memory);
   function transferFrom(address from, address to, uint tokenId) external view returns (uint);
+
+  function updateXP(uint minXP, uint maxXP) external;
 
 
   // ONLY FOR TESTING

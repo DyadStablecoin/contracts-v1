@@ -17,6 +17,19 @@ contract dNFT is ERC721Enumerable{
   // to mint a dnft $ 5k in eth are required
   uint public DEPOSIT_MINIMUM = 5000000000000000000000;
 
+  // here we store the maximum value over every dNFT,
+  // which allows us to do a normalization, without iterating over
+  // all of them to find the max value.
+  // Why init to 100? Because otherwise they are set to 0 and the 
+  // normalization function in the `PoolLibrary` breaks. We always
+  // need to make sure that these values are not smaller than 100.
+  uint public MIN_XP      = 100;
+  uint public MAX_XP      = 100;
+  uint public MAX_BALANCE = 100;
+  uint public MAX_DEPOSIT = 100;
+
+  uint public totalXp     = 0;
+
   // the only ability the deployer has is to set the pool once.
   // once it is set it is impossible to change it.
   address public deployer;
@@ -24,18 +37,6 @@ contract dNFT is ERC721Enumerable{
 
   DYAD public dyad;
   Pool public pool;
-
-  // here we store the maximum value over every dNFT,
-  // which allows us to do a normalization, without iterating over
-  // all of them to find the max value.
-  // Why init to 100? Because otherwise they are set to 0 and the 
-  // normalization function in the `PoolLibrary` breaks. We always
-  // need to make sure that these values are not smaller than 100.
-  uint public MAX_XP      = 100;
-  uint public MAX_BALANCE = 100;
-  uint public MAX_DEPOSIT = 100;
-
-  uint public totalXp     = 0;
 
   // mapping from nft id to nft data
   mapping(uint => IdNFT.Nft) public idToNft;
@@ -82,10 +83,9 @@ contract dNFT is ERC721Enumerable{
   }
 
   // we need to update the max xp value from the pool, that is why we need this
-  function updateMaxXP(uint newXP) external onlyPool {
-    if (newXP > MAX_XP) {
-      MAX_XP = newXP;
-    }
+  function updateXP(uint minXP, uint maxXP) external onlyPool {
+    if (minXP < MAX_XP) { MIN_XP = minXP; }
+    if (maxXP > MAX_XP) { MAX_XP = maxXP; }
   }
 
   // the pool needs a function to update nft info

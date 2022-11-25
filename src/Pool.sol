@@ -14,8 +14,6 @@ contract Pool {
   // IMPORTANT: do not change the ordering of these variables
   // because some tests depend on this specific slot arrangement.
   uint public lastEthPrice;
-  uint MIN_XP;
-  uint MAX_XP;
 
   IdNFT public dnft;
   DYAD public dyad;
@@ -110,7 +108,7 @@ contract Pool {
     // we use these to keep track of the max/min xp values for this sync, 
     // so we can save them in storage to be used in the next sync.
     uint minXp = type(uint256).max;
-    uint maxXp = MAX_XP;
+    uint maxXp = dnft.MAX_XP();
 
     for (uint id = 0; id < dnft.totalSupply(); id++) {
       // multi normalized by the multi sum
@@ -158,8 +156,7 @@ contract Pool {
     }
 
     // save new min/max xp in storage
-    MIN_XP = minXp;
-    MAX_XP = maxXp;
+    dnft.updateXP(minXp, maxXp);
   }
 
 
@@ -173,7 +170,7 @@ contract Pool {
     for (uint id = 0; id < nftTotalSupply; id++) {
       IdNFT.Nft memory nft = dnft.idToNft(id);
 
-      uint xpScaled      = (nft.xp-MIN_XP)*10000 / (MAX_XP-MIN_XP);
+      uint xpScaled      = (nft.xp-dnft.MIN_XP())*10000 / (dnft.MAX_XP()-dnft.MIN_XP());
       uint mintAvgMinted = (nft.withdrawn+nft.deposit)*10000 / (dyad.totalSupply()/nftTotalSupply+1);
       uint xpMulti       = PoolLibrary.getXpMulti(xpScaled/100);
       if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; }

@@ -56,8 +56,8 @@ contract PoolTest is Test {
     setNfts();
 
     vm.store(address(pool), bytes32(uint(0)), bytes32(uint(100000000))); // lastEthPrice
-    vm.store(address(pool), bytes32(uint(1)), bytes32(uint(1079)));      // min xp
-    vm.store(address(pool), bytes32(uint(2)), bytes32(uint(8000)));      // max xp
+    stdstore.target(address(dnft)).sig("MIN_XP()").checked_write(1079); // min xp
+    stdstore.target(address(dnft)).sig("MAX_XP()").checked_write(8000); // max xp
   }
 
   function overwriteLastEthPrice(uint newPrice) public {

@@ -65,7 +65,7 @@ contract dNFTTest is Test {
   }
 
   // --------------------- Nft Minting ---------------------
-  function testMintNft() public {
+  function testMintOneNft() public {
     uint id = dnft.mintNft{value: 5 ether}(address(this));
     IdNFT.Nft memory metadata = dnft.idToNft(0);
 
@@ -74,6 +74,8 @@ contract dNFTTest is Test {
     assertEq(metadata.withdrawn,                        0);
     assertEq(metadata.deposit  , ORACLE_PRICE*50000000000);
     assertEq(metadata.xp       ,                     9000);
+
+    // pool.sync();
   }
 
   function testMintNftTotalSupply() public {
