@@ -99,6 +99,15 @@ contract PoolTest is Test {
     vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(95000000))); 
     uint dyadDelta = pool.sync();
     assertEq(dyadDelta, 4800);
+
+    // check deposits after newly burned dyad. SOME ROUNDING ERRORS!
+    IdNFT.Nft memory nft = dnft.idToNft(0); 
+                           assertEq(nft.deposit, 0);
+    nft = dnft.idToNft(1); assertEq(nft.deposit, 4365);
+    nft = dnft.idToNft(2); assertEq(nft.deposit, 1805);
+    nft = dnft.idToNft(3); assertEq(nft.deposit, 4000);
+    nft = dnft.idToNft(4); assertEq(nft.deposit, 1724);
+    nft = dnft.idToNft(5); assertEq(nft.deposit, 6250);
   }
 
   function testSyncEikesEquationsMint() public {
@@ -107,7 +116,7 @@ contract PoolTest is Test {
     uint dyadDelta = pool.sync();
     assertEq(dyadDelta, 9600);
 
-    // check newly minted dyad. SOME ROUNDING ERRORS!
+    // check deposits after newly minted dyad. SOME ROUNDING ERRORS!
     IdNFT.Nft memory nft = dnft.idToNft(0); 
                            assertEq(nft.deposit, 187);
     nft = dnft.idToNft(1); assertEq(nft.deposit, 6592);
