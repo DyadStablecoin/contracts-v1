@@ -40,10 +40,10 @@ contract dNFT is ERC721Enumerable{
   // mapping from nft id to nft data
   mapping(uint => IdNFT.Nft) public idToNft;
 
-  event MintNft (address indexed to, uint indexed id);
-  event MintDyad(address indexed to, uint indexed id, uint amount);
-  event Withdraw(address indexed to, uint indexed id, uint amount);
-  event Deposit (address indexed to, uint indexed id, uint amount);
+  event NftMinted(address indexed to, uint indexed id);
+  event MintDyad (address indexed to, uint indexed id, uint amount);
+  event Withdraw (address indexed to, uint indexed id, uint amount);
+  event Deposit  (address indexed to, uint indexed id, uint amount);
 
   /// @dev Check if owner of NFT is msg.sender
   /// @param id The id of the NFT
@@ -122,10 +122,10 @@ contract dNFT is ERC721Enumerable{
     IdNFT.Nft storage nft = idToNft[id];
 
     // add 9k xp to the nft to start with
-    nft.xp = nft.xp.add(90000);
+    nft.xp = nft.xp.add(9000);
     totalXp = totalXp.add(nft.xp);
 
-    emit MintNft(receiver, id);
+    emit NftMinted(receiver, id);
     return id;
   }
 

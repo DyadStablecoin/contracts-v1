@@ -14,6 +14,7 @@ interface IdNFT {
   function MAX_XP() external view returns (uint);
   function MAX_BALANCE() external view returns (uint);
   function MAX_DEPOSIT() external view returns (uint);
+  function MAX_SUPPLY() external view returns (uint);
   function totalXp() external view returns (uint);
 
   function pool() external view returns (address);

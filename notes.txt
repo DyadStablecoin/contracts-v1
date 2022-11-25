@@ -3,7 +3,7 @@ eth at 1.2k = 120000000000
 
 120148000000
 
-oracle address mainnet: 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419
+chainlink oracle mainnet: 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419
 
 TODO:
 - [X] Remove balance because we can not keep track of it
