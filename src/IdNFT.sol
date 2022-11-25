@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 interface IdNFT {
   struct Nft {
-    // TODO: remove this! can be replaced by dyad.balanceOf(id)
+    // TODO: rename to withdrawn
     uint balance; // dyad directly owned by the dnft holder 
     uint deposit; // dyad balance in pool
     uint xp;      // always positive, always inflationary
