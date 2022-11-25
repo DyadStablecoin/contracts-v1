@@ -67,18 +67,27 @@ contract dNFTTest is Test {
   // --------------------- Nft Minting ---------------------
   function testMintNft() public {
     uint id = dnft.mintNft{value: 5 ether}(address(this));
-
-    assertEq(id,                                           0);
-    assertEq(dnft.totalSupply(),                           1);
     IdNFT.Nft memory metadata = dnft.idToNft(0);
-    assertEq(metadata.withdrawn,                           0);
-    assertEq(metadata.deposit  ,    ORACLE_PRICE*50000000000);
-    assertEq(metadata.xp       ,                        9000);
+
+    assertEq(id,                                        0);
+    assertEq(dnft.totalSupply(),                        1);
+    assertEq(metadata.withdrawn,                        0);
+    assertEq(metadata.deposit  , ORACLE_PRICE*50000000000);
+    assertEq(metadata.xp       ,                     9000);
   }
+
+  function testMintNftTotalSupply() public {
+    for (uint i = 0; i < 50; i++) {
+      dnft.mintNft{value: 5 ether}(address(this));
+    }
+    assertEq(dnft.totalSupply(), 50);
+  }
+
   function testFailMintNftDepositMinimum() public {
     // to mint an nft, we need to send 5 ETH
     dnft.mintNft{value: 4 ether}(address(this));
   }
+
   function testFailMintNftMaximumSupply() public {
     // only `dnft.MAXIMUM_SUPPLY` nfts can be minted
     for (uint i = 0; i < dnft.MAX_SUPPLY()+1; i++) {
