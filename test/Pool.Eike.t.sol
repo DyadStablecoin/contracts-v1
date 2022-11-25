@@ -106,5 +106,14 @@ contract PoolTest is Test {
     vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(110000000))); 
     uint dyadDelta = pool.sync();
     assertEq(dyadDelta, 9600);
+
+    // check newly minted dyad. SOME ROUNDING ERRORS!
+    IdNFT.Nft memory nft = dnft.idToNft(0); 
+                           assertEq(nft.deposit, 187);
+    nft = dnft.idToNft(1); assertEq(nft.deposit, 6592);
+    nft = dnft.idToNft(2); assertEq(nft.deposit, 2966);
+    nft = dnft.idToNft(3); assertEq(nft.deposit, 5213);
+    nft = dnft.idToNft(4); assertEq(nft.deposit, 2544);
+    nft = dnft.idToNft(5); assertEq(nft.deposit, 7833);
   }
 }
