@@ -2,10 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/console.sol";
-
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-
 import {DYAD} from "../src/dyad.sol";
 import {Pool} from "../src/pool.sol";
 import {IdNFT} from "../src/IdNFT.sol";
@@ -19,9 +17,9 @@ contract dNFT is ERC721Enumerable{
   // to mint a dnft $ 5k in eth are required
   uint public DEPOSIT_MINIMUM = 5000000000000000000000;
 
-  // the only ability the owner has is to set the pool once.
+  // the only ability the deployer has is to set the pool once.
   // once it is set it is impossible to change it.
-  address public owner;
+  address public deployer;
   bool private isPoolSet = false;
 
   DYAD public dyad;
@@ -61,14 +59,14 @@ contract dNFT is ERC721Enumerable{
   }
 
   /// @dev Check if caller is the owner
-  modifier onlyOwner() {
-    require(owner == msg.sender, "dNFT: Only owner can call this function");
+  modifier onlyDeployer() {
+    require(deployer == msg.sender, "dNFT: Only deployer can call this function");
     _;
   }
 
   constructor(address _dyad) ERC721("DYAD NFT", "dNFT") {
-    owner = msg.sender;
-    dyad = DYAD(_dyad);
+    deployer = msg.sender;
+    dyad     = DYAD(_dyad);
 
     // spcecial mint for core-team/contributors/early-adopters/investors
     // _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
@@ -76,10 +74,9 @@ contract dNFT is ERC721Enumerable{
     // _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
   }
 
-  function setPool(address newPool) external onlyOwner {
-    require(!isPoolSet,            "dNFT: Pool is already set");
-    require(msg.sender == owner,   "dNFT: Only owner can set pool");
-    require(newPool != address(0), "dNFT: Pool address cannot be 0x0");
+  function setPool(address newPool) external onlyDeployer {
+    require(!isPoolSet,             "dNFT: Pool is already set");
+    require(newPool != address(0),  "dNFT: Pool address cannot be 0x0");
     pool = Pool(newPool);
     isPoolSet = true;
   }

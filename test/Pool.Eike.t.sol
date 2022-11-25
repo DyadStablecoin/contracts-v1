@@ -9,7 +9,7 @@ import "ds-test/test.sol";
 import {IdNFT} from "../src/IdNFT.sol";
 import {dNFT} from "../src/dNFT.sol";
 import {PoolLibrary} from "../src/PoolLibrary.sol";
-import {OracleMock} from "../src/AggregatorV3Interface.t.sol";
+import {OracleMock} from "./Oracle.t.sol";
 
 interface CheatCodes {
    // Gets address for a given private key, (privateKey) => (address)
