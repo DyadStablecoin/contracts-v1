@@ -60,10 +60,6 @@ contract PoolTest is Test {
     stdstore.target(address(dnft)).sig("MAX_XP()").checked_write(8000); // max xp
   }
 
-  function overwriteLastEthPrice(uint newPrice) public {
-    vm.store(address(pool), 0, bytes32(newPrice));
-  }
-
   // set withdrawn, deposit, xp
   // NOTE: I get a slot error for isClaimable so we do not set it here and 
   // leave it as it is.

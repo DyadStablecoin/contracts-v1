@@ -61,8 +61,9 @@ contract dNFTTest is Test {
   // needed, so we can receive eth transfers
   receive() external payable {}
 
-  function testFailSetPool() public {
-    vm.expectRevert();
+  function testFailSetPoolOnlyOnce() public {
+    // you can only set the pool once. As it was already set in the setUp function
+    // this should fail.
     dnft.setPool(address(this));
   }
 
@@ -100,6 +101,36 @@ contract dNFTTest is Test {
       dnft.mintNft{value: 5 ether}(address(this));
     }
   }
+  // -------------------------------------------------------
+
+  // --------------------- DYAD Minting ---------------------
+  function testFailMintDyadNotNftOwner() public {
+    // only the owner of the nft can mint dyad
+    dnft.mintNft{value: 5 ether}(address(this));
+    vm.prank(address(0));
+    dnft.mintDyad{value: 1 ether}(0);
+  }
+
+  function testFailMintDyadWithoutEth() public {
+    // to mint dyad, we need to send ETH > 0
+    dnft.mintNft{value: 5 ether}(address(this));
+    dnft.mintDyad{value: 0 ether}(0);
+  }
+
+  function testMintDyad() public {
+    dnft.mintNft{value: 5 ether}(address(this));
+    dnft.mintDyad{value: 1 ether}(0);
+  }
+
+  function testMintDyadDeposit() public {
+    dnft.mintNft{value: 5 ether}(address(this));
+    dnft.mintDyad{value: 1 ether}(0);
+    IdNFT.Nft memory metadata = dnft.idToNft(0);
+    // its 6 ETH because we minted 1 ETH dyad and deposited 5 whilte
+    // minting the nft.
+    assertEq(metadata.deposit, ORACLE_PRICE*60000000000);
+  }
+
   // -------------------------------------------------------
 
   // function testMintDyad() public {
