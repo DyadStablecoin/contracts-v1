@@ -119,4 +119,15 @@ contract PoolTest is Test {
     // check deposits after newly minted dyad. SOME ROUNDING ERRORS!
     assertDeposits([187, 6592, 2966, 5213, 2544, 7833]);
   }
+
+  function testSyncLiquidation() public {
+    // we are going to set the oracle price to something super low,
+    // that will trigger the liquidation
+    vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(10000000))); 
+
+    pool.sync();
+
+    // nft 0 is now liquidated, lets claim it!
+    // pool.claim(0, address(this));
+  }
 }
