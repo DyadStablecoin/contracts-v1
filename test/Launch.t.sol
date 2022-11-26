@@ -36,7 +36,11 @@ contract LaunchTest is Test {
     dNFT _dnft = new dNFT(address(dyad), true); // with insider allocation
     dnft       = IdNFT(address(_dnft));
     pool       = new Pool(address(dnft), address(dyad), CHAINLINK_ORACLE_ADDRESS);
-    dnft.setPool(address(pool));
+    dnft.setPool  (address(pool));
+    dyad.setMinter(address(pool));
+
+    addr1 = cheats.addr(1); vm.deal(addr1, 100 ether);
+    addr2 = cheats.addr(2); vm.deal(addr2, 100 ether);
   }
 
   function testInsiderAllocation() public {
@@ -49,6 +53,16 @@ contract LaunchTest is Test {
   }
 
   function testFirstSync() public {
+    pool.sync();
+  }
+
+  function testMintNormallyAndSync() public {
+    dnft.mintNft{value: 5 ether}(address(this));
+    vm.prank(addr1);
+    dnft.mintNft{value: 5 ether}(address(this));
+    vm.prank(addr2);
+    dnft.mintNft{value: 5 ether}(address(this));
+    dnft.mintNft{value: 5 ether}(address(this));
     pool.sync();
   }
 }
