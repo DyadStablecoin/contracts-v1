@@ -128,6 +128,6 @@ contract PoolTest is Test {
     pool.sync();
 
     // nft 0 is now liquidated, lets claim it!
-    // pool.claim(0, address(this));
+    pool.claim(0, address(this));
   }
 }
