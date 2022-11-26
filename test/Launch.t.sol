@@ -17,6 +17,7 @@ interface CheatCodes {
 }
 
 address constant CHAINLINK_ORACLE_ADDRESS = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+uint constant NUMBER_OF_INSIDER_NFTS = 3;
 
 // this should simulate the inital lauch on mainnet
 // IMPORTANT: you have to run this as a mainnet fork!!!
@@ -63,6 +64,15 @@ contract LaunchTest is Test {
     vm.prank(addr2);
     dnft.mintNft{value: 5 ether}(address(this));
     dnft.mintNft{value: 5 ether}(address(this));
+    pool.sync();
+  }
+
+  function testWithdrawAndSync() public {
+    dnft.mintNft{value: 5 ether}(addr1);
+    vm.prank(addr1);
+    // remember the nfts are 0 indexed, so we do not need to increment 
+    // by 1.
+    dnft.withdraw(NUMBER_OF_INSIDER_NFTS, 100000000);
     pool.sync();
   }
 }
