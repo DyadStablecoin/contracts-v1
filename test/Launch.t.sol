@@ -53,6 +53,11 @@ contract LaunchTest is Test {
     assertEq(dnft.pool(), address(pool));
   }
 
+  function testFailSetSetPoolTwice() public {
+    // the pool can only be set once!
+    dnft.setPool(address(pool));
+  }
+
   function testFirstSync() public {
     pool.sync();
   }
