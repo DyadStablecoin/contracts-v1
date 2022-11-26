@@ -17,11 +17,12 @@ interface CheatCodes {
 }
 
 address constant CHAINLINK_ORACLE_ADDRESS = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
-uint constant NUMBER_OF_INSIDER_NFTS = 3;
 
 // this should simulate the inital lauch on mainnet
 // IMPORTANT: you have to run this as a mainnet fork!!!
 contract LaunchTest is Test {
+  uint NUMBER_OF_INSIDER_NFTS;
+
   IdNFT public dnft;
   DYAD public dyad;
   Pool public pool;
@@ -40,13 +41,17 @@ contract LaunchTest is Test {
     dnft.setPool  (address(pool));
     dyad.setMinter(address(pool));
 
+    // directly after deployment the total supply has to be the number
+    // of insider allocations.
+    NUMBER_OF_INSIDER_NFTS = dnft.totalSupply();
+
     addr1 = cheats.addr(1); vm.deal(addr1, 100 ether);
     addr2 = cheats.addr(2); vm.deal(addr2, 100 ether);
   }
 
   function testInsiderAllocation() public {
-    // we have 3 insiders that we allocate for
-    assertEq(dnft.totalSupply(), 3);
+    // we have `NUMBER_OF_INSIDER_NFTS` insiders that we allocate for
+    assertEq(dnft.totalSupply(), NUMBER_OF_INSIDER_NFTS);
   }
 
   function testSetPool() public {

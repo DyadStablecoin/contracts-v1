@@ -59,6 +59,9 @@ contract dNFT is ERC721Enumerable{
       _mintNft(0x7EEfFd5D089b1351ecCC388022d8b823676dF424); // cryptohermetica
       _mintNft(0xCAD2EaDA97Ad393584Fe84A5cCA1ef3093E45ae4); // joeyroth.eth
       _mintNft(0x414b60745072088d013721b4a28a0559b1A9d213); // shafu.eth
+      _mintNft(0x3682827F48F8E023EE40707dEe82620D0B63579f); // Max Entropy
+      _mintNft(0xe779Fb090AF9dfBB3b4C18Ed571ad6390Df52ae2); // dma.eth
+      _mintNft(0x9F919a292e62594f2D8db13F6A4ADB1691D6c60d); // kores
     }
   }
 
