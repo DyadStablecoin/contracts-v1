@@ -20,16 +20,12 @@ contract dNFT is ERC721Enumerable{
   // here we store the maximum value over every dNFT,
   // which allows us to do a normalization, without iterating over
   // all of them to find the max value.
-  // Why init to 100? Because otherwise they are set to 0 and the 
-  // normalization function in the `PoolLibrary` breaks. We always
-  // need to make sure that these values are not smaller than 100.
-  uint public MIN_XP      = 100;
-  uint public MAX_XP      = 100;
-
-  // the only ability the deployer has is to set the pool once.
-  // once it is set it is impossible to change it.
-  address public deployer;
-  bool private isPoolSet = false;
+  // Why init to 900k? Because otherwise they are set to 0 and the 
+  // normalization function in the `PoolLibrary` breaks and 900k is a nice number.
+  uint public MIN_XP = 900000;
+  // after minting the first nft this will be the MAX_XP. After that it will
+  // be updated by the `sync` in the pool contract.
+  uint public MAX_XP = MIN_XP + MAX_SUPPLY;
 
   DYAD public dyad;
   Pool public pool;
@@ -55,32 +51,26 @@ contract dNFT is ERC721Enumerable{
     _;
   }
 
-  /// @dev Check if caller is the owner
-  modifier onlyDeployer() {
-    require(deployer == msg.sender, "dNFT: Only deployer can call this function");
-    _;
-  }
-
-  constructor(address _dyad) ERC721("DYAD NFT", "dNFT") {
-    deployer = msg.sender;
+  constructor(address _dyad, bool withInsiderAllocation) ERC721("DYAD NFT", "dNFT") {
     dyad     = DYAD(_dyad);
 
-    // spcecial mint for core-team/contributors/early-adopters/investors
-    // _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
-    // _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
-    // _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
+    if (withInsiderAllocation) {
+      // spcecial mint for core-team/contributors/early-adopters/investors
+      _mintNft(0x7EEfFd5D089b1351ecCC388022d8b823676dF424); // cryptohermetica
+      _mintNft(0xCAD2EaDA97Ad393584Fe84A5cCA1ef3093E45ae4); // joeyroth.eth
+      _mintNft(0x414b60745072088d013721b4a28a0559b1A9d213); // shafu.eth
+    }
   }
 
-  function setPool(address newPool) external onlyDeployer {
-    require(!isPoolSet,             "dNFT: Pool is already set");
-    require(newPool != address(0),  "dNFT: Pool address cannot be 0x0");
+  function setPool(address newPool) public {
+    // can only be set once, when launching the protocol
+    require(address(pool) == 0x0000000000000000000000000000000000000000,"dNFT: Pool is already set");
     pool = Pool(newPool);
-    isPoolSet = true;
   }
 
   // we need to update the max xp value from the pool, that is why we need this
-  function updateXP(uint minXP, uint maxXP) external onlyPool {
-    if (minXP < MAX_XP) { MIN_XP = minXP; }
+  function updateXP(uint minXP, uint maxXP) public onlyPool {
+    if (minXP < MIN_XP) { MIN_XP = minXP; }
     if (maxXP > MAX_XP) { MAX_XP = maxXP; }
   }
 
@@ -110,6 +100,7 @@ contract dNFT is ERC721Enumerable{
   // the main reason for this method is that we need to be able to mint
   // nfts for the core team and investors without the deposit minimum,
   // this happens in the constructor where we call this method directly.
+  // NOTE: this can only be called `MAX_SUPPLY` times
   function _mintNft(address receiver) private returns (uint) {
     uint id = totalSupply();
     require(id < MAX_SUPPLY, "Max supply reached");
@@ -117,8 +108,14 @@ contract dNFT is ERC721Enumerable{
 
     IdNFT.Nft storage nft = idToNft[id];
 
-    // add 9k xp to the nft to start with
-    nft.xp = nft.xp.add(900000);
+    // add 900k xp to the nft to start with
+    // We do MAX_SUPPLY - totalSupply() not to incentivice anything
+    // but to break the xp symmetry.
+    // +1 to start with a clean 900300
+    nft.xp = nft.xp.add(MIN_XP + (MAX_SUPPLY-totalSupply()+1));
+
+    // the new nft.xp could potentially be a new xp minimum!
+    if (nft.xp < MIN_XP) { MIN_XP = nft.xp; }
 
     emit NftMinted(receiver, id);
     return id;
@@ -160,7 +157,7 @@ contract dNFT is ERC721Enumerable{
     pool.withdraw(msg.sender, amount);
 
     // update nft
-    nft.deposit   = nft.deposit.sub(amount);
+    nft.deposit   = nft.deposit  .sub(amount);
     nft.withdrawn = nft.withdrawn.add(amount);
 
     emit Withdraw(msg.sender, id, amount);

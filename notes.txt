@@ -9,4 +9,6 @@ TODO:
 - [X] Remove balance because we can not keep track of it
       Balance is more like a virtual thing
       This should be called withdrawn
+- [ ] nft.withdrawn should be balanceOf() 
+- [X] when protocol launch we have an xp deadlock
 

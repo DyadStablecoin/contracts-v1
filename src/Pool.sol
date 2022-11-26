@@ -112,7 +112,6 @@ contract Pool {
 
     for (uint id = 0; id < dnft.totalSupply(); id++) {
       // multi normalized by the multi sum
-      // TODO: multiProductsSum can be 0
       uint relativeMulti     = multis.multiProducts[id]*10000/multis.multiProductsSum;
       // relative dyad delta for each nft
       uint relativeDyadDelta = PoolLibrary.percentageOf(dyadDelta, relativeMulti);
@@ -144,7 +143,7 @@ contract Pool {
       // check for liquidation
       if (mode == Mode.BURNING) {
         // liquidation limit is 5% of the minted dyad
-        uint liquidationLimit = PoolLibrary.percentageOf(nft.deposit+nft.withdrawn, 500);
+        uint liquidationLimit = PoolLibrary.percentageOf(nft.withdrawn+nft.deposit, 500);
         if (nft.deposit < liquidationLimit) { nft.isClaimable = true; }
       }
 
@@ -171,6 +170,7 @@ contract Pool {
     for (uint id = 0; id < nftTotalSupply; id++) {
       IdNFT.Nft memory nft = dnft.idToNft(id);
 
+      // NOTE: MAX_XP - MIN_XP could be 0!
       uint xpScaled      = (nft.xp-dnft.MIN_XP())*10000 / (dnft.MAX_XP()-dnft.MIN_XP());
       uint mintAvgMinted = (nft.withdrawn+nft.deposit)*10000 / (dyad.totalSupply()/nftTotalSupply+1);
       uint xpMulti       = PoolLibrary.getXpMulti(xpScaled/100);
@@ -182,6 +182,9 @@ contract Pool {
       multiProductsSum  += multiProduct;
       xpMultis[id]       = xpMulti;
     }
+
+    // so we avoid dividing by 0 in `sync`
+    if (multiProductsSum == 0) { multiProductsSum = 1; }
 
     return Multis(multiProducts, multiProductsSum, xpMultis);
   }

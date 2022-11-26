@@ -12,6 +12,9 @@ contract DYAD is ERC20, ERC20Burnable {
   }
 
   function setMinter(address newMinter) public {
+    // we set this to the pool in the launch process
+    // after that, because the Pool is not controlled by anyone, this
+    // can not be changed anymore.
     require(msg.sender == minter, "Only minter can set minter");
     minter = newMinter;
   }

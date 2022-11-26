@@ -20,7 +20,7 @@ interface CheatCodes {
    function addr(uint256) external returns (address);
 }
 
-contract dNFTTest is Test {
+contract PoolTest is Test {
   using stdStorage for StdStorage;
 
   IdNFT public dnft;
@@ -45,7 +45,7 @@ contract dNFTTest is Test {
     setOraclePrice(ORACLE_PRICE); // $1.2k
 
     // // init dNFT contract
-    dNFT _dnft = new dNFT(address(dyad));
+    dNFT _dnft = new dNFT(address(dyad), false);
     dnft = IdNFT(address(_dnft));
 
     pool = new Pool(address(dnft), address(dyad), address(oracle));
@@ -122,8 +122,7 @@ contract dNFTTest is Test {
     IdNFT.Nft memory nft = dnft.idToNft(0);
     // TODO: it seems that we have to set isClaimable to true, through our logic
     // and not directly through state manipulation
-    IdNFT.Nft memory nft = dnft.idToNft(0);
-    console.log(nft.isClaimable);
+    nft = dnft.idToNft(0);
   }
   function testFailClaimNftNotClaimable() public {
     dnft.mintNft{value: 5 ether}(address(this));
