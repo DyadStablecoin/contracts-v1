@@ -104,7 +104,6 @@ contract dNFTTest is Test {
   function testFailRedeemDyadLessThanRedeemMinimum() public {
     uint REDEEM_AMOUNT = 100000000;
     mintAndTransfer(REDEEM_AMOUNT);
-
     vm.prank(addr1);
     // this is less than the redeem minimum by 1
     pool.redeem(REDEEM_AMOUNT-1);
@@ -115,5 +114,20 @@ contract dNFTTest is Test {
     uint REDEEM_AMOUNT = 100000000;
     mintAndTransfer(REDEEM_AMOUNT);
     pool.redeem(REDEEM_AMOUNT);
+  }
+
+  // --------------------- NFT Claim ---------------------
+  function testClaimNft() public {
+    dnft.mintNft{value: 5 ether}(address(this));
+    IdNFT.Nft memory nft = dnft.idToNft(0);
+    // TODO: it seems that we have to set isClaimable to true, through our logic
+    // and not directly through state manipulation
+    IdNFT.Nft memory nft = dnft.idToNft(0);
+    console.log(nft.isClaimable);
+  }
+  function testFailClaimNftNotClaimable() public {
+    dnft.mintNft{value: 5 ether}(address(this));
+    // can not claim this, because it is not claimable
+    pool.claim(0, addr1);
   }
 }

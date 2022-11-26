@@ -7,7 +7,7 @@ interface IdNFT {
     uint withdrawn; // dyad directly owned by the dnft holder 
     uint deposit;   // dyad balance in pool
     uint xp;        // always positive, always inflationary
-    bool isClaimable; // is true after liquidation
+    bool isClaimable; // is true after liquidation // takes up 1 byte
   }
 
   function updateMaxXP(uint newMaxXP) external;

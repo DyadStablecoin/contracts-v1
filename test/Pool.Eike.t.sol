@@ -62,7 +62,8 @@ contract PoolTest is Test {
 
   // set withdrawn, deposit, xp
   // NOTE: I get a slot error for isClaimable so we do not set it here and 
-  // leave it as it is.
+  // leave it as it is. this seems to be broken for bool rn, see:
+  // https://github.com/foundry-rs/forge-std/pull/103
   function overwriteNft(uint id, uint xp, uint deposit, uint withdrawn) public {
     IdNFT.Nft memory nft = dnft.idToNft(id);
     nft.withdrawn = withdrawn; nft.deposit = deposit; nft.xp = xp;
@@ -73,6 +74,8 @@ contract PoolTest is Test {
       .depth(1).checked_write(nft.deposit);
     stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
       .depth(2).checked_write(nft.xp);
+    // stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
+    //   .depth(3).checked_write(true);
   }
 
   function setNfts() internal {
