@@ -79,10 +79,5 @@ contract LaunchTest is Test {
     dnft.withdraw(NUMBER_OF_INSIDER_NFTS+1, 3 ether);
 
     pool.sync();
-
-    for (uint i = 0; i < NUMBER_OF_INSIDER_NFTS+2; i++) {
-      IdNFT.Nft memory nft = dnft.idToNft(i);
-      console.log(nft.xp, nft.deposit, nft.withdrawn);
-    }
   }
 }

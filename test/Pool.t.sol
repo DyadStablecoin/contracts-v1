@@ -123,7 +123,6 @@ contract PoolTest is Test {
     // TODO: it seems that we have to set isClaimable to true, through our logic
     // and not directly through state manipulation
     nft = dnft.idToNft(0);
-    console.log(nft.isClaimable);
   }
   function testFailClaimNftNotClaimable() public {
     dnft.mintNft{value: 5 ether}(address(this));

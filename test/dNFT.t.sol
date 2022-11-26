@@ -75,10 +75,10 @@ contract dNFTTest is Test {
     assertEq(dnft.totalSupply(),                        1);
     assertEq(metadata.withdrawn,                        0);
     assertEq(metadata.deposit  , ORACLE_PRICE*50000000000);
-    assertEq(metadata.xp       ,                   900000);
+    assertEq(metadata.xp       ,                   900300); 
 
     stdstore.target(address(dnft)).sig("MIN_XP()").checked_write(uint(0));    // min xp
-    stdstore.target(address(dnft)).sig("MAX_XP()").checked_write(uint(900000)); // max xp
+    stdstore.target(address(dnft)).sig("MAX_XP()").checked_write(uint(900300)); // max xp
     pool.sync();
   }
   function testMintNftTotalSupply() public {

@@ -23,8 +23,8 @@ contract dNFT is ERC721Enumerable{
   // Why init to 100? Because otherwise they are set to 0 and the 
   // normalization function in the `PoolLibrary` breaks. We always
   // need to make sure that these values are not smaller than 100.
-  uint public MIN_XP;
-  uint public MAX_XP;
+  uint public MIN_XP = 900000;
+  uint public MAX_XP = MIN_XP + MAX_SUPPLY;
 
   // the only ability the deployer has is to set the pool once.
   // once it is set it is impossible to change it.
@@ -67,13 +67,10 @@ contract dNFT is ERC721Enumerable{
 
     if (withInsiderAllocation) {
       // spcecial mint for core-team/contributors/early-adopters/investors
-      _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
-      _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
-      _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
+      _mintNft(0x7EEfFd5D089b1351ecCC388022d8b823676dF424); // cryptohermetica
+      _mintNft(0xCAD2EaDA97Ad393584Fe84A5cCA1ef3093E45ae4); // joeyroth.eth
+      _mintNft(0x414b60745072088d013721b4a28a0559b1A9d213); // shafu.eth
     }
-    
-    MIN_XP = 900000;
-    MAX_XP = 900000;
   }
 
   function setPool(address newPool) external onlyDeployer {
@@ -83,8 +80,8 @@ contract dNFT is ERC721Enumerable{
   }
 
   // we need to update the max xp value from the pool, that is why we need this
-  function updateXP(uint minXP, uint maxXP) external onlyPool {
-    if (minXP < MAX_XP) { MIN_XP = minXP; }
+  function updateXP(uint minXP, uint maxXP) public onlyPool {
+    if (minXP < MIN_XP) { MIN_XP = minXP; }
     if (maxXP > MAX_XP) { MAX_XP = maxXP; }
   }
 
@@ -114,6 +111,7 @@ contract dNFT is ERC721Enumerable{
   // the main reason for this method is that we need to be able to mint
   // nfts for the core team and investors without the deposit minimum,
   // this happens in the constructor where we call this method directly.
+  // NOTE: this can only be called `MAX_SUPPLY` times
   function _mintNft(address receiver) private returns (uint) {
     uint id = totalSupply();
     require(id < MAX_SUPPLY, "Max supply reached");
@@ -122,9 +120,13 @@ contract dNFT is ERC721Enumerable{
     IdNFT.Nft storage nft = idToNft[id];
 
     // add 900k xp to the nft to start with
-    nft.xp = nft.xp.add(900000);
+    // We do MAX_SUPPLY - totalSupply() not to incentivice anything
+    // but to break the xp symmetry.
+    // +1 to start with a clean 900300
+    nft.xp = nft.xp.add(MIN_XP + (MAX_SUPPLY-totalSupply()+1));
 
-    if (nft.xp > MAX_XP) { MAX_XP = nft.xp; }
+    // the new nft.xp could potentially be a new xp minimum!
+    if (nft.xp < MIN_XP) { MIN_XP = nft.xp; }
 
     emit NftMinted(receiver, id);
     return id;
