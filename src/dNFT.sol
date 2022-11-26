@@ -3,13 +3,15 @@ pragma solidity ^0.8.13;
 
 import "forge-std/console.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import {DYAD} from "../src/dyad.sol";
 import {Pool} from "../src/pool.sol";
 import {IdNFT} from "../src/IdNFT.sol";
 
-contract dNFT is ERC721Enumerable{
+contract dNFT is ERC721Enumerable, ERC721Burnable {
   using SafeMath for uint256;
+  
 
   // maximum number of nfts that can be minted
   uint public MAX_SUPPLY = 300;
@@ -71,6 +73,23 @@ contract dNFT is ERC721Enumerable{
     pool = Pool(newPool);
   }
 
+  // The following functions are overrides required by Solidity.
+  function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
+      internal
+      override(ERC721, ERC721Enumerable)
+  {
+      super._beforeTokenTransfer(from, to, tokenId, batchSize);
+  }
+
+  function supportsInterface(bytes4 interfaceId)
+      public
+      view
+      override(ERC721, ERC721Enumerable)
+      returns (bool)
+  {
+      return super.supportsInterface(interfaceId);
+  }
+
   // we need to update the max xp value from the pool, that is why we need this
   function updateXP(uint minXP, uint maxXP) public onlyPool {
     if (minXP < MIN_XP) { MIN_XP = minXP; }
@@ -82,11 +101,11 @@ contract dNFT is ERC721Enumerable{
     idToNft[id] = nft;
   }
 
-  // IMPORTANT: we extend this to by the ability of the pool contract to transfer any nft
-  // this is needed to make the liquidation mechanism possible
+  // VERY IMPORTANT: we add the pool here so we can burn any dnft. This is needed
+  // to make the liquidation mechanism possible.
   function _isApprovedOrOwner(address spender, uint256 tokenId) internal override view virtual returns (bool) {
     address owner = ERC721.ownerOf(tokenId);
-    return (spender == address(pool) || // <- this is the only change
+    return (spender == address(pool) || // <- this is the only change where we add the pool
             spender == owner ||
             isApprovedForAll(owner, spender) ||
             getApproved(tokenId) == spender);

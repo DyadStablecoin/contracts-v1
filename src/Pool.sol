@@ -110,7 +110,8 @@ contract Pool {
     uint minXp = type(uint256).max;
     uint maxXp = dnft.MAX_XP();
 
-    for (uint id = 0; id < dnft.totalSupply(); id++) {
+    for (uint i = 0; i < dnft.totalSupply(); i++) {
+      uint id = dnft.tokenByIndex(i);
       // multi normalized by the multi sum
       uint relativeMulti     = multis.multiProducts[id]*10000/multis.multiProductsSum;
       // relative dyad delta for each nft
@@ -161,13 +162,14 @@ contract Pool {
 
 
   // NOTE: calculation of the multis is determined by the `mode`
-  function calcMultis(Mode mode) internal view returns (Multis memory) {
+  function calcMultis(Mode mode) internal returns (Multis memory) {
     uint nftTotalSupply = dnft.totalSupply();
     uint multiProductsSum;
     uint[] memory multiProducts = new uint[](nftTotalSupply);
     uint[] memory xpMultis      = new uint[](nftTotalSupply);
 
-    for (uint id = 0; id < nftTotalSupply; id++) {
+    for (uint i = 0; i < nftTotalSupply; i++) {
+      uint id = dnft.tokenByIndex(i);
       IdNFT.Nft memory nft = dnft.idToNft(id);
 
       // NOTE: MAX_XP - MIN_XP could be 0!
@@ -233,7 +235,13 @@ contract Pool {
     nft.isClaimable = false;
     dnft.updateNft(id, nft);
     address owner = dnft.ownerOf(id);
-    dnft.transferFrom(owner, recipient, id);
+    for (uint i = 0; i < dnft.totalSupply(); i++) { console.log(dnft.tokenByIndex(i)); }
+    dnft.burn(id);
+    console.log();
+    for (uint i = 0; i < dnft.totalSupply(); i++) { console.log(dnft.tokenByIndex(i)); }
+
+    // that would mean he has to deposit 5k again...
+    // dnft.mintNft();
     emit Claimed(id, owner, recipient);
   }
 }

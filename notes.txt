@@ -11,4 +11,5 @@ TODO:
       This should be called withdrawn
 - [ ] nft.withdrawn should be balanceOf() -> No I think this is wrong
 - [X] when protocol launch we have an xp deadlock
+- [ ] we need to access the id => nft mapping by tokenByIndex
 
