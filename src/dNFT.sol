@@ -61,19 +61,20 @@ contract dNFT is ERC721Enumerable{
     _;
   }
 
-  constructor(address _dyad) ERC721("DYAD NFT", "dNFT") {
+  constructor(address _dyad, bool withInsiderAllocation) ERC721("DYAD NFT", "dNFT") {
     deployer = msg.sender;
     dyad     = DYAD(_dyad);
 
-    // spcecial mint for core-team/contributors/early-adopters/investors
-    // _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
-    // _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
-    // _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
+    if (withInsiderAllocation) {
+      // spcecial mint for core-team/contributors/early-adopters/investors
+      _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
+      _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
+      _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
+    }
   }
 
   function setPool(address newPool) external onlyDeployer {
     require(!isPoolSet,             "dNFT: Pool is already set");
-    require(newPool != address(0),  "dNFT: Pool address cannot be 0x0");
     pool = Pool(newPool);
     isPoolSet = true;
   }
