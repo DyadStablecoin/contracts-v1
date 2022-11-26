@@ -30,7 +30,7 @@ contract Pool {
   event Claimed(uint indexed id, address indexed from, address indexed to);
 
   /// @dev Check if msg.sender is the nft contract
-  modifier onlyNFT() {
+  modifier onlyNftContract() {
     require(msg.sender == address(dnft), "Pool: Only NFT can call this function");
     _;
   }
@@ -187,7 +187,7 @@ contract Pool {
   }
 
   /// @notice Mint dyad to the NFT
-  function mintDyad(uint minAmount) payable external onlyNFT returns (uint) {
+  function mintDyad(uint minAmount) payable external onlyNftContract returns (uint) {
     require(msg.value > 0, "Pool: You need to send some ETH");
     uint newDyad = uint(getNewEthPrice()).mul(msg.value).div(100000000);
     require(newDyad >= minAmount, "Pool: mintDyad: minAmount not reached");
@@ -197,14 +197,14 @@ contract Pool {
 
   /// @notice Deposit dyad into the pool
   /// @param amount The amount of dyad to deposit
-  function deposit(uint amount) external onlyNFT {
+  function deposit(uint amount) external onlyNftContract {
     dyad.transferFrom(msg.sender, address(this), amount);
   }
 
   /// @notice Withdraw dyad from the pool to the recipient
   /// @param amount The amount of dyad to withdraw
   /// @param recipient The address to withdraw dyad to
-  function withdraw(address recipient, uint amount) external onlyNFT {
+  function withdraw(address recipient, uint amount) external onlyNftContract {
     dyad.transfer(recipient, amount);
   }
 
