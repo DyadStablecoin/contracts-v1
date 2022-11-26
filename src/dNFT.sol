@@ -25,10 +25,6 @@ contract dNFT is ERC721Enumerable{
   // need to make sure that these values are not smaller than 100.
   uint public MIN_XP      = 100;
   uint public MAX_XP      = 100;
-  uint public MAX_BALANCE = 100;
-  uint public MAX_DEPOSIT = 100;
-
-  uint public totalXp     = 0;
 
   // the only ability the deployer has is to set the pool once.
   // once it is set it is impossible to change it.
@@ -123,7 +119,6 @@ contract dNFT is ERC721Enumerable{
 
     // add 9k xp to the nft to start with
     nft.xp = nft.xp.add(900000);
-    totalXp = totalXp.add(nft.xp);
 
     emit NftMinted(receiver, id);
     return id;
@@ -165,13 +160,8 @@ contract dNFT is ERC721Enumerable{
     pool.withdraw(msg.sender, amount);
 
     // update nft
-    nft.deposit = nft.deposit.sub(amount);
+    nft.deposit   = nft.deposit.sub(amount);
     nft.withdrawn = nft.withdrawn.add(amount);
-
-    // update max value
-    if (nft.withdrawn > MAX_BALANCE) {
-      MAX_BALANCE = nft.withdrawn;
-    }
 
     emit Withdraw(msg.sender, id, amount);
   }
@@ -192,11 +182,6 @@ contract dNFT is ERC721Enumerable{
     // update nft
     nft.deposit   = nft.deposit.add(amount);
     nft.withdrawn = nft.withdrawn.sub(amount);
-
-    // update max value
-    if (nft.deposit > MAX_DEPOSIT) {
-      MAX_DEPOSIT = nft.deposit;
-    }
 
     emit Deposit(msg.sender, id, amount);
   }

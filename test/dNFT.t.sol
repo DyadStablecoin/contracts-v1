@@ -82,25 +82,28 @@ contract dNFTTest is Test {
     stdstore.target(address(dnft)).sig("MAX_XP()").checked_write(uint(900000)); // max xp
     pool.sync();
   }
-
   function testMintNftTotalSupply() public {
     for (uint i = 0; i < 50; i++) {
       dnft.mintNft{value: 5 ether}(address(this));
     }
     assertEq(dnft.totalSupply(), 50);
   }
-
   function testFailMintNftDepositMinimum() public {
     // to mint an nft, we need to send 5 ETH
     dnft.mintNft{value: 4 ether}(address(this));
   }
-
   function testFailMintNftMaximumSupply() public {
     // only `dnft.MAXIMUM_SUPPLY` nfts can be minted
     for (uint i = 0; i < dnft.MAX_SUPPLY()+1; i++) {
       dnft.mintNft{value: 5 ether}(address(this));
     }
   }
+  function testMintNftNotClaimable() public {
+    // nft is not claimable by default
+    dnft.mintNft{value: 5 ether}(address(this));
+    assertEq(dnft.idToNft(0).isClaimable, false);
+  }
+
   // -------------------------------------------------------
 
   // --------------------- DYAD Minting ---------------------
@@ -110,19 +113,19 @@ contract dNFTTest is Test {
     vm.prank(address(0));
     dnft.mintDyad{value: 1 ether}(0);
   }
-
+  function testFailMintDyadWithoutOwner() public {
+    dnft.mintDyad{value: 1 ether}(99);
+  }
   function testFailMintDyadWithoutEth() public {
     // to mint dyad, we need to send ETH > 0
     dnft.mintNft{value: 5 ether}(address(this));
     dnft.mintDyad{value: 0 ether}(0);
   }
-
   function testMintDyad() public {
     dnft.mintNft{value: 5 ether}(address(this));
     dnft.mintDyad{value: 1 ether}(0);
   }
-
-  function testMintDyadDeposit() public {
+  function testMintDyadDepositUpdated() public {
     dnft.mintNft{value: 5 ether}(address(this));
     dnft.mintDyad{value: 1 ether}(0);
     IdNFT.Nft memory metadata = dnft.idToNft(0);
@@ -130,8 +133,35 @@ contract dNFTTest is Test {
     // minting the nft.
     assertEq(metadata.deposit, ORACLE_PRICE*60000000000);
   }
-
+  function testMintDyadWithdrawnNotUpdated() public {
+    dnft.mintNft{value: 5 ether}(address(this));
+    dnft.mintDyad{value: 1 ether}(0);
+    IdNFT.Nft memory metadata = dnft.idToNft(0);
+    assertEq(metadata.withdrawn, 0);
+  }
   // -------------------------------------------------------
+
+  // --------------------- DYAD Withdraw ---------------------
+  function testWithdrawDyad() public {
+    uint AMOUNT_TO_WITHDRAW = 7000000;
+    dnft.mintNft{value: 5 ether}(address(this));
+    dnft.mintDyad{value: 1 ether}(0);
+    dnft.withdraw(0, AMOUNT_TO_WITHDRAW);
+    assertEq(dnft.idToNft(0).withdrawn, AMOUNT_TO_WITHDRAW);
+    assertEq(dnft.idToNft(0).deposit, ORACLE_PRICE*60000000000-AMOUNT_TO_WITHDRAW);
+  }
+  function testFailWithdrawDyadNotNftOwner() public {
+    dnft.mintNft{value: 5 ether}(address(this));
+    vm.prank(address(0));
+    dnft.withdraw(0, 7000000);
+  }
+  function testFailWithdrawDyadExceedsBalance() public {
+    dnft.mintNft{value: 5 ether}(address(this));
+    // exceeded nft deposit by exactly 1
+    dnft.withdraw(0, ORACLE_PRICE*50000000000+1); 
+  }
+  // -------------------------------------------------------
+
 
   // function testMintDyad() public {
   //   // mint dyad for 1 wei
