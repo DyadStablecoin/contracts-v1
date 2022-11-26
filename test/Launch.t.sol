@@ -54,7 +54,7 @@ contract LaunchTest is Test {
     assertEq(dnft.totalSupply(), NUMBER_OF_INSIDER_NFTS);
   }
 
-  function testSetPool() public {
+  function testDnftPoolIsCorrect() public {
     assertEq(dnft.pool(), address(pool));
   }
 
