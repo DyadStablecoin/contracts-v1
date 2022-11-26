@@ -36,6 +36,7 @@ contract LaunchTest is Test {
     dNFT _dnft = new dNFT(address(dyad), true); // with insider allocation
     dnft       = IdNFT(address(_dnft));
     pool       = new Pool(address(dnft), address(dyad), CHAINLINK_ORACLE_ADDRESS);
+    dnft.setPool(address(pool));
   }
 
   function testInsiderAllocation() public {

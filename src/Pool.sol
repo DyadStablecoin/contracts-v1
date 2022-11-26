@@ -112,7 +112,6 @@ contract Pool {
 
     for (uint id = 0; id < dnft.totalSupply(); id++) {
       // multi normalized by the multi sum
-      // TODO: multiProductsSum can be 0
       uint relativeMulti     = multis.multiProducts[id]*10000/multis.multiProductsSum;
       // relative dyad delta for each nft
       uint relativeDyadDelta = PoolLibrary.percentageOf(dyadDelta, relativeMulti);
@@ -182,6 +181,9 @@ contract Pool {
       multiProductsSum  += multiProduct;
       xpMultis[id]       = xpMulti;
     }
+
+    // so we avoid dividing by 0 in `sync`
+    if (multiProductsSum == 0) { multiProductsSum = 1; }
 
     return Multis(multiProducts, multiProductsSum, xpMultis);
   }

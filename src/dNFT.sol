@@ -118,8 +118,10 @@ contract dNFT is ERC721Enumerable{
 
     IdNFT.Nft storage nft = idToNft[id];
 
-    // add 9k xp to the nft to start with
+    // add 900k xp to the nft to start with
     nft.xp = nft.xp.add(900000);
+
+    if (nft.xp > MAX_XP) { MAX_XP = nft.xp; }
 
     emit NftMinted(receiver, id);
     return id;
