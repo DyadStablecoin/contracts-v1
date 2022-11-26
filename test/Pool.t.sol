@@ -60,34 +60,60 @@ contract dNFTTest is Test {
   // needed, so we can receive eth transfers
   receive() external payable {}
 
+  function mintAndTransfer(uint amount) public {
+    // mint -> withdraw -> transfer -> approve pool
+    dnft.mintNft{value: 5 ether}(address(this));
+    dnft.withdraw(0,     amount);
+    dyad.transfer(addr1, amount);
+    vm.prank(addr1);
+    dyad.approve(address(pool), amount);
+  }
+
   // --------------------- DYAD Redeem ---------------------
   function testRedeemDyad() public {
-    dnft.mintNft{value: 5 ether}(address(this));
-    dnft.withdraw(0,     100000000);
-    dyad.transfer(addr1, 100000000);
+    uint REDEEM_AMOUNT = 100000000;
+    mintAndTransfer(REDEEM_AMOUNT);
     vm.prank(addr1);
-    dyad.approve(address(pool), 100000000);
+    pool.redeem(REDEEM_AMOUNT);
+  }
+  function testRedeemDyadSenderDyadBalance() public {
+    uint REDEEM_AMOUNT = 100000000;
+    mintAndTransfer(REDEEM_AMOUNT);
     assertEq(addr1.balance, 0);
+    vm.prank(addr1);
+    pool.redeem(REDEEM_AMOUNT);
+    assertEq(addr1.balance, 83333);
+  }
+  function testRedeemDyadPoolBalance() public {
+    uint REDEEM_AMOUNT = 100000000;
+    mintAndTransfer(REDEEM_AMOUNT);
     uint oldPoolBalance = address(pool).balance;
+    vm.prank(addr1);
+    pool.redeem(REDEEM_AMOUNT);
+    assertTrue(address(pool).balance < oldPoolBalance); 
+  }
+  function testRedeemDyadTotalSupply() public {
+    uint REDEEM_AMOUNT = 100000000;
+    mintAndTransfer(REDEEM_AMOUNT);
     uint oldDyadTotalSupply = dyad.totalSupply();
     vm.prank(addr1);
-    pool.redeem(100000000);
-    uint newPoolBalance = address(pool).balance;
-    // there should be less eth in the pool as before the redeem
-    assertTrue(newPoolBalance < oldPoolBalance); 
-    assertEq(addr1.balance, 83333);
-
-    uint newDyadTotalSupply = dyad.totalSupply();
-    assertTrue(newDyadTotalSupply < oldDyadTotalSupply);
+    pool.redeem(REDEEM_AMOUNT);
+    // the redeem burns the dyad so the total supply should be less
+    assertTrue(dyad.totalSupply() < oldDyadTotalSupply);
   }
   function testFailRedeemDyadLessThanRedeemMinimum() public {
-    dnft.mintNft{value: 5 ether}(address(this));
-    dnft.withdraw(0,     100000000);
-    dyad.transfer(addr1, 100000000);
-    vm.prank(addr1);
-    dyad.approve(address(pool), 100000000);
+    uint REDEEM_AMOUNT = 100000000;
+    mintAndTransfer(REDEEM_AMOUNT);
+
     vm.prank(addr1);
     // this is less than the redeem minimum by 1
-    pool.redeem(100000000-1);
+    pool.redeem(REDEEM_AMOUNT-1);
+  }
+  function testFailRedeemDyadNoAllowance() public {
+    // this should fail because we do not prak the redeem call, 
+    // which means that this contract is the sender, and it has no allowance
+    uint REDEEM_AMOUNT = 100000000;
+    mintAndTransfer(REDEEM_AMOUNT);
+    pool.redeem(REDEEM_AMOUNT);
   }
 }
