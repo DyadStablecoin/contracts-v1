@@ -211,7 +211,7 @@ contract Pool {
   /// @notice Redeem dyad for eth
   function redeem(uint amount) public {
     // we do this to avoid rounding errors
-    require(amount > REDEEM_MINIMUM, "Pool: Amount must be greater than 100000000");
+    require(amount >= REDEEM_MINIMUM, "Pool: Amount to redeem must be greater than 100000000");
     // msg.sender has to approve pool to spend its tokens
     dyad.transferFrom(msg.sender, address(this), amount);
     dyad.burn(amount);
