@@ -20,16 +20,12 @@ contract dNFT is ERC721Enumerable{
   // here we store the maximum value over every dNFT,
   // which allows us to do a normalization, without iterating over
   // all of them to find the max value.
-  // Why init to 100? Because otherwise they are set to 0 and the 
-  // normalization function in the `PoolLibrary` breaks. We always
-  // need to make sure that these values are not smaller than 100.
+  // Why init to 900k? Because otherwise they are set to 0 and the 
+  // normalization function in the `PoolLibrary` breaks and 900k is a nice number.
   uint public MIN_XP = 900000;
+  // after minting the first nft this will be the MAX_XP. After that it will
+  // be updated by the `sync` in the pool contract.
   uint public MAX_XP = MIN_XP + MAX_SUPPLY;
-
-  // the only ability the deployer has is to set the pool once.
-  // once it is set it is impossible to change it.
-  address public deployer;
-  bool private isPoolSet = false;
 
   DYAD public dyad;
   Pool public pool;
@@ -55,14 +51,7 @@ contract dNFT is ERC721Enumerable{
     _;
   }
 
-  /// @dev Check if caller is the owner
-  modifier onlyDeployer() {
-    require(deployer == msg.sender, "dNFT: Only deployer can call this function");
-    _;
-  }
-
   constructor(address _dyad, bool withInsiderAllocation) ERC721("DYAD NFT", "dNFT") {
-    deployer = msg.sender;
     dyad     = DYAD(_dyad);
 
     if (withInsiderAllocation) {
@@ -73,10 +62,10 @@ contract dNFT is ERC721Enumerable{
     }
   }
 
-  function setPool(address newPool) external onlyDeployer {
-    require(!isPoolSet,             "dNFT: Pool is already set");
+  function setPool(address newPool) public {
+    // can only be set once, when launching the protocol
+    require(address(pool) == 0x0000000000000000000000000000000000000000,"dNFT: Pool is already set");
     pool = Pool(newPool);
-    isPoolSet = true;
   }
 
   // we need to update the max xp value from the pool, that is why we need this
