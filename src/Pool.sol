@@ -143,7 +143,7 @@ contract Pool {
       // check for liquidation
       if (mode == Mode.BURNING) {
         // liquidation limit is 5% of the minted dyad
-        uint liquidationLimit = PoolLibrary.percentageOf(nft.deposit+nft.withdrawn, 500);
+        uint liquidationLimit = PoolLibrary.percentageOf(nft.withdrawn+nft.deposit, 500);
         if (nft.deposit < liquidationLimit) { nft.isClaimable = true; }
       }
 
@@ -171,8 +171,11 @@ contract Pool {
       IdNFT.Nft memory nft = dnft.idToNft(id);
 
       uint xpScaled      = (nft.xp-dnft.MIN_XP())*10000 / (dnft.MAX_XP()-dnft.MIN_XP());
+      console.log("xpScaled: %s", xpScaled);
       uint mintAvgMinted = (nft.withdrawn+nft.deposit)*10000 / (dyad.totalSupply()/nftTotalSupply+1);
       uint xpMulti       = PoolLibrary.getXpMulti(xpScaled/100);
+      console.log(id);
+      console.log("xpMulti: %s", xpMulti);
       if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; }
       uint depositMulti = nft.deposit*10000 / (nft.deposit+nft.withdrawn+1);
       uint multiProduct = xpMulti * (mode == Mode.BURNING ? mintAvgMinted : depositMulti) / 100;

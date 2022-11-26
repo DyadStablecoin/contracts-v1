@@ -70,9 +70,19 @@ contract LaunchTest is Test {
   function testWithdrawAndSync() public {
     dnft.mintNft{value: 5 ether}(addr1);
     vm.prank(addr1);
-    // remember the nfts are 0 indexed, so we do not need to increment 
-    // by 1.
-    dnft.withdraw(NUMBER_OF_INSIDER_NFTS, 100000000);
+    // remember the nfts are 0 indexed, so we do not need to increment by 1.
+    dnft.withdraw(NUMBER_OF_INSIDER_NFTS, 4 ether);
+
+    dnft.mintNft{value: 5 ether}(addr2);
+    vm.prank(addr2);
+    // remember the nfts are 0 indexed, so we do not need to increment by 1.
+    dnft.withdraw(NUMBER_OF_INSIDER_NFTS+1, 3 ether);
+
     pool.sync();
+
+    for (uint i = 0; i < NUMBER_OF_INSIDER_NFTS+2; i++) {
+      IdNFT.Nft memory nft = dnft.idToNft(i);
+      console.log(nft.xp, nft.deposit, nft.withdrawn);
+    }
   }
 }

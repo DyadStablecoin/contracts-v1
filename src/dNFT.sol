@@ -23,8 +23,8 @@ contract dNFT is ERC721Enumerable{
   // Why init to 100? Because otherwise they are set to 0 and the 
   // normalization function in the `PoolLibrary` breaks. We always
   // need to make sure that these values are not smaller than 100.
-  uint public MIN_XP      = 100;
-  uint public MAX_XP      = 100;
+  uint public MIN_XP;
+  uint public MAX_XP;
 
   // the only ability the deployer has is to set the pool once.
   // once it is set it is impossible to change it.
@@ -71,6 +71,9 @@ contract dNFT is ERC721Enumerable{
       _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
       _mintNft(0x659264De58A00Ca9304aFCA079D8bEf6132BA16f);
     }
+    
+    MIN_XP = 900000;
+    MAX_XP = 900000;
   }
 
   function setPool(address newPool) external onlyDeployer {
@@ -163,7 +166,7 @@ contract dNFT is ERC721Enumerable{
     pool.withdraw(msg.sender, amount);
 
     // update nft
-    nft.deposit   = nft.deposit.sub(amount);
+    nft.deposit   = nft.deposit  .sub(amount);
     nft.withdrawn = nft.withdrawn.add(amount);
 
     emit Withdraw(msg.sender, id, amount);
