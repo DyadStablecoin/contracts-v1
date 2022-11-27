@@ -174,12 +174,11 @@ contract dNFTTest is Test {
     vm.prank(address(0));
     dnft.deposit(0, 7000000);
   }
-  function testFailDepositDyadExceedsBalance() public {
+  function testFailDepositDyadExceedsWithdrawn() public {
     // msg.sender needs some dyad to deposit something
     dnft.mintNft{value: 5 ether}(address(this));
-    // exceeded nft deposit by exactly 1
     dyad.approve(address(dnft), 100);
-    // msg.sender does not own any dyad so this should fail
+    // msg.sender does not own any dyad withdrawn so we can't deposit
     dnft.deposit(0, 100); 
   }
 }

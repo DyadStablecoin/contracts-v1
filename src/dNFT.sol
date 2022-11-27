@@ -75,9 +75,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
       internal
       override(ERC721, ERC721Enumerable)
-  {
-      super._beforeTokenTransfer(from, to, tokenId, batchSize);
-  }
+  { super._beforeTokenTransfer(from, to, tokenId, batchSize); }
 
   // The following functions are overrides required by Solidity.
   function supportsInterface(bytes4 interfaceId)
@@ -85,9 +83,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       view
       override(ERC721, ERC721Enumerable)
       returns (bool)
-  {
-      return super.supportsInterface(interfaceId);
-  }
+  { return super.supportsInterface(interfaceId); }
 
   // we need to update the max xp value from the pool, that is why we need this
   function updateXP(uint minXP, uint maxXP) public onlyPool {
@@ -175,7 +171,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   /// @param amount The amount of dyad to withdraw
   function withdraw(uint id, uint amount) external onlyNFTOwner(id) {
     IdNFT.Nft storage nft = idToNft[id];
-    require(amount <= nft.deposit, "Not enough dyad in pool to withdraw");
+    // The amount you want to withdraw is higher than the amount you have deposited
+    require(amount <= nft.deposit, "dNFT: Amount to withdraw exceeds deposit");
 
     pool.withdraw(msg.sender, amount);
 
@@ -191,6 +188,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   /// @param amount The amount of dyad to deposit
   function deposit(uint id, uint amount) external onlyNFTOwner(id) {
     IdNFT.Nft storage nft = idToNft[id];
+    // The amount you want to deposit is higher than the amount you have withdrawn
+    require(amount <= nft.withdrawn, "dNFT: Amount to deposit exceeds withdrawn");
 
     // transfer dyad to the nft
     // approve the pool to spend the dyad of this contract
