@@ -16,3 +16,4 @@ TODO:
 
 GAS SAVINGS:
 - [ ] unchecked in loop
+- [ ] unnessary assignments like dNFT.sol line 122

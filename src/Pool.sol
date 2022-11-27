@@ -191,7 +191,7 @@ contract Pool {
   /// @notice Mint dyad to the NFT
   function mintDyad(uint minAmount) payable external onlyNftContract returns (uint) {
     require(msg.value > 0, "Pool: You need to send some ETH");
-    uint newDyad = uint(getNewEthPrice())*msg.value/100000000;
+    uint newDyad = uint(getNewEthPrice()) * msg.value/100000000;
     require(newDyad >= minAmount, "Pool: mintDyad: minAmount not reached");
     dyad.mint(msg.sender, newDyad);
     return newDyad;
@@ -218,7 +218,7 @@ contract Pool {
     dyad.transferFrom(msg.sender, address(this), amount);
     dyad.burn(amount);
 
-    uint usdInEth = amount*100000000/lastEthPrice;
+    uint usdInEth = amount*100000000 / lastEthPrice;
     payable(msg.sender).transfer(usdInEth);
   }
 
