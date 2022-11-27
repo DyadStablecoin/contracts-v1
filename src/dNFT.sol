@@ -16,6 +16,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // maximum number of nfts that can be minted
   uint public MAX_SUPPLY = 300;
 
+  uint public NUMBER_OF_NFT_MINTS;
+
   // to mint a dnft $ 5k in eth are required
   uint public DEPOSIT_MINIMUM = 5000000000000000000000;
 
@@ -124,7 +126,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // this happens in the constructor where we call this method directly.
   // NOTE: this can only be called `MAX_SUPPLY` times
   function _mintNft(address receiver) private returns (uint) {
-    uint id = totalSupply();
+    uint id = NUMBER_OF_NFT_MINTS;
     require(id < MAX_SUPPLY, "Max supply reached");
     _mint(receiver, id); // nft mint
 
@@ -140,6 +142,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     if (nft.xp < MIN_XP) { MIN_XP = nft.xp; }
 
     emit NftMinted(receiver, id);
+
+    NUMBER_OF_NFT_MINTS += 1;
     return id;
   }
 

@@ -229,7 +229,7 @@ contract Pool {
   // transfer liquidated nft from the old owner to new owner
   // IMPORTANT: the pool has the ability to transfer any nft without
   // any approvals.
-  function claim(uint id, address recipient) external {
+  function claim(uint id, address recipient) external payable {
     IdNFT.Nft memory nft = dnft.idToNft(id);
     require(nft.isClaimable, "dNFT: NFT is not liquidated");
     nft.isClaimable = false;
@@ -237,6 +237,11 @@ contract Pool {
     address owner = dnft.ownerOf(id);
     for (uint i = 0; i < dnft.totalSupply(); i++) { console.log(dnft.tokenByIndex(i)); }
     dnft.burn(id);
+    console.log();
+    for (uint i = 0; i < dnft.totalSupply(); i++) { console.log(dnft.tokenByIndex(i)); }
+
+    dnft.mintNft{value: msg.value}(recipient);
+
     console.log();
     for (uint i = 0; i < dnft.totalSupply(); i++) { console.log(dnft.tokenByIndex(i)); }
 
