@@ -8,7 +8,7 @@ import "../src/dyad.sol";
 import "../src/pool.sol";
 
 // Pseudo-code, may not compile.
-contract Deploy is Script {
+contract DeployLocally is Script {
    function run() public {
       vm.startBroadcast();
 
@@ -17,7 +17,7 @@ contract Deploy is Script {
       dNFT _dnft = new dNFT(address(dyad), true); // with insider alloc
       IdNFT dnft = IdNFT(address(_dnft));
 
-      Pool pool = new Pool(address(dnft), address(dyad), 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e);
+      Pool pool = new Pool(address(dnft), address(dyad), 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
 
       dyad.setMinter(address(pool));
       dnft.setPool(address(pool));
