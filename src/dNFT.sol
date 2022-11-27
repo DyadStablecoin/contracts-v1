@@ -4,15 +4,11 @@ pragma solidity ^0.8.13;
 import "forge-std/console.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import {DYAD} from "../src/dyad.sol";
 import {Pool} from "../src/pool.sol";
 import {IdNFT} from "../src/IdNFT.sol";
 
 contract dNFT is ERC721Enumerable, ERC721Burnable {
-  using SafeMath for uint256;
-  
-
   // maximum number of nfts that can be minted
   uint public MAX_SUPPLY = 300;
 
@@ -136,7 +132,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     // We do MAX_SUPPLY - totalSupply() not to incentivice anything
     // but to break the xp symmetry.
     // +1 to start with a clean 900300
-    nft.xp = nft.xp.add(MIN_XP + (MAX_SUPPLY-totalSupply()+1));
+    nft.xp = nft.xp + (MIN_XP + (MAX_SUPPLY-totalSupply()+1));
 
     // the new nft.xp could potentially be a new xp minimum!
     if (nft.xp < MIN_XP) { MIN_XP = nft.xp; }
@@ -168,7 +164,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
     IdNFT.Nft storage nft = idToNft[id];
     // give msg.sender ownership of the dyad
-    nft.deposit = nft.deposit.add(amount);
+    nft.deposit = nft.deposit + amount;
 
     emit MintDyad(msg.sender, id, amount);
   }
@@ -183,8 +179,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     pool.withdraw(msg.sender, amount);
 
     // update nft
-    nft.deposit   = nft.deposit  .sub(amount);
-    nft.withdrawn = nft.withdrawn.add(amount);
+    nft.deposit   -= amount;
+    nft.withdrawn += amount;
 
     emit Withdraw(msg.sender, id, amount);
   }
@@ -203,8 +199,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     pool.deposit(amount);
 
     // update nft
-    nft.deposit   = nft.deposit.add(amount);
-    nft.withdrawn = nft.withdrawn.sub(amount);
+    nft.deposit   += amount;
+    nft.withdrawn -= amount;
 
     emit Deposit(msg.sender, id, amount);
   }

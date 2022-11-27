@@ -2,13 +2,10 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/console.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 library PoolLibrary {
-  using SafeMath for uint256;
-
   function percentageOf(uint x, uint basisPoints) internal pure returns (uint) {
-    return x.mul(basisPoints).div(10000);
+    return x * basisPoints/10000;
   }
 
   function getXpMulti(uint xp) public pure returns (uint) {

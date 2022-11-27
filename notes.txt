@@ -13,3 +13,6 @@ TODO:
 - [X] when protocol launch we have an xp deadlock
 - [ ] we need to access the id => nft mapping by tokenByIndex
 
+
+GAS SAVINGS:
+- [ ] unchecked in loop
