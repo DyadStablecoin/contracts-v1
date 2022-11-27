@@ -7,8 +7,10 @@ import {dNFT} from "../src/dNFT.sol";
 import "../src/dyad.sol";
 import "../src/pool.sol";
 
+address constant PRICE_ORACLE_GOERLI = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+
 // Pseudo-code, may not compile.
-contract DeployLocally is Script {
+contract DeployGoerli is Script {
    function run() public {
       vm.startBroadcast();
 
@@ -17,7 +19,7 @@ contract DeployLocally is Script {
       dNFT _dnft = new dNFT(address(dyad), true); // with insider alloc
       IdNFT dnft = IdNFT(address(_dnft));
 
-      Pool pool = new Pool(address(dnft), address(dyad), 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
+      Pool pool = new Pool(address(dnft), address(dyad), PRICE_ORACLE_GOERLI);
 
       dyad.setMinter(address(pool));
       dnft.setPool(address(pool));
@@ -25,3 +27,4 @@ contract DeployLocally is Script {
       vm.stopBroadcast();
    }
 }
+
