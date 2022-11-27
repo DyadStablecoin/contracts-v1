@@ -7,7 +7,6 @@ ifdef FUNC
   matchFunction = --match $(FUNC)
 endif
 
-
 t:
 	forge test $(matchFile) $(matchFunction) -vv --fork-url $(RPC)
 tt:
@@ -36,3 +35,6 @@ gdeploy:
 # deploy on forked mainnet 
 deploy:
 	forge script script/Deploy.Mainnet.s.sol --rpc-url $(RPC) --chain-id 1 --sender 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --broadcast -i 1
+
+calc-deployment-gas-fees:
+	p gas.py --gas $(p gas_deployment.py)
