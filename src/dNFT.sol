@@ -62,6 +62,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       _mintNft(0x3682827F48F8E023EE40707dEe82620D0B63579f); // Max Entropy
       _mintNft(0xe779Fb090AF9dfBB3b4C18Ed571ad6390Df52ae2); // dma.eth
       _mintNft(0x9F919a292e62594f2D8db13F6A4ADB1691D6c60d); // kores
+      _mintNft(0xF37ec513AF2CD91a76D386680fD2Df6ba3Bb7520); // e_z.eth
     }
   }
 
