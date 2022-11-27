@@ -2,15 +2,12 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/console.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import {DYAD} from "../src/dyad.sol";
 import {IAggregatorV3} from "../src/AggregatorV3Interface.sol";
 import {IdNFT} from "../src/IdNFT.sol";
 import {PoolLibrary} from "../src/PoolLibrary.sol";
 
 contract Pool {
-  using SafeMath for uint256;
-
   // IMPORTANT: do not change the ordering of these variables
   // because some tests depend on this specific slot arrangement.
   uint public lastEthPrice;
@@ -72,7 +69,7 @@ contract Pool {
     Mode mode = newEthPrice > lastEthPrice ? Mode.MINTING : Mode.BURNING;
  
     // stores the eth price change in basis points
-    uint ethChange = newEthPrice.mul(10000).div(lastEthPrice);
+    uint ethChange = newEthPrice*10000/lastEthPrice;
     // we have to do this to get the percentage in basis points
     mode == Mode.BURNING ? ethChange = 10000 - ethChange : ethChange -= 10000;
 
@@ -110,7 +107,8 @@ contract Pool {
     uint minXp = type(uint256).max;
     uint maxXp = dnft.MAX_XP();
 
-    for (uint id = 0; id < dnft.totalSupply(); id++) {
+    for (uint i = 0; i < dnft.totalSupply(); i++) {
+      uint id = dnft.tokenByIndex(i);
       // multi normalized by the multi sum
       uint relativeMulti     = multis.multiProducts[id]*10000/multis.multiProductsSum;
       // relative dyad delta for each nft
@@ -161,13 +159,14 @@ contract Pool {
 
 
   // NOTE: calculation of the multis is determined by the `mode`
-  function calcMultis(Mode mode) internal view returns (Multis memory) {
+  function calcMultis(Mode mode) internal returns (Multis memory) {
     uint nftTotalSupply = dnft.totalSupply();
     uint multiProductsSum;
     uint[] memory multiProducts = new uint[](nftTotalSupply);
     uint[] memory xpMultis      = new uint[](nftTotalSupply);
 
-    for (uint id = 0; id < nftTotalSupply; id++) {
+    for (uint i = 0; i < nftTotalSupply; i++) {
+      uint id = dnft.tokenByIndex(i);
       IdNFT.Nft memory nft = dnft.idToNft(id);
 
       // NOTE: MAX_XP - MIN_XP could be 0!
@@ -192,7 +191,7 @@ contract Pool {
   /// @notice Mint dyad to the NFT
   function mintDyad(uint minAmount) payable external onlyNftContract returns (uint) {
     require(msg.value > 0, "Pool: You need to send some ETH");
-    uint newDyad = uint(getNewEthPrice()).mul(msg.value).div(100000000);
+    uint newDyad = uint(getNewEthPrice()) * msg.value/100000000;
     require(newDyad >= minAmount, "Pool: mintDyad: minAmount not reached");
     dyad.mint(msg.sender, newDyad);
     return newDyad;
@@ -219,7 +218,7 @@ contract Pool {
     dyad.transferFrom(msg.sender, address(this), amount);
     dyad.burn(amount);
 
-    uint usdInEth = amount.mul(100000000).div(lastEthPrice);
+    uint usdInEth = amount*100000000 / lastEthPrice;
     payable(msg.sender).transfer(usdInEth);
   }
 
@@ -227,13 +226,11 @@ contract Pool {
   // transfer liquidated nft from the old owner to new owner
   // IMPORTANT: the pool has the ability to transfer any nft without
   // any approvals.
-  function claim(uint id, address recipient) external {
+  function claim(uint id, address recipient) external payable {
     IdNFT.Nft memory nft = dnft.idToNft(id);
     require(nft.isClaimable, "dNFT: NFT is not liquidated");
-    nft.isClaimable = false;
-    dnft.updateNft(id, nft);
-    address owner = dnft.ownerOf(id);
-    dnft.transferFrom(owner, recipient, id);
-    emit Claimed(id, owner, recipient);
+    emit Claimed(id, dnft.ownerOf(id), recipient);
+    dnft.burn(id);
+    dnft.mintNft{value: msg.value}(recipient);
   }
 }

@@ -35,8 +35,10 @@ interface IdNFT {
   function totalSupply() external view returns (uint);
   function idToNft(uint) external view returns (Nft memory);
   function transferFrom(address from, address to, uint tokenId) external view returns (uint);
+  function approve(address to, uint tokenId) external;
 
   function updateXP(uint minXP, uint maxXP) external;
+  function tokenByIndex(uint index) external returns (uint);
 
 
   // ONLY FOR TESTING

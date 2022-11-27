@@ -60,6 +60,9 @@ contract PoolTest is Test {
     stdstore.target(address(dnft)).sig("MAX_XP()").checked_write(8000); // max xp
   }
 
+  // needed, so we can receive eth transfers
+  receive() external payable {}
+
   // set withdrawn, deposit, xp
   // NOTE: I get a slot error for isClaimable so we do not set it here and 
   // leave it as it is. this seems to be broken for bool rn, see:
@@ -128,6 +131,6 @@ contract PoolTest is Test {
     pool.sync();
 
     // nft 0 is now liquidated, lets claim it!
-    // pool.claim(0, address(this));
+    pool.claim{value: 5 ether}(0, address(this));
   }
 }

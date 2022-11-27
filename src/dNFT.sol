@@ -3,16 +3,16 @@ pragma solidity ^0.8.13;
 
 import "forge-std/console.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import {DYAD} from "../src/dyad.sol";
 import {Pool} from "../src/pool.sol";
 import {IdNFT} from "../src/IdNFT.sol";
 
-contract dNFT is ERC721Enumerable{
-  using SafeMath for uint256;
-
+contract dNFT is ERC721Enumerable, ERC721Burnable {
   // maximum number of nfts that can be minted
   uint public MAX_SUPPLY = 300;
+
+  uint public NUMBER_OF_NFT_MINTS;
 
   // to mint a dnft $ 5k in eth are required
   uint public DEPOSIT_MINIMUM = 5000000000000000000000;
@@ -71,6 +71,24 @@ contract dNFT is ERC721Enumerable{
     pool = Pool(newPool);
   }
 
+  // The following functions are overrides required by Solidity.
+  function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
+      internal
+      override(ERC721, ERC721Enumerable)
+  {
+      super._beforeTokenTransfer(from, to, tokenId, batchSize);
+  }
+
+  // The following functions are overrides required by Solidity.
+  function supportsInterface(bytes4 interfaceId)
+      public
+      view
+      override(ERC721, ERC721Enumerable)
+      returns (bool)
+  {
+      return super.supportsInterface(interfaceId);
+  }
+
   // we need to update the max xp value from the pool, that is why we need this
   function updateXP(uint minXP, uint maxXP) public onlyPool {
     if (minXP < MIN_XP) { MIN_XP = minXP; }
@@ -82,11 +100,11 @@ contract dNFT is ERC721Enumerable{
     idToNft[id] = nft;
   }
 
-  // IMPORTANT: we extend this to by the ability of the pool contract to transfer any nft
-  // this is needed to make the liquidation mechanism possible
+  // VERY IMPORTANT: we add the pool here so we can burn any dnft. This is needed
+  // to make the liquidation mechanism possible.
   function _isApprovedOrOwner(address spender, uint256 tokenId) internal override view virtual returns (bool) {
     address owner = ERC721.ownerOf(tokenId);
-    return (spender == address(pool) || // <- this is the only change
+    return (spender == address(pool) || // <- this is the only change where we add the pool
             spender == owner ||
             isApprovedForAll(owner, spender) ||
             getApproved(tokenId) == spender);
@@ -105,7 +123,7 @@ contract dNFT is ERC721Enumerable{
   // this happens in the constructor where we call this method directly.
   // NOTE: this can only be called `MAX_SUPPLY` times
   function _mintNft(address receiver) private returns (uint) {
-    uint id = totalSupply();
+    uint id = NUMBER_OF_NFT_MINTS;
     require(id < MAX_SUPPLY, "Max supply reached");
     _mint(receiver, id); // nft mint
 
@@ -115,12 +133,14 @@ contract dNFT is ERC721Enumerable{
     // We do MAX_SUPPLY - totalSupply() not to incentivice anything
     // but to break the xp symmetry.
     // +1 to start with a clean 900300
-    nft.xp = nft.xp.add(MIN_XP + (MAX_SUPPLY-totalSupply()+1));
+    nft.xp = nft.xp + (MIN_XP + (MAX_SUPPLY-totalSupply()+1));
 
     // the new nft.xp could potentially be a new xp minimum!
     if (nft.xp < MIN_XP) { MIN_XP = nft.xp; }
 
     emit NftMinted(receiver, id);
+
+    NUMBER_OF_NFT_MINTS += 1;
     return id;
   }
 
@@ -145,7 +165,7 @@ contract dNFT is ERC721Enumerable{
 
     IdNFT.Nft storage nft = idToNft[id];
     // give msg.sender ownership of the dyad
-    nft.deposit = nft.deposit.add(amount);
+    nft.deposit = nft.deposit + amount;
 
     emit MintDyad(msg.sender, id, amount);
   }
@@ -160,8 +180,8 @@ contract dNFT is ERC721Enumerable{
     pool.withdraw(msg.sender, amount);
 
     // update nft
-    nft.deposit   = nft.deposit  .sub(amount);
-    nft.withdrawn = nft.withdrawn.add(amount);
+    nft.deposit   -= amount;
+    nft.withdrawn += amount;
 
     emit Withdraw(msg.sender, id, amount);
   }
@@ -180,8 +200,8 @@ contract dNFT is ERC721Enumerable{
     pool.deposit(amount);
 
     // update nft
-    nft.deposit   = nft.deposit.add(amount);
-    nft.withdrawn = nft.withdrawn.sub(amount);
+    nft.deposit   += amount;
+    nft.withdrawn -= amount;
 
     emit Deposit(msg.sender, id, amount);
   }
