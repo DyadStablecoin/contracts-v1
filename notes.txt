@@ -6,6 +6,8 @@ eth at 1.2k = 120000000000
 chainlink oracle mainnet: 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419
 chainlink oracle goerli: 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e
 
+ANVIL PRIVATE_KEY = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+
 TODO:
 - [X] Remove balance because we can not keep track of it
       Balance is more like a virtual thing
