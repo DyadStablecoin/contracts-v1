@@ -4,6 +4,7 @@ eth at 1.2k = 120000000000
 120148000000
 
 chainlink oracle mainnet: 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419
+chainlink oracle goerli: 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e
 
 TODO:
 - [X] Remove balance because we can not keep track of it
