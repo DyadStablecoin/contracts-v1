@@ -79,6 +79,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       super._beforeTokenTransfer(from, to, tokenId, batchSize);
   }
 
+  // The following functions are overrides required by Solidity.
   function supportsInterface(bytes4 interfaceId)
       public
       view

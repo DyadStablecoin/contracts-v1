@@ -229,11 +229,8 @@ contract Pool {
   function claim(uint id, address recipient) external payable {
     IdNFT.Nft memory nft = dnft.idToNft(id);
     require(nft.isClaimable, "dNFT: NFT is not liquidated");
-    nft.isClaimable = false;
-    dnft.updateNft(id, nft);
-    address owner = dnft.ownerOf(id);
+    emit Claimed(id, dnft.ownerOf(id), recipient);
     dnft.burn(id);
     dnft.mintNft{value: msg.value}(recipient);
-    emit Claimed(id, owner, recipient);
   }
 }
