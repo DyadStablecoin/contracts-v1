@@ -28,7 +28,7 @@ contract Pool {
 
   /// @dev Check if msg.sender is the nft contract
   modifier onlyNftContract() {
-    require(msg.sender == address(dnft), "Pool: Only NFT can call this function");
+    require(msg.sender == address(dnft), "Pool: Only callable by NFT contract");
     _;
   }
 
@@ -60,9 +60,10 @@ contract Pool {
   // The "heart" of the protocol.
   // - Gets the latest eth price and determines if new dyad should be minted or
   //   old dyad should be burned to keep the peg.
-  // - Updates each dnft metadata to reflect its updated xp, withdrawn and deposit.
-  // - To incentivize nft holders to call this method, there is a xp boost to the first
-  //   nft of the owner calling it.
+  // - Updates each dnft metadata to reflect its updated xp, withdrawn and 
+  //   deposit.
+  // - To incentivize nft holders to call this method, there is a xp boost to 
+  //   the first nft of the owner calling it.
   function sync() public returns (uint) {
     uint newEthPrice = uint(getNewEthPrice());
     // determine the mode we are in
@@ -92,13 +93,13 @@ contract Pool {
   /// @param ethChange  Eth price change in basis points
   /// @param mode Is the change negative or positive
   /// @return dyadDelta The amount of dyad to mint or burn
-  function updateNFTs(uint ethChange, Mode mode) internal returns (uint dyadDelta) {
+  function updateNFTs(uint ethChange, Mode mode) internal returns (uint) {
     // we boost the nft of the user calling this function with additional
     // xp, but only once! If boosted was used already, it can not be used again.
     bool isBoosted = false;
 
     // the amount to mint/burn to keep the peg
-    dyadDelta = PoolLibrary.percentageOf(dyad.totalSupply(), ethChange);
+    uint dyadDelta = PoolLibrary.percentageOf(dyad.totalSupply(), ethChange);
 
     Multis memory multis = calcMultis(mode);
 
@@ -110,7 +111,7 @@ contract Pool {
     for (uint i = 0; i < dnft.totalSupply(); i++) {
       uint id = dnft.tokenByIndex(i);
       // multi normalized by the multi sum
-      uint relativeMulti     = multis.multiProducts[id]*10000/multis.multiProductsSum;
+      uint relativeMulti = multis.multiProducts[id]*10000/multis.multiProductsSum;
       // relative dyad delta for each nft
       uint relativeDyadDelta = PoolLibrary.percentageOf(dyadDelta, relativeMulti);
 
@@ -131,7 +132,9 @@ contract Pool {
       // update memory nft data
       if (mode == Mode.BURNING) {
         // we cap nft.deposit at 0, so it can never become negative
-        nft.deposit  = nft.deposit < relativeDyadDelta ? 0 : nft.deposit - relativeDyadDelta;
+        nft.deposit  = nft.deposit < relativeDyadDelta 
+                        ? 0 
+                        : nft.deposit - relativeDyadDelta;
         nft.xp      += xpAccrual;
       } else {
         // NOTE: there is no xp accrual in Mode.MINTING
@@ -155,6 +158,7 @@ contract Pool {
 
     // save new min/max xp in storage
     dnft.updateXP(minXp, maxXp);
+    return dyadDelta;
   }
 
 
@@ -213,7 +217,7 @@ contract Pool {
   /// @notice Redeem dyad for eth
   function redeem(uint amount) public {
     // we do this to avoid rounding errors
-    require(amount >= REDEEM_MINIMUM, "Pool: Amount to redeem must be greater than 100000000");
+    require(amount >= REDEEM_MINIMUM, "Pool: Redemption must be > 100000000");
     // msg.sender has to approve pool to spend its tokens
     dyad.transferFrom(msg.sender, address(this), amount);
     dyad.burn(amount);

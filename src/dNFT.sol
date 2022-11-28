@@ -41,18 +41,18 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   /// @dev Check if owner of NFT is msg.sender
   /// @param id The id of the NFT
   modifier onlyNFTOwner(uint id) {
-    require(this.ownerOf(id) == msg.sender, "dNFT: Only NFT owner can call this function");
+    require(this.ownerOf(id) == msg.sender, "dNFT: Only callable by NFT owner");
     _;
   }
 
   /// @dev Check if caller is the pool
   modifier onlyPool() {
-    require(address(pool) == msg.sender, "dNFT: Only Pool can call this function");
+    require(address(pool) == msg.sender, "dNFT: Only callable by Pool contract");
     _;
   }
 
   constructor(address _dyad, bool withInsiderAllocation) ERC721("DYAD NFT", "dNFT") {
-    dyad     = DYAD(_dyad);
+    dyad = DYAD(_dyad);
 
     if (withInsiderAllocation) {
       // spcecial mint for core-team/contributors/early-adopters/investors
@@ -68,14 +68,16 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
   function setPool(address newPool) public {
     // can only be set once, when launching the protocol
-    require(address(pool) == 0x0000000000000000000000000000000000000000,"dNFT: Pool is already set");
+    require(address(pool) == address(0),"dNFT: Pool is already set");
     pool = Pool(newPool);
   }
 
   // The following functions are overrides required by Solidity.
-  function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
-      internal
-      override(ERC721, ERC721Enumerable)
+  function _beforeTokenTransfer(address from,
+                                address to,
+                                uint256 tokenId,
+                                uint256 batchSize)
+      internal override(ERC721, ERC721Enumerable)
   { super._beforeTokenTransfer(from, to, tokenId, batchSize); }
 
   // The following functions are overrides required by Solidity.
@@ -99,9 +101,11 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
   // VERY IMPORTANT: we add the pool here so we can burn any dnft. This is needed
   // to make the liquidation mechanism possible.
-  function _isApprovedOrOwner(address spender, uint256 tokenId) internal override view virtual returns (bool) {
+  function _isApprovedOrOwner(address spender,
+                              uint256 tokenId) 
+                              internal override view virtual returns (bool) {
     address owner = ERC721.ownerOf(tokenId);
-    return (spender == address(pool) || // <- this is the only change where we add the pool
+    return (spender == address(pool) || // <- we add the pool
             spender == owner ||
             isApprovedForAll(owner, spender) ||
             getApproved(tokenId) == spender);
@@ -172,8 +176,9 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   /// @param amount The amount of dyad to withdraw
   function withdraw(uint id, uint amount) external onlyNFTOwner(id) {
     IdNFT.Nft storage nft = idToNft[id];
-    // The amount you want to withdraw is higher than the amount you have deposited
-    require(amount <= nft.deposit, "dNFT: Amount to withdraw exceeds deposit");
+    // The amount you want to withdraw is higher than the amount you have
+    // deposited
+    require(amount <= nft.deposit, "dNFT: Withdraw amount exceeds deposit");
 
     pool.withdraw(msg.sender, amount);
 
@@ -189,8 +194,9 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   /// @param amount The amount of dyad to deposit
   function deposit(uint id, uint amount) external onlyNFTOwner(id) {
     IdNFT.Nft storage nft = idToNft[id];
-    // The amount you want to deposit is higher than the amount you have withdrawn
-    require(amount <= nft.withdrawn, "dNFT: Amount to deposit exceeds withdrawn");
+    // The amount you want to deposit is higher than the amount you have 
+    // withdrawn
+    require(amount <= nft.withdrawn, "dNFT: Deposit exceeds withdrawn");
 
     // transfer dyad to the nft
     // approve the pool to spend the dyad of this contract
