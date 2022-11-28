@@ -24,7 +24,7 @@ contract Pool {
   enum Mode{ BURNING, MINTING }
 
   event Synced (uint newEthPrice);
-  event Claimed(uint indexed id, address indexed from, address indexed to);
+  event NftClaimed(uint indexed id, address indexed from, address indexed to);
 
   /// @dev Check if msg.sender is the nft contract
   modifier onlyNftContract() {
@@ -218,7 +218,7 @@ contract Pool {
   function redeem(uint amount) public {
     // we do this to avoid rounding errors
     require(amount >= REDEEM_MINIMUM, "Pool: Redemption must be > 100000000");
-    // msg.sender has to approve pool to spend its tokens
+    // msg.sender has to approve pool to spend its tokens and burn it
     dyad.transferFrom(msg.sender, address(this), amount);
     dyad.burn(amount);
 
@@ -233,7 +233,7 @@ contract Pool {
   function claim(uint id, address recipient) external payable {
     IdNFT.Nft memory nft = dnft.idToNft(id);
     require(nft.isClaimable, "dNFT: NFT is not liquidated");
-    emit Claimed(id, dnft.ownerOf(id), recipient);
+    emit NftClaimed(id, dnft.ownerOf(id), recipient);
     dnft.burn(id);
     dnft.mintNft{value: msg.value}(recipient);
   }

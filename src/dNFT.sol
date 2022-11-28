@@ -33,10 +33,10 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // mapping from nft id to nft data
   mapping(uint => IdNFT.Nft) public idToNft;
 
-  event NftMinted(address indexed to, uint indexed id);
-  event MintDyad (address indexed to, uint indexed id, uint amount);
-  event Withdraw (address indexed to, uint indexed id, uint amount);
-  event Deposit  (address indexed to, uint indexed id, uint amount);
+  event NftMinted    (address indexed to, uint indexed id);
+  event DyadMinted   (address indexed to, uint indexed id, uint amount);
+  event DyadWithdrawn(address indexed to, uint indexed id, uint amount);
+  event DyadDeposited(address indexed to, uint indexed id, uint amount);
 
   /// @dev Check if owner of NFT is msg.sender
   /// @param id The id of the NFT
@@ -168,7 +168,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     // give msg.sender ownership of the dyad
     nft.deposit = nft.deposit + amount;
 
-    emit MintDyad(msg.sender, id, amount);
+    emit DyadMinted(msg.sender, id, amount);
   }
 
   /// @notice Withdraw dyad from the NFT to the msg.sender
@@ -186,7 +186,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     nft.deposit   -= amount;
     nft.withdrawn += amount;
 
-    emit Withdraw(msg.sender, id, amount);
+    emit DyadWithdrawn(msg.sender, id, amount);
   }
 
   /// @notice Deposit dyad back in the pool
@@ -209,6 +209,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     nft.deposit   += amount;
     nft.withdrawn -= amount;
 
-    emit Deposit(msg.sender, id, amount);
+    emit DyadDeposited(msg.sender, id, amount);
   }
 }
