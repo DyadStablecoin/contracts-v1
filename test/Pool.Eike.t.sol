@@ -97,9 +97,9 @@ contract PoolTest is Test {
   }
 
   // check that the nft deposit values are equal to each other
-  function assertDeposits(uint16[6] memory deposits) internal {
+  function assertDeposits(int16[6] memory deposits) internal {
     for (uint i = 0; i < deposits.length; i++) {
-      assertTrue(uint(dnft.idToNft(i).deposit) == deposits[i]);
+      assertTrue(dnft.idToNft(i).deposit == deposits[i]);
     }
   }
 
@@ -110,7 +110,7 @@ contract PoolTest is Test {
     assertEq(dyadDelta, 4800);
 
     // check deposits after newly burned dyad. SOME ROUNDING ERRORS!
-    assertDeposits([0, 4365, 1805, 4000, 1724, 6250]);
+    assertDeposits([-135, 4365, 1805, 4000, 1724, 6250]);
   }
 
   function testSyncMint() public {
@@ -120,7 +120,10 @@ contract PoolTest is Test {
     assertEq(dyadDelta, 9600);
 
     // check deposits after newly minted dyad. SOME ROUNDING ERRORS!
-    assertDeposits([187, 6592, 2966, 5213, 2544, 7833]);
+    // why do we cast the first argument? Good question. This forces
+    // the compiler to create a int16 array. Is there a better way?
+    int16[6] memory deposits = [int16(187), 6592, 2966, 5213, 2544, 7833];
+    assertDeposits(deposits);
   }
 
   function testSyncLiquidation() public {
