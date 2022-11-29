@@ -180,7 +180,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
     IdNFT.Nft storage nft = idToNft[id];
     // give msg.sender ownership of the dyad
-    nft.deposit = nft.deposit + int(amount);
+    nft.deposit += int(amount);
 
     emit DyadMinted(msg.sender, id, amount);
   }
