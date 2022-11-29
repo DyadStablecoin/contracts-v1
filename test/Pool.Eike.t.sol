@@ -135,8 +135,9 @@ contract PoolTest is Test {
     // IMPORTANT: this test will only pass while the eth price is above $135.
     uint id = pool.claim{value: 1 ether}(0, address(this));
 
-    // lets check that the xp moved from the burned nft to the newly minted one
-    assertEq(dnft.idToNft(0).xp, dnft.idToNft(id).xp);
+    // lets check that all the metadata moved from the burned nft to the newly minted one
+    assertEq(dnft.idToNft(0).xp,        dnft.idToNft(id).xp);
+    assertEq(dnft.idToNft(0).withdrawn, dnft.idToNft(id).withdrawn);
 
     // dnft 1 has a positive deposit, and therfore is not claimable
     vm.expectRevert();

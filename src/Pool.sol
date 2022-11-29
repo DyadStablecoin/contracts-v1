@@ -233,6 +233,6 @@ contract Pool {
     // how much eth is required to cover the negative deposit
     uint ethRequired = uint(-nft.deposit) * lastEthPrice/100000000;
     // mint new nft with the xp of the old one
-    return dnft.mintNftWithXp{value: msg.value}(receiver, nft.xp, ethRequired);
+    return dnft.mintNftCopy{value: msg.value}(receiver, nft, ethRequired);
   }
 }
