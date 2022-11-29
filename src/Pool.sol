@@ -131,21 +131,11 @@ contract Pool {
 
       // update memory nft data
       if (mode == Mode.BURNING) {
-        // we cap nft.deposit at 0, so it can never become negative
-        nft.deposit  = nft.deposit < relativeDyadDelta 
-                        ? 0 
-                        : nft.deposit - relativeDyadDelta;
+        nft.deposit -= int(relativeDyadDelta);
         nft.xp      += xpAccrual;
       } else {
         // NOTE: there is no xp accrual in Mode.MINTING
-        nft.deposit += relativeDyadDelta;
-      }
-
-      // check for liquidation
-      if (mode == Mode.BURNING) {
-        // liquidation limit is 5% of the minted dyad
-        uint liquidationLimit = PoolLibrary.percentageOf(nft.withdrawn+nft.deposit, 500);
-        if (nft.deposit < liquidationLimit) { nft.isClaimable = true; }
+        nft.deposit += int(relativeDyadDelta);
       }
 
       // update nft in storage
@@ -173,13 +163,18 @@ contract Pool {
       uint id = dnft.tokenByIndex(i);
       IdNFT.Nft memory nft = dnft.idToNft(id);
 
-      // NOTE: MAX_XP - MIN_XP could be 0!
-      uint xpScaled      = (nft.xp-dnft.MIN_XP())*10000 / (dnft.MAX_XP()-dnft.MIN_XP());
-      uint mintAvgMinted = (nft.withdrawn+nft.deposit)*10000 / (dyad.totalSupply()/nftTotalSupply+1);
-      uint xpMulti       = PoolLibrary.getXpMulti(xpScaled/100);
-      if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; }
-      uint depositMulti = nft.deposit*10000 / (nft.deposit+nft.withdrawn+1);
-      uint multiProduct = xpMulti * (mode == Mode.BURNING ? mintAvgMinted : depositMulti) / 100;
+      uint multiProduct; // 0 by default
+      uint xpMulti;      // 0 by default
+
+      if (nft.deposit >= 0 ) {
+        // NOTE: MAX_XP - MIN_XP could be 0!
+        uint xpScaled      = (nft.xp-dnft.MIN_XP())*10000 / (dnft.MAX_XP()-dnft.MIN_XP());
+        uint mintAvgMinted = (nft.withdrawn+uint(nft.deposit))*10000 / (dyad.totalSupply()/nftTotalSupply+1);
+        xpMulti           = PoolLibrary.getXpMulti(xpScaled/100);
+        if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; }
+        uint depositMulti = uint(nft.deposit)*10000 / (uint(nft.deposit)+nft.withdrawn+1);
+        multiProduct      = xpMulti * (mode == Mode.BURNING ? mintAvgMinted : depositMulti) / 100;
+      } 
 
       multiProducts[id]  = multiProduct;
       multiProductsSum  += multiProduct;
@@ -230,11 +225,15 @@ contract Pool {
   // transfer liquidated nft from the old owner to new owner
   // IMPORTANT: the pool has the ability to transfer any nft without
   // any approvals.
-  function claim(uint id, address recipient) external payable {
+  function claim(uint id, address recipient) external payable returns (uint) {
     IdNFT.Nft memory nft = dnft.idToNft(id);
-    require(nft.isClaimable, "dNFT: NFT is not liquidated");
-    emit NftClaimed(id, dnft.ownerOf(id), recipient);
-    dnft.burn(id);
-    dnft.mintNft{value: msg.value}(recipient);
+    // emit before we burn, otherwise ownerOf(id) will fail!
+    emit NftClaimed(id, dnft.ownerOf(id), recipient); 
+    dnft.burn(id); // burn nft
+    require(nft.deposit < 0, "dNFT: NFT is not liquidatable");
+    // how much eth is required to cover the negative deposit
+    uint ethRequired = uint(-nft.deposit) * lastEthPrice/100000000;
+    // mint new nft with the xp of the old one
+    return dnft.mintNftWithXp{value: msg.value}(recipient, nft.xp, ethRequired);
   }
 }

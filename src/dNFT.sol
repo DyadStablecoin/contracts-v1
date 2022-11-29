@@ -119,11 +119,25 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     return id;
   }
 
+  // special function for the liquidation mechanism, where we have to mint a new
+  // nft with a diffrent deposit minimum and where we transfer xp from the old
+  // burned nft to the new one.
+  function mintNftWithXp(address receiver,
+                         uint xp,
+                         uint depositMinimum) external payable onlyPool returns (uint) {
+    uint id = _mintNft(receiver);
+    idToNft[id].xp = xp;
+
+    // mint the required dyad to cover the negative deposit
+    _mintDyad(id, depositMinimum); 
+    return id;
+  }
+
   // the main reason for this method is that we need to be able to mint
   // nfts for the core team and investors without the deposit minimum,
   // this happens in the constructor where we call this method directly.
   // NOTE: this can only be called `MAX_SUPPLY` times
-  function _mintNft(address receiver) private returns (uint) {
+  function _mintNft(address receiver) public returns (uint) {
     uint id = NUMBER_OF_NFT_MINTS;
     require(id < MAX_SUPPLY, "Max supply reached");
     _mint(receiver, id); // nft mint
@@ -158,16 +172,11 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // `DEPOSIT_MINIMUM` in the `mintNft` method.
   function _mintDyad(uint id, uint minAmount) private {
     require(msg.value > 0, "You need to send some ETH to mint dyad");
-
     // mint new dyad and deposit it in the pool 
     uint amount = pool.mintDyad{value: msg.value}(minAmount);
     dyad.approve(address(pool), amount);
     pool.deposit(amount);
-
-    IdNFT.Nft storage nft = idToNft[id];
-    // give msg.sender ownership of the dyad
-    nft.deposit = nft.deposit + amount;
-
+    idToNft[id].deposit += int(amount);
     emit DyadMinted(msg.sender, id, amount);
   }
 
@@ -178,12 +187,12 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     IdNFT.Nft storage nft = idToNft[id];
     // The amount you want to withdraw is higher than the amount you have
     // deposited
-    require(amount <= nft.deposit, "dNFT: Withdraw amount exceeds deposit");
+    require(int(amount) <= nft.deposit, "dNFT: Withdraw amount exceeds deposit");
 
     pool.withdraw(msg.sender, amount);
 
     // update nft
-    nft.deposit   -= amount;
+    nft.deposit   -= int(amount);
     nft.withdrawn += amount;
 
     emit DyadWithdrawn(msg.sender, id, amount);
@@ -206,7 +215,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     pool.deposit(amount);
 
     // update nft
-    nft.deposit   += amount;
+    nft.deposit   += int(amount);
     nft.withdrawn -= amount;
 
     emit DyadDeposited(msg.sender, id, amount);

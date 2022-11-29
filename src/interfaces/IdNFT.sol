@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 interface IdNFT {
   struct Nft {
     uint withdrawn;   // dyad withdrawn from the pool deposit
-    uint deposit;     // dyad balance in pool
+    int deposit;      // dyad balance in pool
     uint xp;          // always positive, always inflationary
     bool isClaimable; // is true after liquidation // takes up 1 byte
   }
@@ -25,6 +25,7 @@ interface IdNFT {
   function deposit(uint id, uint amount) external;
   function setPool(address newPool) external;
   function mintNft(address receiver) external payable returns (uint id);
+  function mintNftWithXp(address receiver, uint xp, uint depositMinimum) external payable returns (uint id);
   function burn(uint id) external;
   function balanceOf(uint id) external view returns (int);
   function xpOf(uint id) external view returns (uint);

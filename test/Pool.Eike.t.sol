@@ -69,12 +69,12 @@ contract PoolTest is Test {
   // https://github.com/foundry-rs/forge-std/pull/103
   function overwriteNft(uint id, uint xp, uint deposit, uint withdrawn) public {
     IdNFT.Nft memory nft = dnft.idToNft(id);
-    nft.withdrawn = withdrawn; nft.deposit = deposit; nft.xp = xp;
+    nft.withdrawn = withdrawn; nft.deposit = int(deposit); nft.xp = xp;
 
     stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
       .depth(0).checked_write(nft.withdrawn);
     stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
-      .depth(1).checked_write(nft.deposit);
+      .depth(1).checked_write(uint(nft.deposit));
     stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
       .depth(2).checked_write(nft.xp);
     // stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
@@ -97,20 +97,47 @@ contract PoolTest is Test {
   }
 
   // check that the nft deposit values are equal to each other
-  function assertDeposits(uint16[6] memory deposits) internal {
+  function assertDeposits(int16[6] memory deposits) internal {
     for (uint i = 0; i < deposits.length; i++) {
-      assertEq(dnft.idToNft(i).deposit, deposits[i]);
+      assertTrue(dnft.idToNft(i).deposit == deposits[i]);
     }
   }
 
-  function testSyncBurn() public {
+  function setupBurn() public returns (uint){
     // change new oracle price to something lower so we trigger the burn
     vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(95000000))); 
     uint dyadDelta = pool.sync();
+    return dyadDelta;
+  }
+
+  function testSyncBurn() public {
+    uint dyadDelta = setupBurn();
     assertEq(dyadDelta, 4800);
 
     // check deposits after newly burned dyad. SOME ROUNDING ERRORS!
-    assertDeposits([0, 4365, 1805, 4000, 1724, 6250]);
+    assertDeposits([-135, 4365, 1805, 4000, 1724, 6250]);
+  }
+
+  function testClaim() public {
+    setupBurn();
+
+    // as we can see from the `testSyncBurn` above, the first nft deposit
+    // is negative (-135), which makes it claimable by others.
+
+    // this is not enough ether to claim the nft
+    vm.expectRevert();
+    pool.claim{value: 1   wei}(0, address(this));
+
+    // 1 ether is enough
+    // IMPORTANT: this test will only pass while the eth price is above $135.
+    uint id = pool.claim{value: 1 ether}(0, address(this));
+
+    // lets check that the xp moved from the burned nft to the newly minted one
+    assertEq(dnft.idToNft(0).xp, dnft.idToNft(id).xp);
+
+    // dnft 1 has a positive deposit, and therfore is not claimable
+    vm.expectRevert();
+    pool.claim{value: 1 ether}(1, address(this));
   }
 
   function testSyncMint() public {
@@ -120,7 +147,9 @@ contract PoolTest is Test {
     assertEq(dyadDelta, 9600);
 
     // check deposits after newly minted dyad. SOME ROUNDING ERRORS!
-    assertDeposits([187, 6592, 2966, 5213, 2544, 7833]);
+    // why do we cast the first argument? Good question. This forces
+    // the compiler to create a int16 array. Is there a better way?
+    assertDeposits([int16(187), 6592, 2966, 5213, 2544, 7833]);
   }
 
   function testSyncLiquidation() public {

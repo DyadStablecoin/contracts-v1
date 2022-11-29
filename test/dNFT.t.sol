@@ -71,11 +71,11 @@ contract dNFTTest is Test {
     uint id = dnft.mintNft{value: 5 ether}(address(this));
     IdNFT.Nft memory metadata = dnft.idToNft(0);
 
-    assertEq(id,                                        0);
-    assertEq(dnft.totalSupply(),                        1);
-    assertEq(metadata.withdrawn,                        0);
-    assertEq(metadata.deposit  , ORACLE_PRICE*50000000000);
-    assertEq(metadata.xp       ,                   900300); 
+    assertEq(id,                                             0);
+    assertEq(dnft.totalSupply(),                             1);
+    assertEq(metadata.withdrawn,                             0);
+    assertEq(metadata.deposit  , int(ORACLE_PRICE*50000000000));
+    assertEq(metadata.xp       ,                        900300); 
 
     stdstore.target(address(dnft)).sig("MIN_XP()").checked_write(uint(0));    // min xp
     stdstore.target(address(dnft)).sig("MAX_XP()").checked_write(uint(900300)); // max xp
@@ -128,7 +128,7 @@ contract dNFTTest is Test {
     IdNFT.Nft memory metadata = dnft.idToNft(0);
     // its 6 ETH because we minted 1 ETH dyad and deposited 5 whilte
     // minting the nft.
-    assertEq(metadata.deposit, ORACLE_PRICE*60000000000);
+    assertEq(metadata.deposit, int(ORACLE_PRICE*60000000000));
   }
   function testMintDyadWithdrawnNotUpdated() public {
     dnft.mintNft{value: 5 ether}(address(this));
@@ -144,7 +144,7 @@ contract dNFTTest is Test {
     dnft.mintDyad{value: 1 ether}(0);
     dnft.withdraw(0, AMOUNT_TO_WITHDRAW);
     assertEq(dnft.idToNft(0).withdrawn, AMOUNT_TO_WITHDRAW);
-    assertEq(dnft.idToNft(0).deposit, ORACLE_PRICE*60000000000-AMOUNT_TO_WITHDRAW);
+    assertEq(dnft.idToNft(0).deposit, int(ORACLE_PRICE*60000000000-AMOUNT_TO_WITHDRAW));
   }
   function testFailWithdrawDyadNotNftOwner() public {
     dnft.mintNft{value: 5 ether}(address(this));
@@ -167,7 +167,7 @@ contract dNFTTest is Test {
     dyad.approve(address(dnft), AMOUNT_TO_DEPOSIT);
     dnft.deposit (0, AMOUNT_TO_DEPOSIT);
     assertEq(dnft.idToNft(0).withdrawn, 0);
-    assertEq(dnft.idToNft(0).deposit, ORACLE_PRICE*50000000000);
+    assertEq(dnft.idToNft(0).deposit, int(ORACLE_PRICE*50000000000));
   }
   function testFailDepositDyadNotNftOwner() public {
     dnft.mintNft{value: 5 ether}(address(this));
