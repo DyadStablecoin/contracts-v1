@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 interface IdNFT {
   struct Nft {
     uint withdrawn;   // dyad withdrawn from the pool deposit
-    uint deposit;     // dyad balance in pool
+    int deposit;      // dyad balance in pool
     uint xp;          // always positive, always inflationary
     bool isClaimable; // is true after liquidation // takes up 1 byte
   }

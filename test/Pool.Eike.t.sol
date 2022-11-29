@@ -69,12 +69,12 @@ contract PoolTest is Test {
   // https://github.com/foundry-rs/forge-std/pull/103
   function overwriteNft(uint id, uint xp, uint deposit, uint withdrawn) public {
     IdNFT.Nft memory nft = dnft.idToNft(id);
-    nft.withdrawn = withdrawn; nft.deposit = deposit; nft.xp = xp;
+    nft.withdrawn = withdrawn; nft.deposit = int(deposit); nft.xp = xp;
 
     stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
       .depth(0).checked_write(nft.withdrawn);
     stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
-      .depth(1).checked_write(nft.deposit);
+      .depth(1).checked_write(uint(nft.deposit));
     stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
       .depth(2).checked_write(nft.xp);
     // stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
@@ -99,7 +99,7 @@ contract PoolTest is Test {
   // check that the nft deposit values are equal to each other
   function assertDeposits(uint16[6] memory deposits) internal {
     for (uint i = 0; i < deposits.length; i++) {
-      assertEq(dnft.idToNft(i).deposit, deposits[i]);
+      assertTrue(uint(dnft.idToNft(i).deposit) == deposits[i]);
     }
   }
 
