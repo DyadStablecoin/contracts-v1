@@ -122,10 +122,14 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // special function for the liquidation mechanism, where we have to mint a new
   // nft with a diffrent deposit minimum and where we transfer xp from the old
   // burned nft to the new one.
-  function mintNftWithXp(address receiver, uint xp) external onlyPool returns (uint) {
+  function mintNftWithXp(address receiver,
+                         uint xp,
+                         uint depositMinimum) external payable onlyPool returns (uint) {
     uint id = _mintNft(receiver);
     IdNFT.Nft storage nft = idToNft[id];
     nft.xp = xp;
+    // mint the required dyad to cover the negative deposit
+    _mintDyad(id, depositMinimum); 
     return id;
   }
 

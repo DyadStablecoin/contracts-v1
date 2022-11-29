@@ -123,7 +123,7 @@ contract PoolTest is Test {
 
     // dnft 1 has a positive deposit, and therfore is not claimable
     vm.expectRevert();
-    pool.claim{value: 100 ether}(1, address(this));
+    pool.claim{value: 1 ether}(1, address(this));
   }
 
   function testSyncMint() public {

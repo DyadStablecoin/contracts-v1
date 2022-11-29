@@ -225,16 +225,15 @@ contract Pool {
   // transfer liquidated nft from the old owner to new owner
   // IMPORTANT: the pool has the ability to transfer any nft without
   // any approvals.
-  function claim(uint id, address recipient) external payable {
+  function claim(uint id, address recipient) external payable returns (uint) {
     IdNFT.Nft memory nft = dnft.idToNft(id);
     // emit before we burn, otherwise ownerOf(id) will fail!
     emit NftClaimed(id, dnft.ownerOf(id), recipient); 
     dnft.burn(id); // burn nft
     require(nft.deposit < 0, "dNFT: NFT is not liquidatable");
     // how much eth is required to cover the negative deposit
-    uint ethRequired = uint(-nft.deposit)*lastEthPrice/100000000;
-    require (msg.value >= ethRequired, "Pool: Not enough ETH to claim NFT");
+    uint ethRequired = uint(-nft.deposit) * lastEthPrice/100000000;
     // mint new nft with the xp of the old one
-    dnft.mintNftWithXp(recipient, nft.xp);
+    return dnft.mintNftWithXp{value: msg.value}(recipient, nft.xp, ethRequired);
   }
 }
