@@ -119,11 +119,21 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     return id;
   }
 
+  // special function for the liquidation mechanism, where we have to mint a new
+  // nft with a diffrent deposit minimum and where we transfer xp from the old
+  // burned nft to the new one.
+  function mintNftWithXp(address receiver, uint xp) external onlyPool returns (uint) {
+    uint id = _mintNft(receiver);
+    IdNFT.Nft storage nft = idToNft[id];
+    nft.xp = xp;
+    return id;
+  }
+
   // the main reason for this method is that we need to be able to mint
   // nfts for the core team and investors without the deposit minimum,
   // this happens in the constructor where we call this method directly.
   // NOTE: this can only be called `MAX_SUPPLY` times
-  function _mintNft(address receiver) private returns (uint) {
+  function _mintNft(address receiver) public returns (uint) {
     uint id = NUMBER_OF_NFT_MINTS;
     require(id < MAX_SUPPLY, "Max supply reached");
     _mint(receiver, id); // nft mint

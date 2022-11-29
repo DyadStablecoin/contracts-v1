@@ -234,10 +234,7 @@ contract Pool {
     // how much eth is required to cover the negative deposit
     uint ethRequired = uint(-nft.deposit)*lastEthPrice/100000000;
     require (msg.value >= ethRequired, "Pool: Not enough ETH to claim NFT");
-    // mint new nft
-    uint mintedId = dnft.mintNft{value: msg.value}(recipient);
-    IdNFT.Nft memory mintedNft = dnft.idToNft(mintedId);
-    mintedNft.xp = nft.xp; // transfer xp from burned nft to newly minted nft
-    dnft.updateNft(mintedId, mintedNft);
+    // mint new nft with the xp of the old one
+    dnft.mintNftWithXp(recipient, nft.xp);
   }
 }
