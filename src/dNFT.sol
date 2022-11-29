@@ -172,16 +172,11 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // `DEPOSIT_MINIMUM` in the `mintNft` method.
   function _mintDyad(uint id, uint minAmount) private {
     require(msg.value > 0, "You need to send some ETH to mint dyad");
-
     // mint new dyad and deposit it in the pool 
     uint amount = pool.mintDyad{value: msg.value}(minAmount);
     dyad.approve(address(pool), amount);
     pool.deposit(amount);
-
-    IdNFT.Nft storage nft = idToNft[id];
-    // give msg.sender ownership of the dyad
-    nft.deposit += int(amount);
-
+    idToNft[id].deposit += int(amount);
     emit DyadMinted(msg.sender, id, amount);
   }
 
