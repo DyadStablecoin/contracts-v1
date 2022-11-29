@@ -111,6 +111,19 @@ contract PoolTest is Test {
 
     // check deposits after newly burned dyad. SOME ROUNDING ERRORS!
     assertDeposits([-135, 4365, 1805, 4000, 1724, 6250]);
+
+    // as we can see from the `assertDeposits` above, the first nft deposit
+    // is negative (-135), which makes it claimable by others.
+    vm.expectRevert();
+    // this is not enough ether to claim the nft
+    pool.claim{value: 1   wei}(0, address(this));
+    // 1 ether is enough
+    // IMPORTANT: this test will only pass while the eth price is above $135.
+    pool.claim{value: 1 ether}(0, address(this));
+
+    // dnft 1 has a positive deposit, and therfore is not claimable
+    vm.expectRevert();
+    pool.claim{value: 100 ether}(1, address(this));
   }
 
   function testSyncMint() public {
@@ -122,8 +135,7 @@ contract PoolTest is Test {
     // check deposits after newly minted dyad. SOME ROUNDING ERRORS!
     // why do we cast the first argument? Good question. This forces
     // the compiler to create a int16 array. Is there a better way?
-    int16[6] memory deposits = [int16(187), 6592, 2966, 5213, 2544, 7833];
-    assertDeposits(deposits);
+    assertDeposits([int16(187), 6592, 2966, 5213, 2544, 7833]);
   }
 
   function testSyncLiquidation() public {
