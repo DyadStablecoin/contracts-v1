@@ -64,6 +64,8 @@ contract Pool {
   //   deposit.
   // - To incentivize nft holders to call this method, there is a xp boost to 
   //   the first nft of the owner calling it.
+  // NOTE: check out this google sheet to get a better overview of the equations:
+  // https://docs.google.com/spreadsheets/d/1pegDYo8hrOQZ7yZY428F_aQ_mCvK0d701mygZy-P04o/edit#gid=0
   function sync() public returns (uint) {
     uint newEthPrice = uint(getNewEthPrice());
     // determine the mode we are in
