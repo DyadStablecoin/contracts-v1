@@ -77,13 +77,8 @@ contract Pool {
     // the amount of dyad to burn/mint
     uint dyadDelta = updateNFTs(ethChange, mode);
 
-    if (mode == Mode.MINTING) {
-      dyad.mint(address(this), dyadDelta);
-    } else {
-      // What happens if there is not enough to burn?
-      // TODO
-      // dyad.burn(dyadDelta);
-    }
+    mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
+                         : dyad.burn(dyadDelta);
 
     lastEthPrice = newEthPrice;
     emit Synced(newEthPrice);

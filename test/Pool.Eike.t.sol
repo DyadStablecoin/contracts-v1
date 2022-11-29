@@ -106,7 +106,10 @@ contract PoolTest is Test {
   function setupBurn() public returns (uint){
     // change new oracle price to something lower so we trigger the burn
     vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(95000000))); 
+    uint totalSupplyBefore = dyad.totalSupply();
     uint dyadDelta = pool.sync();
+    // there should be less dyad now after the sync
+    assertTrue(totalSupplyBefore > dyad.totalSupply());
     return dyadDelta;
   }
 
@@ -143,8 +146,11 @@ contract PoolTest is Test {
   function testSyncMint() public {
     // change new oracle price to something higher so we trigger the mint
     vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(110000000))); 
+    uint totalSupplyBefore = dyad.totalSupply();
     uint dyadDelta = pool.sync();
     assertEq(dyadDelta, 9600);
+    // there should be more dyad now after the sync
+    assertTrue(totalSupplyBefore < dyad.totalSupply());
 
     // check deposits after newly minted dyad. SOME ROUNDING ERRORS!
     // why do we cast the first argument? Good question. This forces
