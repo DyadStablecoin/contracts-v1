@@ -103,23 +103,37 @@ contract PoolTest is Test {
     }
   }
 
-  function testSyncBurn() public {
+  function setupBurn() public returns (uint){
     // change new oracle price to something lower so we trigger the burn
     vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(95000000))); 
     uint dyadDelta = pool.sync();
+    return dyadDelta;
+  }
+
+  function testSyncBurn() public {
+    uint dyadDelta = setupBurn();
     assertEq(dyadDelta, 4800);
 
     // check deposits after newly burned dyad. SOME ROUNDING ERRORS!
     assertDeposits([-135, 4365, 1805, 4000, 1724, 6250]);
+  }
 
-    // as we can see from the `assertDeposits` above, the first nft deposit
+  function testClaim() public {
+    setupBurn();
+
+    // as we can see from the `testSyncBurn` above, the first nft deposit
     // is negative (-135), which makes it claimable by others.
-    vm.expectRevert();
+
     // this is not enough ether to claim the nft
+    vm.expectRevert();
     pool.claim{value: 1   wei}(0, address(this));
+
     // 1 ether is enough
     // IMPORTANT: this test will only pass while the eth price is above $135.
-    pool.claim{value: 1 ether}(0, address(this));
+    uint id = pool.claim{value: 1 ether}(0, address(this));
+
+    // lets check that the xp moved from the burned nft to the newly minted one
+    assertEq(dnft.idToNft(0).xp, dnft.idToNft(id).xp);
 
     // dnft 1 has a positive deposit, and therfore is not claimable
     vm.expectRevert();

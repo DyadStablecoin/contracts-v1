@@ -126,8 +126,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
                          uint xp,
                          uint depositMinimum) external payable onlyPool returns (uint) {
     uint id = _mintNft(receiver);
-    IdNFT.Nft storage nft = idToNft[id];
-    nft.xp = xp;
+    idToNft[id].xp = xp;
+
     // mint the required dyad to cover the negative deposit
     _mintDyad(id, depositMinimum); 
     return id;
