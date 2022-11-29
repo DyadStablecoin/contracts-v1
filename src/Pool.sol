@@ -202,11 +202,11 @@ contract Pool {
     dyad.transferFrom(msg.sender, address(this), amount);
   }
 
-  /// @notice Withdraw dyad from the pool to the recipient
+  /// @notice Withdraw dyad from the pool to the receiver
   /// @param amount The amount of dyad to withdraw
-  /// @param recipient The address to withdraw dyad to
-  function withdraw(address recipient, uint amount) external onlyNftContract {
-    dyad.transfer(recipient, amount);
+  /// @param receiver The address to withdraw dyad to
+  function withdraw(address receiver, uint amount) external onlyNftContract {
+    dyad.transfer(receiver, amount);
   }
 
   /// @notice Redeem dyad for eth
@@ -225,15 +225,15 @@ contract Pool {
   // transfer liquidated nft from the old owner to new owner
   // IMPORTANT: the pool has the ability to transfer any nft without
   // any approvals.
-  function claim(uint id, address recipient) external payable returns (uint) {
+  function claim(uint id, address receiver) external payable returns (uint) {
     IdNFT.Nft memory nft = dnft.idToNft(id);
     // emit before we burn, otherwise ownerOf(id) will fail!
-    emit NftClaimed(id, dnft.ownerOf(id), recipient); 
+    emit NftClaimed(id, dnft.ownerOf(id), receiver); 
     dnft.burn(id); // burn nft
     require(nft.deposit < 0, "dNFT: NFT is not liquidatable");
     // how much eth is required to cover the negative deposit
     uint ethRequired = uint(-nft.deposit) * lastEthPrice/100000000;
     // mint new nft with the xp of the old one
-    return dnft.mintNftWithXp{value: msg.value}(recipient, nft.xp, ethRequired);
+    return dnft.mintNftWithXp{value: msg.value}(receiver, nft.xp, ethRequired);
   }
 }
