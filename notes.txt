@@ -22,3 +22,7 @@ TODO:
 GAS SAVINGS:
 - [ ] unchecked in loop
 - [ ] unnessary assignments like dNFT.sol line 122
+
+UNCERTAINTIES:
+- [ ] can it happen that every nft deposit is negative?
+      this would make `multiProductsSum` in sync() equal to 0
