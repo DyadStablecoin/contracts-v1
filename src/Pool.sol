@@ -110,7 +110,7 @@ contract Pool {
     for (uint i = 0; i < dnft.totalSupply(); i++) {
       uint id = dnft.tokenByIndex(i);
       // multi normalized by the multi sum
-      uint relativeMulti = multis.multiProducts[id]*10000/multis.multiProductsSum;
+      uint relativeMulti = multis.multiProducts[id]*10000 / multis.multiProductsSum;
       // relative dyad delta for each nft
       uint relativeDyadDelta = PoolLibrary.percentageOf(dyadDelta, relativeMulti);
 
@@ -118,7 +118,8 @@ contract Pool {
 
       // xp accrual happens only when there is a burn.
       uint xpAccrual;
-      if (mode == Mode.BURNING) {
+      // there can only be xp accrual if deposit is not 0 
+      if (mode == Mode.BURNING && nft.deposit >= 0) {
         // normal accrual
         xpAccrual = relativeDyadDelta*100 / (multis.xpMultis[id]);
         // boost for the address calling this function
@@ -167,12 +168,12 @@ contract Pool {
 
       if (nft.deposit >= 0 ) {
         // NOTE: MAX_XP - MIN_XP could be 0!
-        uint xpScaled      = (nft.xp-dnft.MIN_XP())*10000 / (dnft.MAX_XP()-dnft.MIN_XP());
+        uint xpScaled = (nft.xp-dnft.MIN_XP())*10000 / (dnft.MAX_XP()-dnft.MIN_XP());
         uint mintAvgMinted = (nft.withdrawn+uint(nft.deposit))*10000 / (dyad.totalSupply()/nftTotalSupply+1);
-        xpMulti           = PoolLibrary.getXpMulti(xpScaled/100);
+        xpMulti = PoolLibrary.getXpMulti(xpScaled/100);
         if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; }
         uint depositMulti = uint(nft.deposit)*10000 / (uint(nft.deposit)+nft.withdrawn+1);
-        multiProduct      = xpMulti * (mode == Mode.BURNING ? mintAvgMinted : depositMulti) / 100;
+        multiProduct = xpMulti * (mode == Mode.BURNING ? mintAvgMinted : depositMulti) / 100;
       } 
 
       multiProducts[id]  = multiProduct;
