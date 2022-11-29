@@ -227,11 +227,17 @@ contract Pool {
   // any approvals.
   function claim(uint id, address recipient) external payable {
     IdNFT.Nft memory nft = dnft.idToNft(id);
+    // emit before we burn, otherwise ownerOf(id) will fail!
+    emit NftClaimed(id, dnft.ownerOf(id), recipient); 
+    dnft.burn(id); // burn nft
     require(nft.deposit < 0, "dNFT: NFT is not liquidatable");
-    emit NftClaimed(id, dnft.ownerOf(id), recipient);
-    dnft.burn(id);
-    dnft.mintNft{value: msg.value}(recipient);
-    // cover the negative deposit
-    // transfer -> xp
+    // how much eth is required to cover the negative deposit
+    uint ethRequired = uint(-nft.deposit)*lastEthPrice/100000000;
+    require (msg.value >= ethRequired, "Pool: Not enough ETH to claim NFT");
+    // mint new nft
+    uint mintedId = dnft.mintNft{value: msg.value}(recipient);
+    IdNFT.Nft memory mintedNft = dnft.idToNft(mintedId);
+    mintedNft.xp = nft.xp; // transfer xp from burned nft to newly minted nft
+    dnft.updateNft(mintedId, mintedNft);
   }
 }
