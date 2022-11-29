@@ -67,12 +67,14 @@ contract Pool {
   function sync() public returns (uint) {
     uint newEthPrice = uint(getNewEthPrice());
     // determine the mode we are in
-    Mode mode = newEthPrice > lastEthPrice ? Mode.MINTING : Mode.BURNING;
+    Mode mode = newEthPrice > lastEthPrice ? Mode.MINTING 
+                                           : Mode.BURNING;
  
     // stores the eth price change in basis points
     uint ethChange = newEthPrice*10000/lastEthPrice;
     // we have to do this to get the percentage in basis points
-    mode == Mode.BURNING ? ethChange = 10000 - ethChange : ethChange -= 10000;
+    mode == Mode.BURNING ? ethChange  = 10000 - ethChange 
+                         : ethChange -= 10000;
 
     // the amount of dyad to burn/mint
     uint dyadDelta = updateNFTs(ethChange, mode);
