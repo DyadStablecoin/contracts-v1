@@ -166,7 +166,7 @@ contract Pool {
       uint multiProduct; // 0 by default
       uint xpMulti;      // 0 by default
 
-      if (nft.deposit >= 0 ) {
+      if (nft.deposit >= 0) {
         // NOTE: MAX_XP - MIN_XP could be 0!
         uint xpScaled = (nft.xp-dnft.MIN_XP())*10000 / (dnft.MAX_XP()-dnft.MIN_XP());
         uint mintAvgMinted = (nft.withdrawn+uint(nft.deposit))*10000 / (dyad.totalSupply()/nftTotalSupply+1);
