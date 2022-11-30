@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "forge-std/console.sol";
-
 library PoolLibrary {
   function percentageOf(uint x, uint basisPoints) internal pure returns (uint) {
     return x * basisPoints/10000;
