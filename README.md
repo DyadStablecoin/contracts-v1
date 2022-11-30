@@ -4,13 +4,19 @@
 
 This repo contains the smart contracts for the dyad protocol.
 
-## Run Locally
+## Run
 
 1) Install [foundry](https://book.getfoundry.sh/getting-started/installation)
 2) Run `forge build`
 
-## Run Tests
+## Test
 
 ```
 forge test --fork-url {FORK_URL}
+```
+
+## Deploy
+
+```
+forge script script/Deploy.Mainnet.s.sol --rpc-url ${RPC} --chain-id 1 --sender ${SENDER} --broadcast -i 1
 ```
