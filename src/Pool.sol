@@ -214,7 +214,6 @@ contract Pool {
     // msg.sender has to approve pool to spend its tokens and burn it
     dyad.transferFrom(msg.sender, address(this), amount);
     dyad.burn(amount);
-    // TODO: get the latest price??
     uint usdInEth = amount*100000000 / lastEthPrice;
     payable(msg.sender).transfer(usdInEth);
   }

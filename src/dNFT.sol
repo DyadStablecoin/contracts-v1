@@ -9,11 +9,12 @@ import {IdNFT} from "../src/interfaces/IdNFT.sol";
 
 contract dNFT is ERC721Enumerable, ERC721Burnable {
   // maximum number of nfts that can be minted
-  uint public MAX_SUPPLY = 300;
+  uint constant public MAX_SUPPLY = 300;
 
-  uint public NUMBER_OF_NFT_MINTS;
+  uint public numberOfMints;
 
   // to mint a dnft $ 5k in eth are required
+  // should be constant but for testing purposes we leave it out
   uint public DEPOSIT_MINIMUM = 5000000000000000000000;
 
   // here we store the maximum value over every dNFT,
@@ -140,11 +141,11 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // nfts for the core team and investors without the deposit minimum,
   // this happens in the constructor where we call this method directly.
   // NOTE: this can only be called `MAX_SUPPLY` times
-  function _mintNft(address receiver) public returns (uint) {
+  function _mintNft(address receiver) public returns (uint id) {
     // we can not use totalSupply() here because of the liquidation mechanism, 
     // which burns and creates new nfts. This way ensures that we alway use 
     // a new id.
-    uint id = NUMBER_OF_NFT_MINTS;
+    id = numberOfMints;
     require(totalSupply() < MAX_SUPPLY, "Max supply reached");
     _mint(receiver, id); // nft mint
 
@@ -161,8 +162,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
     emit NftMinted(receiver, id);
 
-    NUMBER_OF_NFT_MINTS += 1;
-    return id;
+    numberOfMints += 1;
   }
 
   // mint new dyad to the respective nft
