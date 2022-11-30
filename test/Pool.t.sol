@@ -101,13 +101,6 @@ contract PoolTest is Test {
     // the redeem burns the dyad so the total supply should be less
     assertTrue(dyad.totalSupply() < oldDyadTotalSupply);
   }
-  function testFailRedeemDyadLessThanRedeemMinimum() public {
-    uint REDEEM_AMOUNT = 100000000;
-    mintAndTransfer(REDEEM_AMOUNT);
-    vm.prank(addr1);
-    // this is less than the redeem minimum by 1
-    pool.redeem(REDEEM_AMOUNT-1);
-  }
   function testFailRedeemDyadNoAllowance() public {
     // this should fail because we do not prak the redeem call, 
     // which means that this contract is the sender, and it has no allowance

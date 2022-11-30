@@ -141,8 +141,11 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // this happens in the constructor where we call this method directly.
   // NOTE: this can only be called `MAX_SUPPLY` times
   function _mintNft(address receiver) public returns (uint) {
+    // we can not use totalSupply() here because of the liquidation mechanism, 
+    // which burns and creates new nfts. This way ensures that we alway use 
+    // a new id.
     uint id = NUMBER_OF_NFT_MINTS;
-    require(id < MAX_SUPPLY, "Max supply reached");
+    require(totalSupply() < MAX_SUPPLY, "Max supply reached");
     _mint(receiver, id); // nft mint
 
     IdNFT.Nft storage nft = idToNft[id];
@@ -151,7 +154,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     // We do MAX_SUPPLY - totalSupply() not to incentivice anything
     // but to break the xp symmetry.
     // +1 to start with a clean 900300
-    nft.xp = nft.xp + (MIN_XP + (MAX_SUPPLY-totalSupply()+1));
+    nft.xp = MIN_XP + MAX_SUPPLY-totalSupply()+1;
 
     // the new nft.xp could potentially be a new xp minimum!
     if (nft.xp < MIN_XP) { MIN_XP = nft.xp; }
@@ -204,7 +207,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   /// @notice Deposit dyad back in the pool
   /// @param id The NFT id
   /// @param amount The amount of dyad to deposit
-  function deposit(uint id, uint amount) external onlyNFTOwner(id) {
+  // NOTE: anyone can call this!
+  function deposit(uint id, uint amount) external {
     IdNFT.Nft storage nft = idToNft[id];
     // The amount you want to deposit is higher than the amount you have 
     // withdrawn
