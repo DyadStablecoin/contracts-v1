@@ -30,7 +30,7 @@ ldeploy:
 
 # deploy on goerli
 gdeploy:
-	forge script script/Deploy.Goerli.s.sol --rpc-url $(GOERLI_RPC) --chain-id 5 --sender 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --broadcast -i 1
+	forge script script/Deploy.Goerli.s.sol --rpc-url $(GOERLI_RPC) --sender $(PUBLIC_KEY) --broadcast --verify -i 1 -vvvv
 
 # deploy on forked mainnet 
 deploy:

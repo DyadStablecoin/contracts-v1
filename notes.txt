@@ -17,7 +17,7 @@ TODO:
 - [X] we need to access the id => nft mapping by tokenByIndex
 - [X] add README.md
 - [X] rename recipient to receiver
-- [ ] automatic etherscan verification
+- [X] automatic etherscan verification (should work out of the box)
 
 
 GAS SAVINGS:

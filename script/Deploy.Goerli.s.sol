@@ -7,24 +7,26 @@ import {dNFT} from "../src/dNFT.sol";
 import "../src/dyad.sol";
 import "../src/pool.sol";
 
-address constant PRICE_ORACLE_GOERLI = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+address constant PRICE_ORACLE_GOERLI = 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e;
 
 // Pseudo-code, may not compile.
 contract DeployGoerli is Script {
-   function run() public {
-      vm.startBroadcast();
+  uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
-      DYAD dyad = new DYAD();
+  function run() public {
+    vm.startBroadcast(deployerPrivateKey);
 
-      dNFT _dnft = new dNFT(address(dyad), true); // with insider alloc
-      IdNFT dnft = IdNFT(address(_dnft));
+    DYAD dyad = new DYAD();
 
-      Pool pool = new Pool(address(dnft), address(dyad), 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
+    dNFT _dnft = new dNFT(address(dyad), true); // with insider alloc
+    IdNFT dnft = IdNFT(address(_dnft));
 
-      dyad.setMinter(address(pool));
-      dnft.setPool(address(pool));
+    Pool pool = new Pool(address(dnft), address(dyad), PRICE_ORACLE_GOERLI);
 
-      vm.stopBroadcast();
-   }
+    dnft.setPool(address(pool));
+    dyad.setMinter(address(pool));
+
+    vm.stopBroadcast();
+  }
 }
 
