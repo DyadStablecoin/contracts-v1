@@ -108,22 +108,22 @@ contract Pool {
     uint maxXp = dnft.MAX_XP();
 
     for (uint i = 0; i < dnft.totalSupply(); i++) {
-      uint id = dnft.tokenByIndex(i);
+      uint tokenId = dnft.tokenByIndex(i);
       // multi normalized by the multi sum
-      uint relativeMulti = multis.multiProducts[id]*10000 / multis.multiProductsSum;
+      uint relativeMulti = multis.multiProducts[i]*10000 / multis.multiProductsSum;
       // relative dyad delta for each nft
       uint relativeDyadDelta = PoolLibrary.percentageOf(dyadDelta, relativeMulti);
 
-      IdNFT.Nft memory nft = dnft.idToNft(id);
+      IdNFT.Nft memory nft = dnft.idToNft(tokenId);
 
       // xp accrual happens only when there is a burn.
       uint xpAccrual;
       // there can only be xp accrual if deposit is not 0 
       if (mode == Mode.BURNING && nft.deposit >= 0) {
         // normal accrual
-        xpAccrual = relativeDyadDelta*100 / (multis.xpMultis[id]);
+        xpAccrual = relativeDyadDelta*100 / (multis.xpMultis[i]);
         // boost for the address calling this function
-        if (!isBoosted && msg.sender == dnft.ownerOf(id)) {
+        if (!isBoosted && msg.sender == dnft.ownerOf(tokenId)) {
           isBoosted = true;
           xpAccrual += PoolLibrary.percentageOf(nft.xp, 10); // 0.10%
         }
@@ -139,7 +139,7 @@ contract Pool {
       }
 
       // update nft in storage
-      dnft.updateNft(id, nft);
+      dnft.updateNft(tokenId, nft);
 
       // check if this is a new xp minimum/maximum for this sync
       if (nft.xp < minXp) { minXp = nft.xp; }
@@ -160,8 +160,8 @@ contract Pool {
     uint[] memory xpMultis      = new uint[](nftTotalSupply);
 
     for (uint i = 0; i < nftTotalSupply; i++) {
-      uint id = dnft.tokenByIndex(i);
-      IdNFT.Nft memory nft = dnft.idToNft(id);
+      uint tokenId = dnft.tokenByIndex(i);
+      IdNFT.Nft memory nft = dnft.idToNft(tokenId);
 
       uint multiProduct; // 0 by default
       uint xpMulti;      // 0 by default
@@ -176,9 +176,9 @@ contract Pool {
         multiProduct = xpMulti * (mode == Mode.BURNING ? mintAvgMinted : depositMulti) / 100;
       } 
 
-      multiProducts[id]  = multiProduct;
+      multiProducts[i]  = multiProduct;
       multiProductsSum  += multiProduct;
-      xpMultis[id]       = xpMulti;
+      xpMultis[i]       = xpMulti;
     }
 
     // so we avoid dividing by 0 in `sync`
