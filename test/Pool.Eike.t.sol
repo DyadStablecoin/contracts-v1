@@ -177,13 +177,12 @@ contract PoolTest is Test {
   function testSyncBurnMintBurn() public { triggerBurn(); triggerMint(); triggerBurn(); }
 
   function testSyncLiquidation() public {
-    // we are going to set the oracle price to something super low,
-    // that will trigger the liquidation
-    vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(10000000))); 
-    pool.sync();
+    triggerBurn();
 
     // nft 0 is now liquidated, lets claim it!
     pool.claim{value: 5 ether}(0, address(this));
+
+    triggerMint();
     // sync now acts on the newly minted nft, which is a very important test, 
     // because the newly minted nft has different index from the old one.
     pool.sync();

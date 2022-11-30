@@ -52,6 +52,7 @@ contract Pool {
 
   /// @notice get the latest eth price from oracle
   function getNewEthPrice() internal view returns (int newEthPrice) {
+    // NOTE: this can not be negative! (hopefully)
     ( , newEthPrice, , , ) = priceFeed.latestRoundData();
   }
 
@@ -166,6 +167,7 @@ contract Pool {
       uint xpMulti;      // 0 by default
 
       if (nft.deposit >= 0) {
+        // NOTE: From here on, uint(nft.deposit) is fine because it is not negative
         // NOTE: MAX_XP - MIN_XP could be 0!
         uint xpScaled = (nft.xp-dnft.MIN_XP())*10000 / (dnft.MAX_XP()-dnft.MIN_XP());
         uint mintAvgMinted = (nft.withdrawn+uint(nft.deposit))*10000 / (dyad.totalSupply()/nftTotalSupply+1);
@@ -231,6 +233,7 @@ contract Pool {
     dnft.burn(id); // burn nft
     require(nft.deposit < 0, "dNFT: NFT is not liquidatable");
     // how much eth is required to cover the negative deposit
+    // NOTE: uint(-nft.deposit) is fine because nft.deposit is negative
     uint ethRequired = uint(-nft.deposit) * lastEthPrice/100000000;
     // mint new nft with the xp of the old one
     return dnft.mintNftCopy{value: msg.value}(receiver, nft, ethRequired);
