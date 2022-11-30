@@ -18,6 +18,10 @@ TODO:
 - [X] add README.md
 - [X] rename recipient to receiver
 - [X] automatic etherscan verification (should work out of the box)
+- [ ] nft.deposit > or >= ?
+- [ ] replace 10k with const
+- [ ] redeem: get the latest price or lastEthPrice?
+- [ ] rename to ehjc
 
 
 GAS SAVINGS:

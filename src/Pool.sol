@@ -15,8 +15,6 @@ contract Pool {
   DYAD public dyad;
   IAggregatorV3 internal priceFeed;
 
-  uint256 constant private REDEEM_MINIMUM = 100000000;
-
   // when syncing, the protocol can be in two states:
   //   BURNING: if the price of eth went down
   //   MINTING: if the price of eth went up
@@ -119,7 +117,7 @@ contract Pool {
       // xp accrual happens only when there is a burn.
       uint xpAccrual;
       // there can only be xp accrual if deposit is not 0 
-      if (mode == Mode.BURNING && nft.deposit >= 0) {
+      if (mode == Mode.BURNING && nft.deposit > 0) {
         // normal accrual
         xpAccrual = relativeDyadDelta*100 / (multis.xpMultis[i]);
         // boost for the address calling this function
@@ -160,19 +158,20 @@ contract Pool {
     uint[] memory xpMultis      = new uint[](nftTotalSupply);
 
     for (uint i = 0; i < nftTotalSupply; i++) {
-      uint tokenId = dnft.tokenByIndex(i);
-      IdNFT.Nft memory nft = dnft.idToNft(tokenId);
+      // get nft by token id
+      IdNFT.Nft memory nft = dnft.idToNft(dnft.tokenByIndex(i));
 
       uint multiProduct; // 0 by default
       uint xpMulti;      // 0 by default
 
-      if (nft.deposit >= 0) {
+      if (nft.deposit > 0) {
         // NOTE: From here on, uint(nft.deposit) is fine because it is not negative
-        // NOTE: MAX_XP - MIN_XP could be 0!
-        uint xpScaled = (nft.xp-dnft.MIN_XP())*10000 / (dnft.MAX_XP()-dnft.MIN_XP());
+        uint xpDelta =  dnft.MAX_XP() - dnft.MIN_XP();
+        if (xpDelta == 0) { xpDelta = 1; } // avoid division by 0
+        uint xpScaled = (nft.xp-dnft.MIN_XP())*10000 / xpDelta;
         uint mintAvgMinted = (nft.withdrawn+uint(nft.deposit))*10000 / (dyad.totalSupply()/nftTotalSupply+1);
         xpMulti = PoolLibrary.getXpMulti(xpScaled/100);
-        if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; }
+        if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } // should be 292: 242+50
         uint depositMulti = uint(nft.deposit)*10000 / (uint(nft.deposit)+nft.withdrawn+1);
         multiProduct = xpMulti * (mode == Mode.BURNING ? mintAvgMinted : depositMulti) / 100;
       } 
@@ -212,12 +211,10 @@ contract Pool {
 
   /// @notice Redeem dyad for eth
   function redeem(uint amount) public {
-    // we do this to avoid rounding errors
-    require(amount >= REDEEM_MINIMUM, "Pool: Redemption must be > 100000000");
     // msg.sender has to approve pool to spend its tokens and burn it
     dyad.transferFrom(msg.sender, address(this), amount);
     dyad.burn(amount);
-
+    // TODO: get the latest price??
     uint usdInEth = amount*100000000 / lastEthPrice;
     payable(msg.sender).transfer(usdInEth);
   }
