@@ -2,8 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
-import {Deployment} from "./DeploymentLibrary.sol";
-
+import {Deployment} from "./Deployment.sol";
 
 // Run on a local mainnet fork
 contract DeployMainnet is Script {
