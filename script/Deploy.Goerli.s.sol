@@ -8,7 +8,7 @@ import {Deployment} from "./Deployment.sol";
 contract DeployGoerli is Script {
   function run() public {
       address ORACLE_GOERLI   = 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e;
-      uint    DEPOSIT_MINIMUM = 1000000000000000000; // $l deposit minimum
+      uint    DEPOSIT_MINIMUM = 1000000000000000000; // $1 deposit minimum
       new Deployment().deploy(ORACLE_GOERLI, DEPOSIT_MINIMUM, true);
   }
 }
