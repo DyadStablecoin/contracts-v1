@@ -11,7 +11,7 @@ library PoolLibrary {
     return x*basisPoints/10000;
   }
 
-  function getXpMulti(uint xp) public pure returns (uint) {
+  function getXpMulti(uint xp) internal pure returns (uint) {
     // xp is like an index which maps exactly to one value in the table. That is why
     // xp must be uint and between 0 and 100.
     require(xp >= 0 && xp <= 100, "PoolLibrary: xp out of range (0 <= xp <= 100)");
