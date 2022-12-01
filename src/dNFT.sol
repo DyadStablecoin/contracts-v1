@@ -14,8 +14,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   uint public numberOfMints;
 
   // to mint a dnft $ 5k in eth are required
-  // should be constant but for testing purposes we leave it out
-  uint public DEPOSIT_MINIMUM = 5000000000000000000000;
+  // deposit minimum to mint a new dnft
+  uint public DEPOSIT_MINIMUM;
 
   // here we store the maximum value over every dNFT,
   // which allows us to do a normalization, without iterating over
@@ -51,8 +51,11 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     _;
   }
 
-  constructor(address _dyad, bool withInsiderAllocation) ERC721("DYAD NFT", "dNFT") {
+  constructor(address _dyad,
+              uint depositMinimum,
+              bool withInsiderAllocation) ERC721("DYAD NFT", "dNFT") {
     dyad = DYAD(_dyad);
+    DEPOSIT_MINIMUM = depositMinimum;
 
     if (withInsiderAllocation) {
       // spcecial mint for core-team/contributors/early-adopters/investors
@@ -63,6 +66,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       _mintNft(0xe779Fb090AF9dfBB3b4C18Ed571ad6390Df52ae2); // dma.eth
       _mintNft(0x9F919a292e62594f2D8db13F6A4ADB1691D6c60d); // kores
       _mintNft(0xF37ec513AF2CD91a76D386680fD2Df6ba3Bb7520); // e_z.eth
+      _mintNft(0xe9fC93E678F2Bde7A0a3bA3d39F505Ef63a68C97); // ehjc
     }
   }
 

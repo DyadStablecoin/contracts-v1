@@ -8,6 +8,8 @@ import "../src/dyad.sol";
 import "../src/pool.sol";
 
 address constant PRICE_ORACLE_MAINNET = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+// $5k deposit minimum
+uint constant DEPOSIT_MINIMUM = 5000000000000000000000;
 
 // Run on a local mainnet fork
 contract DeployMainnet is Script {
@@ -16,7 +18,7 @@ contract DeployMainnet is Script {
 
       DYAD dyad = new DYAD();
 
-      dNFT _dnft = new dNFT(address(dyad), true); // with insider alloc
+      dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, true); // with insider alloc
       IdNFT dnft = IdNFT(address(_dnft));
 
       Pool pool = new Pool(address(dnft), address(dyad), PRICE_ORACLE_MAINNET);

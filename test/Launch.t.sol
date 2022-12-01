@@ -17,6 +17,7 @@ interface CheatCodes {
 }
 
 address constant CHAINLINK_ORACLE_ADDRESS = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+uint constant DEPOSIT_MINIMUM = 5000000000000000000000;
 
 // this should simulate the inital lauch on mainnet
 // IMPORTANT: you have to run this as a mainnet fork!!!
@@ -38,7 +39,7 @@ contract LaunchTest is Test {
 
   function setUp() public {
     dyad       = new DYAD();
-    dNFT _dnft = new dNFT(address(dyad), true); // with insider allocation
+    dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, true); // with insider allocation
     dnft       = IdNFT(address(_dnft));
     pool       = new Pool(address(dnft), address(dyad), CHAINLINK_ORACLE_ADDRESS);
     dnft.setPool  (address(pool));
