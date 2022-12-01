@@ -8,8 +8,8 @@ import "../src/dyad.sol";
 import "../src/pool.sol";
 
 address constant PRICE_ORACLE_GOERLI = 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e;
-// $5 deposit minimum
-uint constant DEPOSIT_MINIMUM = 5000000000000000000;
+// $1 deposit minimum
+uint constant DEPOSIT_MINIMUM = 1000000000000000000;
 
 // Pseudo-code, may not compile.
 contract DeployGoerli is Script {
