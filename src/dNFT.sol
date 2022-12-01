@@ -17,11 +17,12 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // deposit minimum to mint a new dnft
   uint public DEPOSIT_MINIMUM;
 
-  // here we store the maximum value over every dNFT,
+  // here we store the min/max value of xp over every dNFT,
   // which allows us to do a normalization, without iterating over
-  // all of them to find the max value.
+  // all of them to find the min/max value.
   // Why init to 900k? Because otherwise they are set to 0 and the 
   // normalization function in the `PoolLibrary` breaks and 900k is a nice number.
+  // every newly minted nft starts out with this MIN_XP.
   uint public MIN_XP = 900000;
   // after minting the first nft this will be the MAX_XP. After that it will
   // be updated by the `sync` in the pool contract.
@@ -93,7 +94,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   { return super.supportsInterface(interfaceId); }
 
   // we need to update the max xp value from the pool, that is why we need this
-  function updateXP(uint minXP, uint maxXP) public onlyPool {
+  function updateXP(uint minXP, uint maxXP) external onlyPool {
     if (minXP < MIN_XP) { MIN_XP = minXP; }
     if (maxXP > MAX_XP) { MAX_XP = maxXP; }
   }
@@ -145,7 +146,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // nfts for the core team and investors without the deposit minimum,
   // this happens in the constructor where we call this method directly.
   // NOTE: this can only be called `MAX_SUPPLY` times
-  function _mintNft(address receiver) public returns (uint id) {
+  function _mintNft(address receiver) private returns (uint id) {
     // we can not use totalSupply() here because of the liquidation mechanism, 
     // which burns and creates new nfts. This way ensures that we alway use 
     // a new id.

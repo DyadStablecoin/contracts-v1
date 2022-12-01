@@ -90,7 +90,7 @@ contract Pool {
   /// @param ethChange  Eth price change in basis points
   /// @param mode Is the change negative or positive
   /// @return dyadDelta The amount of dyad to mint or burn
-  function updateNFTs(uint ethChange, Mode mode) internal returns (uint) {
+  function updateNFTs(uint ethChange, Mode mode) private returns (uint) {
     // we boost the nft of the user calling this function with additional
     // xp, but only once! If boosted was used already, it can not be used again.
     bool isBoosted = false;
@@ -151,7 +151,7 @@ contract Pool {
 
 
   // NOTE: calculation of the multis is determined by the `mode`
-  function calcMultis(Mode mode) internal returns (Multis memory) {
+  function calcMultis(Mode mode) private returns (Multis memory) {
     uint nftTotalSupply = dnft.totalSupply();
     uint multiProductsSum;
     uint[] memory multiProducts = new uint[](nftTotalSupply);
@@ -210,7 +210,7 @@ contract Pool {
   }
 
   /// @notice Redeem dyad for eth
-  function redeem(uint amount) public {
+  function redeem(uint amount) external {
     // msg.sender has to approve pool to spend its tokens and burn it
     dyad.transferFrom(msg.sender, address(this), amount);
     dyad.burn(amount);
