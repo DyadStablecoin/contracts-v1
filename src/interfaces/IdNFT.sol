@@ -16,7 +16,6 @@ interface IdNFT {
   function MAX_DEPOSIT() external view returns (uint);
   function MAX_SUPPLY() external view returns (uint);
   function totalXp() external view returns (uint);
-
   function pool() external view returns (address);
   function ownerOf(uint tokenId) external view returns (address);
   function updateNft(uint id, Nft memory metadata) external;
@@ -37,12 +36,7 @@ interface IdNFT {
   function idToNft(uint) external view returns (Nft memory);
   function transferFrom(address from, address to, uint tokenId) external view returns (uint);
   function approve(address to, uint tokenId) external;
-
   function updateXP(uint minXP, uint maxXP) external;
   function tokenByIndex(uint index) external returns (uint);
-
-
-  // ONLY FOR TESTING
-  function addTestNft(uint id, uint xp, uint deposit, uint balance) external;
 }
 

@@ -11,6 +11,8 @@ import {dNFT} from "../src/dNFT.sol";
 import {PoolLibrary} from "../src/PoolLibrary.sol";
 import {OracleMock} from "./Oracle.t.sol";
 
+uint constant DEPOSIT_MINIMUM = 5000000000000000000000;
+
 interface CheatCodes {
    // Gets address for a given private key, (privateKey) => (address)
    function addr(uint256) external returns (address);
@@ -35,7 +37,7 @@ contract PoolTest is Test {
     dyad = new DYAD();
 
     // init dNFT contract
-    dNFT _dnft = new dNFT(address(dyad), false);
+    dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, false);
     dnft = IdNFT(address(_dnft));
 
     pool = new Pool(address(dnft), address(dyad), address(oracle));

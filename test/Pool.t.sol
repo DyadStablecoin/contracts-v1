@@ -14,6 +14,7 @@ import {OracleMock} from "./Oracle.t.sol";
 // mainnnet
 address constant PRICE_ORACLE_ADDRESS = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
 uint constant ORACLE_PRICE = 120000000000; // $1.2k
+uint constant DEPOSIT_MINIMUM = 5000000000000000000000;
 
 interface CheatCodes {
    // Gets address for a given private key, (privateKey) => (address)
@@ -45,7 +46,7 @@ contract PoolTest is Test {
     setOraclePrice(ORACLE_PRICE); // $1.2k
 
     // // init dNFT contract
-    dNFT _dnft = new dNFT(address(dyad), false);
+    dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, false);
     dnft = IdNFT(address(_dnft));
 
     pool = new Pool(address(dnft), address(dyad), address(oracle));
