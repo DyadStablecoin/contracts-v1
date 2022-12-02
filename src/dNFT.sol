@@ -8,12 +8,12 @@ import {Pool} from "../src/pool.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
 
 contract dNFT is ERC721Enumerable, ERC721Burnable {
-  // maximum number of nfts that can be minted
+  // maximum number of nfts that can exist at one point in time
   uint constant public MAX_SUPPLY = 300;
 
   uint public numberOfMints;
 
-  // deposit minimum to mint a new dnft
+  // deposit minimum required to mint a new dnft
   uint public DEPOSIT_MINIMUM;
 
   // here we store the min/max value of xp over every dNFT,
@@ -37,15 +37,13 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   event DyadMinted   (address indexed to, uint indexed id, uint amount);
   event DyadWithdrawn(address indexed to, uint indexed id, uint amount);
   event DyadDeposited(address indexed to, uint indexed id, uint amount);
+  event DyadRedeemed (address indexed to, uint indexed id, uint amount);
 
-  /// @dev Check if owner of NFT is msg.sender
-  /// @param id The id of the NFT
   modifier onlyNFTOwner(uint id) {
     require(this.ownerOf(id) == msg.sender, "dNFT: Only callable by NFT owner");
     _;
   }
 
-  /// @dev Check if caller is the pool
   modifier onlyPool() {
     require(address(pool) == msg.sender, "dNFT: Only callable by Pool contract");
     _;
@@ -54,7 +52,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   constructor(address _dyad,
               uint depositMinimum,
               bool withInsiderAllocation) ERC721("DYAD NFT", "dNFT") {
-    dyad = DYAD(_dyad);
+    dyad            = DYAD(_dyad);
     DEPOSIT_MINIMUM = depositMinimum;
 
     if (withInsiderAllocation) {
@@ -71,7 +69,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   }
 
   function setPool(address newPool) public {
-    // can only be set once, when launching the protocol
+    // can only be set once
     require(address(pool) == address(0),"dNFT: Pool is already set");
     pool = Pool(newPool);
   }
@@ -92,43 +90,40 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       returns (bool)
   { return super.supportsInterface(interfaceId); }
 
-  // we need to update the max xp value from the pool, that is why we need this
   function updateXP(uint minXP, uint maxXP) external onlyPool {
     if (minXP < MIN_XP) { MIN_XP = minXP; }
     if (maxXP > MAX_XP) { MAX_XP = maxXP; }
   }
 
-  // the pool needs a function to update nft info
   function updateNft(uint id, IdNFT.Nft memory nft) external onlyPool {
     idToNft[id] = nft;
   }
 
-  // VERY IMPORTANT: we add the pool here so we can burn any dnft. This is needed
-  // to make the liquidation mechanism possible.
+  // VERY IMPORTANT: we add the pool here so we can burn any dnft. 
+  // This is needed to make the liquidation mechanism work.
   function _isApprovedOrOwner(address spender,
                               uint256 tokenId) 
                               internal override view virtual returns (bool) {
     address owner = ERC721.ownerOf(tokenId);
-    return (spender == address(pool) || // <- we add the pool
+    return (spender == address(pool) || // <- only change
             spender == owner ||
             isApprovedForAll(owner, spender) ||
             getApproved(tokenId) == spender);
   }
 
-  // mint a new nft to the `receiver`
-  // to mint a new nft a minimum of $`DEPOSIT_MINIMUM` in eth is required
+  // to mint a new dnft a msg.value of 'DEPOSIT_MINIMUM' USD denominated in ETH
+  // is required.
   function mintNft(address receiver) external payable returns (uint) {
     uint id = _mintNft(receiver);
     _mintDyad(id, DEPOSIT_MINIMUM);
     return id;
   }
 
-  // special function for the liquidation mechanism, where we have to mint a new
-  // nft with a diffrent deposit minimum and where we transfer xp and the amount
-  // withdrawn from the old burned nft to the new one.
+  // Mint a new nft that will have the same xp and withdrawn amount as `nft`.
+  // The deposit of the newly minted nft depends on `msg.value`.
   function mintNftCopy(address receiver,
-                         IdNFT.Nft memory nft,
-                         uint depositMinimum) external payable onlyPool returns (uint) {
+                       IdNFT.Nft memory nft,
+                       uint depositMinimum) external payable onlyPool returns (uint) {
     uint id = _mintNft(receiver);
     IdNFT.Nft storage newNft = idToNft[id];
     // copy over xp and withdrawn. deposit is handled by _mintDyad below.
@@ -144,29 +139,27 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // the main reason for this method is that we need to be able to mint
   // nfts for the core team and investors without the deposit minimum,
   // this happens in the constructor where we call this method directly.
-  // NOTE: this can only be called `MAX_SUPPLY` times
   function _mintNft(address receiver) private returns (uint id) {
-    // we can not use totalSupply() here because of the liquidation mechanism, 
-    // which burns and creates new nfts. This way ensures that we alway use 
-    // a new id.
+    // we can not use totalSupply() for the id because of the liquidation
+    // mechanism, which burns and creates new nfts. This way ensures that we
+    // alway use a new id.
     id = numberOfMints;
     require(totalSupply() < MAX_SUPPLY, "Max supply reached");
-    _mint(receiver, id); // nft mint
+    _mint(receiver, id); 
+    numberOfMints += 1;
 
     IdNFT.Nft storage nft = idToNft[id];
 
-    // add 900k xp to the nft to start with
-    // We do MAX_SUPPLY - totalSupply() not to incentivice anything
-    // but to break the xp symmetry.
-    // +1 to start with a clean 900300
+    // add MIN_XP to the nft to start with
+    // We do MAX_SUPPLY - totalSupply() not to incentivice something but to
+    // break the xp symmetry.
+    // +1 to compensate for the newly minted nft which increments totalSupply()
+    // by 1.
     nft.xp = MIN_XP + MAX_SUPPLY-totalSupply()+1;
 
     // the new nft.xp could potentially be a new xp minimum!
     if (nft.xp < MIN_XP) { MIN_XP = nft.xp; }
-
     emit NftMinted(receiver, id);
-
-    numberOfMints += 1;
   }
 
   // mint new DYAD and deposit it in the pool
@@ -174,15 +167,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     _mintDyad(id, 0);
   }
 
-  // this method is needed, because of the required deposit minimum
-  // when minting new nfts.
-  // this deposit minimum is not required though when calling `mintDyad`
-  // through the respective nft.
-  // therfore `minAmount` is set to 0 in the `mintDyad` method and to 
-  // `DEPOSIT_MINIMUM` in the `mintNft` method.
   function _mintDyad(uint id, uint minAmount) private {
     require(msg.value > 0, "You need to send some ETH to mint dyad");
-    // mint new dyad and deposit it in the pool 
     uint amount = pool.mintDyad{value: msg.value}(minAmount);
     dyad.approve(address(pool), amount);
     pool.deposit(amount);
@@ -193,16 +179,10 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // withdraw dyad from the pool to msg.sender
   function withdraw(uint id, uint amount) external onlyNFTOwner(id) {
     IdNFT.Nft storage nft = idToNft[id];
-    // The amount you want to withdraw is higher than the amount you have
-    // deposited
     require(int(amount) <= nft.deposit, "dNFT: Withdraw amount exceeds deposit");
-
     pool.withdraw(msg.sender, amount);
-
-    // update nft
     nft.deposit   -= int(amount);
     nft.withdrawn += amount;
-
     emit DyadWithdrawn(msg.sender, id, amount);
   }
 
@@ -234,5 +214,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     nft.withdrawn -= amount;
     dyad.transferFrom(msg.sender, address(pool), amount);
     pool.redeem(msg.sender, amount);
+    emit DyadRedeemed(msg.sender, id, amount);
   }
 }
