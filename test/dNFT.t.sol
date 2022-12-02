@@ -182,4 +182,44 @@ contract dNFTTest is Test {
     // msg.sender does not own any dyad withdrawn so we can't deposit
     dnft.deposit(0, 100); 
   }
+
+  // --------------------- DYAD Redeem ---------------------
+  uint REDEEM_AMOUNT = 100000000;
+
+  function mintAndTransfer(uint amount) public {
+    // mint -> withdraw -> transfer -> approve dNFT
+    dnft.mintNft{value: 5 ether}(address(this));
+    dnft.withdraw(0,     amount);
+    dyad.approve(address(dnft), amount);
+  }
+  function testRedeemDyad() public {
+    mintAndTransfer(REDEEM_AMOUNT);
+    dnft.redeem(0, REDEEM_AMOUNT);
+  }
+  function testRedeemDyadSenderDyadBalance() public {
+    mintAndTransfer(REDEEM_AMOUNT);
+    uint ethBalanceBefore = address(this).balance;
+    dnft.redeem(0, REDEEM_AMOUNT);
+    // before redeeming, the eth balance should be lower than after it
+    assertTrue(ethBalanceBefore < address(this).balance);
+  }
+  function testRedeemDyadPoolBalance() public {
+    mintAndTransfer(REDEEM_AMOUNT);
+    uint oldPoolBalance = address(pool).balance;
+    dnft.redeem(0, REDEEM_AMOUNT);
+    // before redeeming, the pool balance should be higher than after it
+    assertTrue(address(pool).balance < oldPoolBalance); 
+  }
+  function testRedeemDyadTotalSupply() public {
+    mintAndTransfer(REDEEM_AMOUNT);
+    uint oldDyadTotalSupply = dyad.totalSupply();
+    dnft.redeem(0, REDEEM_AMOUNT);
+    // the redeem burns the dyad so the total supply should be less
+    assertTrue(dyad.totalSupply() < oldDyadTotalSupply);
+  }
+  function testFailRedeemNotNftOwner() public {
+    // this should fail beacuse msg.sender is not the owner of dnft 1
+    mintAndTransfer(REDEEM_AMOUNT);
+    dnft.redeem(1, REDEEM_AMOUNT);
+  }
 }

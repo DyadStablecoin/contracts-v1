@@ -196,23 +196,18 @@ contract Pool {
     return newDyad;
   }
 
-  // Deposit dyad into the pool
   function deposit(uint amount) external onlyNftContract {
     dyad.transferFrom(msg.sender, address(this), amount);
   }
 
-  // Withdraw dyad from the pool to the receiver
   function withdraw(address receiver, uint amount) external onlyNftContract {
     dyad.transfer(receiver, amount);
   }
 
-  // Redeem dyad for eth
-  function redeem(uint amount) external {
-    // msg.sender has to approve pool to spend its tokens and burn it
-    dyad.transferFrom(msg.sender, address(this), amount);
+  function redeem(address receiver, uint amount) external onlyNftContract {
     dyad.burn(amount);
     uint usdInEth = amount*100000000 / lastEthPrice;
-    payable(msg.sender).transfer(usdInEth);
+    payable(receiver).transfer(usdInEth);
   }
 
   // Calim a liquidated nft
