@@ -206,7 +206,7 @@ contract Pool {
 
   function redeem(address receiver, uint amount) external onlyNftContract {
     dyad.burn(amount);
-    // the equivalent amount of USD in ETH
+    // the equivalent amount of USD denominated in ETH
     uint usdInEth = amount*100000000 / lastEthPrice;
     payable(receiver).transfer(usdInEth);
   }
