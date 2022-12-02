@@ -231,9 +231,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // redeem DYAD for ETH
   function redeem(uint id, uint amount) external onlyNFTOwner(id) {
     IdNFT.Nft storage nft = idToNft[id];
-    require(amount <= nft.withdrawn, "dNFT: Redeem exceeds withdrawn");
+    require(amount <= nft.withdrawn, "dNFT: Amount to redeem exceeds withdrawn");
     nft.withdrawn -= amount;
-    // msg.sender has to approve dNFT to transfer its tokens
     dyad.transferFrom(msg.sender, address(pool), amount);
     pool.redeem(msg.sender, amount);
   }
