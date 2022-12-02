@@ -13,7 +13,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
   uint public numberOfMints;
 
-  // to mint a dnft $5k in eth are required
   // deposit minimum to mint a new dnft
   uint public DEPOSIT_MINIMUM;
 
