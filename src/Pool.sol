@@ -48,7 +48,7 @@ contract Pool {
     lastEthPrice = uint(getNewEthPrice());
   }
 
-  /// @notice get the latest eth price from oracle
+  // get the latest eth price from oracle
   function getNewEthPrice() internal view returns (int newEthPrice) {
     // NOTE: this can not be negative! (hopefully)
     ( , newEthPrice, , , ) = priceFeed.latestRoundData();
@@ -187,7 +187,7 @@ contract Pool {
     return Multis(multiProducts, multiProductsSum, xpMultis);
   }
 
-  /// @notice Mint dyad to the NFT
+  // Mint dyad to the NFT
   function mintDyad(uint minAmount) payable external onlyNftContract returns (uint) {
     require(msg.value > 0, "Pool: You need to send some ETH");
     uint newDyad = uint(getNewEthPrice()) * msg.value/100000000;
@@ -196,20 +196,17 @@ contract Pool {
     return newDyad;
   }
 
-  /// @notice Deposit dyad into the pool
-  /// @param amount The amount of dyad to deposit
+  // Deposit dyad into the pool
   function deposit(uint amount) external onlyNftContract {
     dyad.transferFrom(msg.sender, address(this), amount);
   }
 
-  /// @notice Withdraw dyad from the pool to the receiver
-  /// @param amount The amount of dyad to withdraw
-  /// @param receiver The address to withdraw dyad to
+  // Withdraw dyad from the pool to the receiver
   function withdraw(address receiver, uint amount) external onlyNftContract {
     dyad.transfer(receiver, amount);
   }
 
-  /// @notice Redeem dyad for eth
+  // Redeem dyad for eth
   function redeem(uint amount) external {
     // msg.sender has to approve pool to spend its tokens and burn it
     dyad.transferFrom(msg.sender, address(this), amount);
@@ -218,7 +215,7 @@ contract Pool {
     payable(msg.sender).transfer(usdInEth);
   }
 
-  /// @notice Calim a liquidated nft
+  // Calim a liquidated nft
   // transfer liquidated nft from the old owner to new owner
   // IMPORTANT: the pool has the ability to transfer any nft without
   // any approvals.

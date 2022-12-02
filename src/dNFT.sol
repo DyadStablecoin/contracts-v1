@@ -170,7 +170,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     numberOfMints += 1;
   }
 
-  // mint new dyad to the respective nft
+  // mint new DYAD and deposit it in the pool
   function mintDyad(uint id) payable public onlyNFTOwner(id) {
     _mintDyad(id, 0);
   }
@@ -191,9 +191,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     emit DyadMinted(msg.sender, id, amount);
   }
 
-  /// @notice Withdraw dyad from the NFT to the msg.sender
-  /// @param id The NFT id
-  /// @param amount The amount of dyad to withdraw
+  // withdraw dyad from the pool to msg.sender
   function withdraw(uint id, uint amount) external onlyNFTOwner(id) {
     IdNFT.Nft storage nft = idToNft[id];
     // The amount you want to withdraw is higher than the amount you have
@@ -209,10 +207,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     emit DyadWithdrawn(msg.sender, id, amount);
   }
 
-  /// @notice Deposit dyad back in the pool
-  /// @param id The NFT id
-  /// @param amount The amount of dyad to deposit
-  // NOTE: anyone can call this!
+  // deposit dyad back into the pool
   function deposit(uint id, uint amount) external {
     IdNFT.Nft storage nft = idToNft[id];
     // The amount you want to deposit is higher than the amount you have 
