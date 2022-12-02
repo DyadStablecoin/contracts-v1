@@ -143,10 +143,10 @@ contract LaunchTest is Test {
     for(uint i = 0; i < 4; i++) { pool.sync(); }
 
     // do some redeems
-    dyad.approve(address(pool), 5 ether);
-    pool.redeem(100000002);
-    pool.redeem(100000202);
-    pool.redeem(3000000202);
+    dyad.approve(address(dnft), 5 ether);
+    dnft.redeem(id1, 100000002);
+    dnft.redeem(id1, 100000202);
+    dnft.redeem(id1, 3000000202);
 
     for(uint i = 0; i < 4; i++) { pool.sync(); }
   }

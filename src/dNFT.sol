@@ -13,7 +13,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
   uint public numberOfMints;
 
-  // to mint a dnft $ 5k in eth are required
   // deposit minimum to mint a new dnft
   uint public DEPOSIT_MINIMUM;
 
@@ -226,5 +225,14 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     nft.withdrawn -= amount;
 
     emit DyadDeposited(msg.sender, id, amount);
+  }
+
+  // redeem DYAD for ETH
+  function redeem(uint id, uint amount) external onlyNFTOwner(id) {
+    IdNFT.Nft storage nft = idToNft[id];
+    require(amount <= nft.withdrawn, "dNFT: Amount to redeem exceeds withdrawn");
+    nft.withdrawn -= amount;
+    dyad.transferFrom(msg.sender, address(pool), amount);
+    pool.redeem(msg.sender, amount);
   }
 }

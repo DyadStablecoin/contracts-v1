@@ -61,55 +61,6 @@ contract PoolTest is Test {
   // needed, so we can receive eth transfers
   receive() external payable {}
 
-  function mintAndTransfer(uint amount) public {
-    // mint -> withdraw -> transfer -> approve pool
-    dnft.mintNft{value: 5 ether}(address(this));
-    dnft.withdraw(0,     amount);
-    dyad.transfer(addr1, amount);
-    vm.prank(addr1);
-    dyad.approve(address(pool), amount);
-  }
-
-  // --------------------- DYAD Redeem ---------------------
-  function testRedeemDyad() public {
-    uint REDEEM_AMOUNT = 100000000;
-    mintAndTransfer(REDEEM_AMOUNT);
-    vm.prank(addr1);
-    pool.redeem(REDEEM_AMOUNT);
-  }
-  function testRedeemDyadSenderDyadBalance() public {
-    uint REDEEM_AMOUNT = 100000000;
-    mintAndTransfer(REDEEM_AMOUNT);
-    assertEq(addr1.balance, 0);
-    vm.prank(addr1);
-    pool.redeem(REDEEM_AMOUNT);
-    assertEq(addr1.balance, 83333);
-  }
-  function testRedeemDyadPoolBalance() public {
-    uint REDEEM_AMOUNT = 100000000;
-    mintAndTransfer(REDEEM_AMOUNT);
-    uint oldPoolBalance = address(pool).balance;
-    vm.prank(addr1);
-    pool.redeem(REDEEM_AMOUNT);
-    assertTrue(address(pool).balance < oldPoolBalance); 
-  }
-  function testRedeemDyadTotalSupply() public {
-    uint REDEEM_AMOUNT = 100000000;
-    mintAndTransfer(REDEEM_AMOUNT);
-    uint oldDyadTotalSupply = dyad.totalSupply();
-    vm.prank(addr1);
-    pool.redeem(REDEEM_AMOUNT);
-    // the redeem burns the dyad so the total supply should be less
-    assertTrue(dyad.totalSupply() < oldDyadTotalSupply);
-  }
-  function testFailRedeemDyadNoAllowance() public {
-    // this should fail because we do not prak the redeem call, 
-    // which means that this contract is the sender, and it has no allowance
-    uint REDEEM_AMOUNT = 100000000;
-    mintAndTransfer(REDEEM_AMOUNT);
-    pool.redeem(REDEEM_AMOUNT);
-  }
-
   // --------------------- NFT Claim ---------------------
   function testClaimNft() public {
     dnft.mintNft{value: 5 ether}(address(this));
