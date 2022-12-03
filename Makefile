@@ -38,3 +38,6 @@ deploy:
 
 calc-deployment-gas-fees:
 	p gas.py --gas $(p gas_deployment.py)
+
+calc-sync-gas-fees:
+	forge script script/SyncGasCosts.sol --fork-url $(RPC)
