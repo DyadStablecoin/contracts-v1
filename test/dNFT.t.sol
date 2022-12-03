@@ -98,11 +98,6 @@ contract dNFTTest is Test {
       dnft.mintNft{value: 5 ether}(address(this));
     }
   }
-  function testMintNftNotClaimable() public {
-    // nft is not claimable by default
-    dnft.mintNft{value: 5 ether}(address(this));
-    assertEq(dnft.idToNft(0).isClaimable, false);
-  }
 
   // --------------------- DYAD Minting ---------------------
   function testFailMintDyadNotNftOwner() public {
