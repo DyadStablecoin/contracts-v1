@@ -1,6 +1,6 @@
 import click
 
-eth_price = 1129
+eth_price = 1270
 gas_price = 13.7
 gas = 853482
 calls_per_hour = 6
