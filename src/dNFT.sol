@@ -180,9 +180,9 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function withdraw(uint id, uint amount) external onlyNFTOwner(id) {
     IdNFT.Nft storage nft = idToNft[id];
     require(int(amount) <= nft.deposit, "dNFT: Withdraw amount exceeds deposit");
-    pool.withdraw(msg.sender, amount);
     nft.deposit   -= int(amount);
     nft.withdrawn += amount;
+    pool.withdraw(msg.sender, amount);
     emit DyadWithdrawn(msg.sender, id, amount);
   }
 
@@ -193,16 +193,15 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     // withdrawn
     require(amount <= nft.withdrawn, "dNFT: Deposit exceeds withdrawn");
 
+    nft.deposit   += int(amount);
+    nft.withdrawn -= amount;
+
     // transfer dyad to the nft
     // approve the pool to spend the dyad of this contract
     // deposit dyad in the pool
     dyad.transferFrom(msg.sender, address(this), amount);
     dyad.approve(address(pool), amount);
     pool.deposit(amount);
-
-    // update nft
-    nft.deposit   += int(amount);
-    nft.withdrawn -= amount;
 
     emit DyadDeposited(msg.sender, id, amount);
   }
