@@ -167,7 +167,7 @@ contract dNFTTest is Test {
     // this pushes the CR over 150% 
     dnft.withdraw(0, AMOUNT);
     dyad.approve(address(dnft), AMOUNT);
-    // this returns the CR to something below 150%, which enables withdrawns
+    // this returns the CR to something below 150%, which enables withdrawls
     // again
     dnft.deposit(0, AMOUNT);
     dnft.withdraw(0, 2 ether);
