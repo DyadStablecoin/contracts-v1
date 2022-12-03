@@ -6,14 +6,13 @@ import "../src/dyad.sol";
 import "../src/pool.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
 import {dNFT} from "../src/dNFT.sol";
+import {Parameters} from "./Parameters.sol";
 import "forge-std/console.sol";
 import {Deployment} from "./Deployment.sol";
 
-contract SyncGasCosts is Script {
+contract CalculateSyncGasCosts is Script, Parameters {
   function run() public {
-    address ORACLE_MAINNET  = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
-    address dNftAddr;
-    address poolAddr;
+    address dNftAddr; address poolAddr;
 
     (dNftAddr, poolAddr) = new Deployment().deploy(ORACLE_MAINNET, 0, false);
     IdNFT dnft = IdNFT(dNftAddr);
