@@ -74,12 +74,4 @@ contract PoolTest is Test {
     // can not claim this, because it is not claimable
     pool.claim(0, addr1);
   }
-  function testSyncHa() public {
-    for (uint i = 0; i < 300; i++) {
-      dnft.mintNft{value: 5 ether}(address(this));
-    }
-    uint g1 = gasleft();
-    pool.sync();
-    console.log("gas used: ", g1 - gasleft());
-  }
 }

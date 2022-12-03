@@ -7,18 +7,17 @@ import "../src/pool.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
 import {dNFT} from "../src/dNFT.sol";
 import "forge-std/console.sol";
+import {Deployment} from "./Deployment.sol";
 
 contract SyncGasCosts is Script {
   function run() public {
-    DYAD dyad = new DYAD();
+    address ORACLE_MAINNET  = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+    address dNftAddr;
+    address poolAddr;
 
-    dNFT _dnft = new dNFT(address(dyad), 5000000000000000000000, false);
-    IdNFT dnft = IdNFT(address(_dnft));
-
-    Pool pool = new Pool(address(dnft), address(dyad), 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
-
-    dyad.setMinter(address(pool));
-    dnft.setPool(address(pool));
+    (dNftAddr, poolAddr) = new Deployment().deploy(ORACLE_MAINNET, 0, false);
+    IdNFT dnft = IdNFT(dNftAddr);
+    Pool pool = Pool(poolAddr);
 
     for (uint i = 0; i < 300; i++) {
       dnft.mintNft{value: 5 ether}(address(this));
