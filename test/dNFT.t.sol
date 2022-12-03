@@ -152,6 +152,26 @@ contract dNFTTest is Test {
     // exceeded nft deposit by exactly 1
     dnft.withdraw(0, ORACLE_PRICE*50000000000+1); 
   }
+  function testFailWithdrawCollaterizationRationTooHigh() public {
+    dnft.mintNft{value: 5 ether}(address(this));
+    dnft.mintDyad{value: 1 ether}(0);
+    // this pushes the CR over 150% which disables the ability for anyone
+    // to withdraw more dyad
+    dnft.withdraw(0, 5000000000000000000000);
+    dnft.withdraw(0, 2 ether);
+  }
+  function testUnblockCollaterizationRatioLock() public {
+    dnft.mintNft{value: 5 ether}(address(this));
+    dnft.mintDyad{value: 1 ether}(0);
+    uint AMOUNT = 5000000000000000000000;
+    // this pushes the CR over 150% 
+    dnft.withdraw(0, AMOUNT);
+    dyad.approve(address(dnft), AMOUNT);
+    // this returns the CR to something below 150%, which enables withdrawns
+    // again
+    dnft.deposit(0, AMOUNT);
+    dnft.withdraw(0, 2 ether);
+  }
 
   // --------------------- DYAD Deposit ---------------------
   function testDepositDyad() public {
