@@ -11,6 +11,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // maximum number of nfts that can exist at one point in time
   uint constant public MAX_SUPPLY = 300;
 
+  uint constant public MAX_COLLATERATION_RATIO = 15000; // 150% in basis points
+
   uint public numberOfMints;
 
   // deposit minimum required to mint a new dnft
@@ -178,6 +180,10 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
   // withdraw dyad from the pool to msg.sender
   function withdraw(uint id, uint amount) external onlyNFTOwner(id) {
+    uint poolDyadBalance = dyad.balanceOf(address(pool));
+    uint cr = (dyad.totalSupply() - poolDyadBalance) * 10000 / poolDyadBalance;
+    require(cr < MAX_COLLATERATION_RATIO, "CR is over 150%"); 
+
     IdNFT.Nft storage nft = idToNft[id];
     require(int(amount) <= nft.deposit, "dNFT: Withdraw amount exceeds deposit");
     nft.deposit   -= int(amount);
