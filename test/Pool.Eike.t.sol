@@ -46,18 +46,18 @@ contract PoolTest is Test {
     dnft.setPool(address(pool));
 
     // set oracle price
-    vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(95000000))); 
+    vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(950 * 10**8)));
     // set DEPOSIT_MINIMUM to something super low, so we do not run into the $5k limit
-    stdstore.target(address(dnft)).sig("DEPOSIT_MINIMUM()").checked_write(77);
+    stdstore.target(address(dnft)).sig("DEPOSIT_MINIMUM()").checked_write(77 * 10**8);
 
     // mint 10 nfts with a specific deposit to re-create the equations
     for (uint i = 0; i < 10; i++) {
-      dnft.mintNft{value: 10106 wei}(cheats.addr(i+1)); // i+1 to avoid 0x0 address
+      dnft.mintNft{value: 10106*(10**15)}(cheats.addr(i+1)); // i+1 to avoid 0x0 address
     }
 
     setNfts();
 
-    vm.store(address(pool), bytes32(uint(0)), bytes32(uint(100000000))); // lastEthPrice
+    vm.store(address(pool), bytes32(uint(0)), bytes32(uint(1000 * 10**8))); // lastEthPrice
     stdstore.target(address(dnft)).sig("MIN_XP()").checked_write(1079); // min xp
     stdstore.target(address(dnft)).sig("MAX_XP()").checked_write(8000); // max xp
   }
@@ -74,9 +74,9 @@ contract PoolTest is Test {
     nft.withdrawn = withdrawn; nft.deposit = int(deposit); nft.xp = xp;
 
     stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
-      .depth(0).checked_write(nft.withdrawn);
+      .depth(0).checked_write(nft.withdrawn * 10 ** 18);
     stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
-      .depth(1).checked_write(uint(nft.deposit));
+      .depth(1).checked_write(uint(nft.deposit) * 10 ** 18);
     stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
       .depth(2).checked_write(nft.xp);
     // stdstore.target(address(dnft)).sig("idToNft(uint256)").with_key(id)
@@ -101,13 +101,13 @@ contract PoolTest is Test {
   // check that the nft deposit values are equal to each other
   function assertDeposits(int16[6] memory deposits) internal {
     for (uint i = 0; i < deposits.length; i++) {
-      assertTrue(dnft.idToNft(i).deposit == deposits[i]);
+      assertTrue(dnft.idToNft(i).deposit/(10**18) == int(deposits[i]));
     }
   }
 
   function triggerBurn() public returns (uint){
     // change new oracle price to something lower so we trigger the burn
-    vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(95000000))); 
+    vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(950 * 10**8)));
     uint totalSupplyBefore = dyad.totalSupply();
     uint dyadDelta = pool.sync();
     // there should be less dyad now after the sync
@@ -115,12 +115,12 @@ contract PoolTest is Test {
     return dyadDelta;
   }
 
-  function testSyncBurn() public {
+  function testSyncBurnHa() public {
     uint dyadDelta = triggerBurn();
-    assertEq(dyadDelta, 4800);
+    assertEq(4800, dyadDelta/(10**18));
 
     // check deposits after newly burned dyad. SOME ROUNDING ERRORS!
-    assertDeposits([-135, 4365, 1805, 4000, 1724, 6250]);
+    assertDeposits([-301, 4359, 1515, 4180, 1726, 6430]);
   }
 
   function testSyncBurnWithNegativeDeposit() public {

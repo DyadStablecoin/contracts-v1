@@ -41,3 +41,6 @@ calc-deployment-gas-fees:
 
 calc-sync-gas-fees:
 	forge script script/CalculateSyncGasCosts.sol --fork-url $(RPC)
+
+read-data:
+	forge script script/ReadData.Goerli.s.sol --fork-url $(GOERLI_RPC)

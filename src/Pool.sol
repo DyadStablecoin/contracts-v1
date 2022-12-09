@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
+import "forge-std/console.sol";
 
 import {DYAD} from "../src/dyad.sol";
 import {IAggregatorV3} from "../src/interfaces/AggregatorV3Interface.sol";
@@ -97,6 +98,7 @@ contract Pool {
 
     // the amount to mint/burn to keep the peg
     uint dyadDelta = PoolLibrary.percentageOf(dyad.totalSupply(), ethChange);
+    console.log("totalSupply", dyad.totalSupply());
 
     Multis memory multis = calcMultis(mode);
 
@@ -130,7 +132,7 @@ contract Pool {
       // update memory nft data
       if (mode == Mode.BURNING) {
         nft.deposit -= int(relativeDyadDelta);
-        nft.xp      += xpAccrual;
+        nft.xp      += xpAccrual/(10**18);
       } else {
         // NOTE: there is no xp accrual in Mode.MINTING
         nft.deposit += int(relativeDyadDelta);
@@ -169,10 +171,10 @@ contract Pool {
         uint xpDelta =  dnft.MAX_XP() - dnft.MIN_XP();
         if (xpDelta == 0) { xpDelta = 1; } // avoid division by 0
         uint xpScaled = (nft.xp-dnft.MIN_XP())*10000 / xpDelta;
-        uint mintAvgMinted = (nft.withdrawn+uint(nft.deposit))*10000 / (dyad.totalSupply()/nftTotalSupply+1);
+        uint mintAvgMinted = (nft.withdrawn)+uint(nft.deposit)*10000 / (dyad.totalSupply()/nftTotalSupply+1);
         xpMulti = PoolLibrary.getXpMulti(xpScaled/100);
         if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } // should be 292: 242+50
-        uint depositMulti = uint(nft.deposit)*10000 / (uint(nft.deposit)+nft.withdrawn+1);
+        uint depositMulti = uint(nft.deposit)*10000 / uint(nft.deposit)+nft.withdrawn+1;
         multiProduct = xpMulti * (mode == Mode.BURNING ? mintAvgMinted : depositMulti) / 100;
       } 
 
