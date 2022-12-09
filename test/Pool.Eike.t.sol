@@ -117,7 +117,7 @@ contract PoolTest is Test {
     return dyadDelta;
   }
 
-  function testSyncBurnHa() public {
+  function testSyncBurn() public {
     uint dyadDelta = triggerBurn();
     assertEq(4800, dyadDelta/(10**18));
 
@@ -140,23 +140,24 @@ contract PoolTest is Test {
     // this is not enough ether to claim the nft
     vm.expectRevert();
     pool.claim{value: 1   wei}(0, address(this));
+    console.logInt(dnft.idToNft(0).deposit);
 
     // 1 ether is enough
     // IMPORTANT: this test will only pass while the eth price is above $135.
     uint id = pool.claim{value: 1 ether}(0, address(this));
 
-    // lets check that all the metadata moved from the burned nft to the newly minted one
+    // // lets check that all the metadata moved from the burned nft to the newly minted one
     assertEq(dnft.idToNft(0).xp,        dnft.idToNft(id).xp);
     assertEq(dnft.idToNft(0).withdrawn, dnft.idToNft(id).withdrawn);
 
-    // dnft 1 has a positive deposit, and therfore is not claimable
+    // // dnft 1 has a positive deposit, and therfore is not claimable
     vm.expectRevert();
     pool.claim{value: 1 ether}(1, address(this));
   }
 
   function triggerMint() public returns (uint) {
     // change new oracle price to something higher so we trigger the mint
-    vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(110000000))); 
+    vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(1100 * 10**8)));
     uint totalSupplyBefore = dyad.totalSupply();
     uint dyadDelta = pool.sync();
     // there should be more dyad now after the sync
@@ -166,12 +167,12 @@ contract PoolTest is Test {
 
   function testSyncMint() public {
     uint dyadDelta = triggerMint();
-    assertEq(dyadDelta, 9600);
+    assertEq(9600, dyadDelta/(10**18));
 
     // check deposits after newly minted dyad. SOME ROUNDING ERRORS!
     // why do we cast the first argument? Good question. This forces
     // the compiler to create a int16 array. Is there a better way?
-    assertDeposits([int16(187), 6592, 2966, 5213, 2544, 7833]);
+    assertDeposits([int16(187), 6593, 2966, 5213, 2544, 7833]);
   }
 
   function testSyncMintBurn() public { triggerMint(); triggerBurn(); }
