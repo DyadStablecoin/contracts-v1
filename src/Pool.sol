@@ -131,7 +131,7 @@ contract Pool {
       // update memory nft data
       if (mode == Mode.BURNING) {
         nft.deposit -= int(relativeDyadDelta);
-        nft.xp      += xpAccrual/(10**18);
+        nft.xp      += xpAccrual/(10**18); // normalize by the dyad decimals
       } else {
         // NOTE: there is no xp accrual in Mode.MINTING
         nft.deposit += int(relativeDyadDelta);
