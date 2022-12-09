@@ -24,7 +24,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // Why init to 900k? Because otherwise they are set to 0 and the 
   // normalization function in the `PoolLibrary` breaks and 900k is a nice number.
   // every newly minted nft starts out with this MIN_XP.
-  uint public MIN_XP = 900000;
+  uint public MIN_XP = 300;
   // after minting the first nft this will be the MAX_XP. After that it will
   // be updated by the `sync` in the pool contract.
   uint public MAX_XP = MIN_XP + MAX_SUPPLY;

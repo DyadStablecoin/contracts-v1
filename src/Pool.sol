@@ -130,7 +130,7 @@ contract Pool {
       // update memory nft data
       if (mode == Mode.BURNING) {
         nft.deposit -= int(relativeDyadDelta);
-        nft.xp      += xpAccrual;
+        nft.xp      += xpAccrual/(10**18); // normalize by the dyad decimals
       } else {
         // NOTE: there is no xp accrual in Mode.MINTING
         nft.deposit += int(relativeDyadDelta);
@@ -168,11 +168,11 @@ contract Pool {
         // NOTE: From here on, uint(nft.deposit) is fine because it is not negative
         uint xpDelta =  dnft.MAX_XP() - dnft.MIN_XP();
         if (xpDelta == 0) { xpDelta = 1; } // avoid division by 0
-        uint xpScaled = (nft.xp-dnft.MIN_XP())*10000 / xpDelta;
-        uint mintAvgMinted = (nft.withdrawn+uint(nft.deposit))*10000 / (dyad.totalSupply()/nftTotalSupply+1);
+        uint xpScaled = ((nft.xp-dnft.MIN_XP())*10000) / xpDelta;
+        uint mintAvgMinted = ((nft.withdrawn+uint(nft.deposit))*10000) / (dyad.totalSupply()/(nftTotalSupply+1));
         xpMulti = PoolLibrary.getXpMulti(xpScaled/100);
         if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } // should be 292: 242+50
-        uint depositMulti = uint(nft.deposit)*10000 / (uint(nft.deposit)+nft.withdrawn+1);
+        uint depositMulti = (uint(nft.deposit)*10000) / (uint(nft.deposit)+(nft.withdrawn+1));
         multiProduct = xpMulti * (mode == Mode.BURNING ? mintAvgMinted : depositMulti) / 100;
       } 
 
@@ -223,7 +223,7 @@ contract Pool {
     require(nft.deposit < 0, "dNFT: NFT is not liquidatable");
     // how much eth is required to cover the negative deposit
     // NOTE: uint(-nft.deposit) is fine because nft.deposit is negative
-    uint ethRequired = uint(-nft.deposit) * lastEthPrice/100000000;
+    uint ethRequired = uint(-nft.deposit) / (lastEthPrice/100000000);
     // mint new nft with the xp of the old one
     return dnft.mintNftCopy{value: msg.value}(receiver, nft, ethRequired);
   }
