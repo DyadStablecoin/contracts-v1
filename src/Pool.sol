@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
-import "forge-std/console.sol";
 
 import {DYAD} from "../src/dyad.sol";
 import {IAggregatorV3} from "../src/interfaces/AggregatorV3Interface.sol";
@@ -225,7 +224,6 @@ contract Pool {
     // how much eth is required to cover the negative deposit
     // NOTE: uint(-nft.deposit) is fine because nft.deposit is negative
     uint ethRequired = uint(-nft.deposit) / (lastEthPrice/100000000);
-    console.log("ethRequired: %s", ethRequired);
     // mint new nft with the xp of the old one
     return dnft.mintNftCopy{value: msg.value}(receiver, nft, ethRequired);
   }

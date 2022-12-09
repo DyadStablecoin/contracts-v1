@@ -101,8 +101,6 @@ contract PoolTest is Test {
   // check that the nft deposit values are equal to each other
   function assertDeposits(int16[6] memory deposits) internal {
     for (uint i = 0; i < deposits.length; i++) {
-      console.logInt(deposits[i]);
-      console.logInt(int(dnft.idToNft(i).deposit) / (10 ** 18));
       assertTrue(dnft.idToNft(i).deposit/(10**18) == int(deposits[i]));
     }
   }
@@ -140,7 +138,6 @@ contract PoolTest is Test {
     // this is not enough ether to claim the nft
     vm.expectRevert();
     pool.claim{value: 1   wei}(0, address(this));
-    console.logInt(dnft.idToNft(0).deposit);
 
     // 1 ether is enough
     // IMPORTANT: this test will only pass while the eth price is above $135.
