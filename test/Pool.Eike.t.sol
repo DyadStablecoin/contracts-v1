@@ -101,6 +101,8 @@ contract PoolTest is Test {
   // check that the nft deposit values are equal to each other
   function assertDeposits(int16[6] memory deposits) internal {
     for (uint i = 0; i < deposits.length; i++) {
+      console.logInt(deposits[i]);
+      console.logInt(int(dnft.idToNft(i).deposit) / (10 ** 18));
       assertTrue(dnft.idToNft(i).deposit/(10**18) == int(deposits[i]));
     }
   }
@@ -120,7 +122,7 @@ contract PoolTest is Test {
     assertEq(4800, dyadDelta/(10**18));
 
     // check deposits after newly burned dyad. SOME ROUNDING ERRORS!
-    assertDeposits([-301, 4359, 1515, 4180, 1726, 6430]);
+    assertDeposits([-135, 4364, 1804, 3999, 1723, 6249]);
   }
 
   function testSyncBurnWithNegativeDeposit() public {
