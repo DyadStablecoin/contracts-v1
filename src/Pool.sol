@@ -123,7 +123,7 @@ contract Pool {
         // boost for the address calling this function
         if (!isBoosted && msg.sender == dnft.ownerOf(tokenId)) {
           isBoosted = true;
-          xpAccrual += PoolLibrary.percentageOf(nft.xp, 10); // 0.10%
+          xpAccrual *= 2;
         }
       }
 
