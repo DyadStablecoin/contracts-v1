@@ -57,21 +57,22 @@ contract StakeTest is Test,Deployment {
     vm.prank(addr1);
     dnft.approve(address(stake), id);
 
-    vm.prank(addr1);
-    dyad.approve(address(dnft), 200);
+    uint amount = 100*10**18;
 
     vm.prank(addr1);
-    dnft.withdraw(id, 200);
+    dyad.approve(address(dnft), amount);
 
     vm.prank(addr1);
-    stake.stake(id);
+    dnft.withdraw(id, amount);
 
     vm.prank(addr1);
-    dyad.approve(address(stake), 200);
+    stake.stake(id, 100); // fee of 1%
 
-    console.log(address(dyad));
     vm.prank(addr1);
-    stake.redeem(id, 200);
+    dyad.approve(address(stake), amount);
+
+    vm.prank(addr1);
+    stake.redeem(id, amount);
 
     // vm.prank(addr1);
     // stake.unstake(id);
