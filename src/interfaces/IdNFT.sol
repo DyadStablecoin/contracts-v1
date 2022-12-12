@@ -34,7 +34,7 @@ interface IdNFT {
   function lastCheckpointForIdOf(uint id) external view returns (uint);
   function totalSupply() external view returns (uint);
   function idToNft(uint) external view returns (Nft memory);
-  function transferFrom(address from, address to, uint tokenId) external view returns (uint);
+  function transferFrom(address _from, address _to, uint256 _tokenId) external payable;
   function approve(address to, uint tokenId) external;
   function updateXP(uint minXP, uint maxXP) external;
   function tokenByIndex(uint index) external returns (uint);

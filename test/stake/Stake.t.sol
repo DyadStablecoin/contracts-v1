@@ -54,10 +54,11 @@ contract StakeTest is Test,Deployment {
 
   function testStake() public {
     uint id = dnft.mintNft{value: 5 ether}(addr1);
+    console.log("id", id);
     vm.prank(addr1);
     dnft.approve(address(stake), id);
     console.log(addr1);
     vm.prank(addr1);
-    stake.stake(id);
+    stake.ss(id);
   }
 }
