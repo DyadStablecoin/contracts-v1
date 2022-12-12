@@ -53,28 +53,19 @@ contract StakeTest is Test,Deployment {
   }
 
   function testStake() public {
-    uint id = dnft.mintNft{value: 5 ether}(addr1);
-    vm.prank(addr1);
-    dnft.approve(address(stake), id);
-
     uint amount = 100*10**18;
+    uint id = dnft.mintNft{value: 5 ether}(addr1);
 
-    vm.prank(addr1);
+    vm.startPrank(addr1);
+
     dyad.approve(address(dnft), amount);
-
-    vm.prank(addr1);
     dnft.withdraw(id, amount);
-
-    vm.prank(addr1);
+    dnft.approve(address(stake), id);
     stake.stake(id, 100); // fee of 1%
-
-    vm.prank(addr1);
     dyad.approve(address(stake), amount);
-
-    vm.prank(addr1);
     stake.redeem(id, amount);
+    stake.unstake(id);
 
-    // vm.prank(addr1);
-    // stake.unstake(id);
+    vm.stopPrank();
   }
 }
