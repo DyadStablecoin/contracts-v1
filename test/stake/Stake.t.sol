@@ -38,27 +38,42 @@ contract StakeTest is Test,Deployment {
 
   function setUp() public {
     oracle = new OracleMock();
-    dyad = new DYAD();
 
     setOraclePrice(ORACLE_PRICE);
 
-    address _dnft; address _pool;
-    (_dnft, _pool) = new Deployment().deploy(address(oracle), DEPOSIT_MINIMUM, true);
+    address _dnft; address _pool; address _dyad;
+    (_dnft, _pool, _dyad) = new Deployment().deploy(address(oracle), DEPOSIT_MINIMUM, true);
 
+    dyad = DYAD(_dyad);
     dnft = IdNFT(_dnft);
     pool = Pool(_pool);
-    stake = new Stake(_dnft);
+    stake = new Stake(_dnft, _dyad);
 
     addr1 = cheats.addr(1);
   }
 
   function testStake() public {
     uint id = dnft.mintNft{value: 5 ether}(addr1);
-    console.log("id", id);
     vm.prank(addr1);
     dnft.approve(address(stake), id);
-    console.log(addr1);
+
     vm.prank(addr1);
-    stake.ss(id);
+    dyad.approve(address(dnft), 200);
+
+    vm.prank(addr1);
+    dnft.withdraw(id, 200);
+
+    vm.prank(addr1);
+    stake.stake(id);
+
+    vm.prank(addr1);
+    dyad.approve(address(stake), 200);
+
+    console.log(address(dyad));
+    vm.prank(addr1);
+    stake.redeem(id, 200);
+
+    // vm.prank(addr1);
+    // stake.unstake(id);
   }
 }
