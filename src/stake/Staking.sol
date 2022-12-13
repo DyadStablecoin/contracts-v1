@@ -5,15 +5,15 @@ import "forge-std/console.sol";
 import "../../src/dyad.sol";
 import {PoolLibrary} from "../PoolLibrary.sol";
 
+struct Stake {
+  address owner;
+  uint fee;
+  uint limit;
+}
+
 contract Staking {
   IdNFT public dnft;
   DYAD public dyad;
-
-  struct Stake {
-    address owner;
-    uint fee;
-    uint limit;
-  }
 
   mapping (uint => Stake) public stakes;
 
@@ -30,9 +30,9 @@ contract Staking {
   // is needed, because `dnft.redeem` sends us eth
   receive() external payable {}
 
-  function stake(uint id, uint fee, uint limit) public  {
+  function stake(uint id, Stake memory _stake) public  {
     dnft.transferFrom(msg.sender, address(this), id);
-    stakes[id] = Stake(msg.sender, fee, limit);
+    stakes[id] = _stake;
   }
 
   function unstake(uint id) public isStakeOwner(id) {
