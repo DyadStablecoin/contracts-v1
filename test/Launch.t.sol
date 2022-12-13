@@ -10,6 +10,7 @@ import {IdNFT} from "../src/interfaces/IdNFT.sol";
 import {dNFT} from "../src/core/dNFT.sol";
 import {PoolLibrary} from "../src/libraries/PoolLibrary.sol";
 import {OracleMock} from "./Oracle.t.sol";
+import {Parameters} from "../script/Parameters.sol";
 
 interface CheatCodes {
    // Gets address for a given private key, (privateKey) => (address)
@@ -21,7 +22,7 @@ uint constant DEPOSIT_MINIMUM = 5000000000000000000000;
 
 // this should simulate the inital lauch on mainnet
 // IMPORTANT: you have to run this as a mainnet fork!!!
-contract LaunchTest is Test {
+contract LaunchTest is Test, Parameters {
   uint NUMBER_OF_INSIDER_NFTS;
 
   IdNFT public dnft;
@@ -39,7 +40,7 @@ contract LaunchTest is Test {
 
   function setUp() public {
     dyad       = new DYAD();
-    dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, true); // with insider allocation
+    dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, INSIDERS); // with insider allocation
     dnft       = IdNFT(address(_dnft));
     pool       = new Pool(address(dnft), address(dyad), CHAINLINK_ORACLE_ADDRESS);
     dnft.setPool  (address(pool));

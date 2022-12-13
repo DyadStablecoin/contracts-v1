@@ -10,6 +10,7 @@ import {IdNFT} from "../src/interfaces/IdNFT.sol";
 import {dNFT} from "../src/core/dNFT.sol";
 import {PoolLibrary} from "../src/libraries/PoolLibrary.sol";
 import {OracleMock} from "./Oracle.t.sol";
+import {Parameters} from "../script/Parameters.sol";
 
 uint constant DEPOSIT_MINIMUM = 5000000000000000000000;
 
@@ -22,7 +23,7 @@ interface CheatCodes {
 // https://docs.google.com/spreadsheets/d/1pegDYo8hrOQZ7yZY428F_aQ_mCvK0d701mygZy-P04o/edit#gid=0
 // There are many hard coded values here that are based on the equations in the 
 // google sheet.
-contract PoolTest is Test {
+contract PoolTest is Test, Parameters {
   using stdStorage for StdStorage;
 
   DYAD public dyad;
@@ -37,7 +38,7 @@ contract PoolTest is Test {
     dyad = new DYAD();
 
     // init dNFT contract
-    dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, false);
+    dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, new address[](0));
     dnft = IdNFT(address(_dnft));
 
     pool = new Pool(address(dnft), address(dyad), address(oracle));
