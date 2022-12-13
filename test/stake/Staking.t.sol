@@ -73,7 +73,7 @@ contract StakeTest is Test,Deployment {
     vm.stopPrank();
 
     uint balancePre = dyad.balanceOf(address(this));
-    staking.mintDyadAndWithdraw{value: 5 ether}(id);
+    staking.mint{value: 5 ether}(id);
     assertTrue(dyad.balanceOf(address(this)) > balancePre);
   }
 }

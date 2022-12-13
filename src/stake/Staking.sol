@@ -59,7 +59,9 @@ contract Staking {
     payable(msg.sender).transfer(usdInEth - fee);
   }
 
-  function mintDyadAndWithdraw(uint id) external payable {
+  // mint DYAD with ETH
+  function mint(uint id) external payable {
+    require(msg.value > 0, "Staking: No ETH sent");
     Position memory _position = positions[id];
     uint amount = dnft.mintDyad{value: msg.value}(id);
     require(dnft.idToNft(id).withdrawn + amount <= _position.withdrawalLimit,
