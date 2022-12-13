@@ -61,7 +61,7 @@ contract StakeTest is Test,Deployment {
     dyad.approve(address(dnft), amount);
     dnft.withdraw(id, amount);
     dnft.approve(address(staking), id);
-    Position memory _position = Position(addr1, 100, addr1, 200);
+    Position memory _position = Position(addr1, 100, addr1, 200, 8000 * 10**18);
     staking.stake(id, _position); // fee of 1%
     dyad.approve(address(staking), amount);
     staking.redeem(id, amount - 200);
@@ -71,5 +71,9 @@ contract StakeTest is Test,Deployment {
     staking.stake(id, _position); // fee of 1%
 
     vm.stopPrank();
+
+    uint balancePre = dyad.balanceOf(address(this));
+    staking.mintDyadAndWithdraw{value: 5 ether}(id);
+    assertTrue(dyad.balanceOf(address(this)) > balancePre);
   }
 }

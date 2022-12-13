@@ -7,9 +7,10 @@ import {PoolLibrary} from "../PoolLibrary.sol";
 
 struct Position {
   address owner; 
-  uint    fee;          // fee in basis points
+  uint    fee;             // fee in basis points
   address feeRecipient;
-  uint    limit;        // limit the dnft withdrawn amount can not be below
+  uint    redemptionLimit; // limit the dnft withdrawn amount can not be below
+  uint    withdrawalLimit; 
 }
 
 contract Staking {
@@ -46,10 +47,10 @@ contract Staking {
   }
 
   // redeem DYAD for ETH -> Position `feeRecipient` gets a fee
-  function redeem(uint id, uint amount) public {
+  function redeem(uint id, uint amount) external {
     Position memory _position = positions[id];
-    IdNFT.Nft memory nft = dnft.idToNft(id);
-    require(nft.withdrawn - amount >= _position.limit, "Staking: Exceeds limit");
+    require(dnft.idToNft(id).withdrawn - amount >= _position.redemptionLimit,
+            "Staking: Exceeds Redemption Limit");
     dyad.transferFrom(msg.sender, address(this), amount);
     dyad.approve(address(dnft), amount);
     uint usdInEth = dnft.redeem(id, amount);
@@ -58,5 +59,15 @@ contract Staking {
     payable(msg.sender).transfer(usdInEth - fee);
   }
 
-  // TODO: deposit + withdraw + redeem?
+  function mintDyadAndWithdraw(uint id) external payable {
+    Position memory _position = positions[id];
+    uint amount = dnft.mintDyad{value: msg.value}(id);
+    require(dnft.idToNft(id).withdrawn + amount <= _position.withdrawalLimit,
+            "Staking: Exceeds Withdrawl Limit");
+    dyad.approve(address(dnft), amount);
+    dnft.withdraw(id, amount);
+    uint fee = PoolLibrary.percentageOf(amount, _position.fee);
+    dyad.transfer(_position.feeRecipient, fee);
+    dyad.transfer(msg.sender, amount - fee);
+  }
 }
