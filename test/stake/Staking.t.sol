@@ -12,7 +12,7 @@ import {OracleMock} from "./../Oracle.t.sol";
 import "../../src/dyad.sol";
 import "../../src/Pool.sol";
 import {Deployment} from "../../script/Deployment.sol";
-import {Staking, Stake} from "../../src/stake/Staking.sol";
+import {Staking, Position} from "../../src/stake/Staking.sol";
 
 uint constant DEPOSIT_MINIMUM = 5000000000000000000000;
 uint constant ORACLE_PRICE = 120000000000; // $1.2k
@@ -61,14 +61,14 @@ contract StakeTest is Test,Deployment {
     dyad.approve(address(dnft), amount);
     dnft.withdraw(id, amount);
     dnft.approve(address(staking), id);
-    Stake memory _stake = Stake(addr1, 100, 200);
-    staking.stake(id, _stake); // fee of 1%
+    Position memory _position = Position(addr1, 100, addr1, 200);
+    staking.stake(id, _position); // fee of 1%
     dyad.approve(address(staking), amount);
     staking.redeem(id, amount - 200);
     staking.unstake(id);
 
     dnft.approve(address(staking), id);
-    staking.stake(id, _stake); // fee of 1%
+    staking.stake(id, _position); // fee of 1%
 
     vm.stopPrank();
   }

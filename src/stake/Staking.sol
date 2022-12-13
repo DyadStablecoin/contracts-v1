@@ -5,20 +5,21 @@ import "forge-std/console.sol";
 import "../../src/dyad.sol";
 import {PoolLibrary} from "../PoolLibrary.sol";
 
-struct Stake {
-  address owner;
-  uint fee;
-  uint limit;
+struct Position {
+  address owner; 
+  uint    fee;          // fee in basis points
+  address feeRecipient;
+  uint    limit;        // limit the dnft withdrawn amount can not be below
 }
 
 contract Staking {
   IdNFT public dnft;
   DYAD public dyad;
 
-  mapping (uint => Stake) public stakes;
+  mapping (uint => Position) public positions;
 
-  modifier isStakeOwner(uint id) {
-    require(msg.sender == stakes[id].owner, "Staking: Not stake owner");
+  modifier isPositionOwner(uint id) {
+    require(msg.sender == positions[id].owner, "Staking: Not stake owner");
     _;
   }
 
@@ -30,29 +31,30 @@ contract Staking {
   // is needed, because `dnft.redeem` sends us eth
   receive() external payable {}
 
-  function stake(uint id, Stake memory _stake) public  {
-    dnft.transferFrom(msg.sender, address(this), id);
-    stakes[id] = _stake;
+  function stake(uint id, Position memory _position) public  {
+    dnft.transferFrom(_position.owner, address(this), id);
+    positions[id] = _position;
   }
 
-  function unstake(uint id) public isStakeOwner(id) {
-    delete stakes[id];
-    dnft.transferFrom(address(this), msg.sender, id);
+  function unstake(uint id) public isPositionOwner(id) {
+    dnft.transferFrom(address(this), positions[id].owner, id);
+    delete positions[id];
   }
 
-  function setLimit(uint id, uint newLimit) external isStakeOwner(id) {
-    stakes[id].limit = newLimit;
+  function setPosition(uint id, Position memory _position) external isPositionOwner(id) {
+    positions[id] = _position;
   }
 
+  // redeem DYAD for ETH -> Position `feeRecipient` gets a fee
   function redeem(uint id, uint amount) public {
-    Stake memory _stake = stakes[id];
+    Position memory _position = positions[id];
     IdNFT.Nft memory nft = dnft.idToNft(id);
-    require(nft.withdrawn - amount >= _stake.limit, "Staking: Exceeds limit");
+    require(nft.withdrawn - amount >= _position.limit, "Staking: Exceeds limit");
     dyad.transferFrom(msg.sender, address(this), amount);
     dyad.approve(address(dnft), amount);
     uint usdInEth = dnft.redeem(id, amount);
-    uint fee = PoolLibrary.percentageOf(usdInEth, _stake.fee);
-    payable(_stake.owner).transfer(fee); 
+    uint fee = PoolLibrary.percentageOf(usdInEth, _position.fee);
+    payable(_position.feeRecipient).transfer(fee); 
     payable(msg.sender).transfer(usdInEth - fee);
   }
 
