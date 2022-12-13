@@ -46,7 +46,7 @@ contract PoolTest is Test {
     setOraclePrice(ORACLE_PRICE); // $1.2k
 
     // // init dNFT contract
-    dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, false);
+    dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, new address[](0));
     dnft = IdNFT(address(_dnft));
 
     pool = new Pool(address(dnft), address(dyad), address(oracle));

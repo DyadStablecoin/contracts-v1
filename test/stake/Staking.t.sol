@@ -12,6 +12,7 @@ import {OracleMock} from "./../Oracle.t.sol";
 import "../../src/core/dyad.sol";
 import "../../src/core/Pool.sol";
 import {Deployment} from "../../script/Deployment.sol";
+import {Parameters} from "../../script/Parameters.sol";
 import {Staking, Position} from "../../src/stake/Staking.sol";
 
 uint constant DEPOSIT_MINIMUM = 5000000000000000000000;
@@ -21,7 +22,7 @@ interface CheatCodes {
    function addr(uint256) external returns (address);
 }
 
-contract StakeTest is Test,Deployment {
+contract StakeTest is Test, Deployment, Parameters {
   using stdStorage for StdStorage;
 
   OracleMock public oracle;
@@ -42,7 +43,7 @@ contract StakeTest is Test,Deployment {
     setOraclePrice(ORACLE_PRICE);
 
     address _dnft; address _pool; address _dyad;
-    (_dnft, _pool, _dyad) = new Deployment().deploy(address(oracle), DEPOSIT_MINIMUM, true);
+    (_dnft, _pool, _dyad) = new Deployment().deploy(address(oracle), DEPOSIT_MINIMUM, INSIDERS);
 
     dyad = DYAD(_dyad);
     dnft = IdNFT(_dnft);
