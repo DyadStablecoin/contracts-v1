@@ -3,9 +3,9 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
-import {dNFT} from "../src/dNFT.sol";
-import "../src/dyad.sol";
-import "../src/Pool.sol";
+import {dNFT} from "../src/core/dNFT.sol";
+import "../src/core/dyad.sol";
+import "../src/core/Pool.sol";
 
 contract Deployment is Script {
   function deploy(address oracle, uint depositMinimum, bool insiderAlloc) public returns (address, address, address) {

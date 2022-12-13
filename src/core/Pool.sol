@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import {DYAD} from "../src/dyad.sol";
-import {IAggregatorV3} from "../src/interfaces/AggregatorV3Interface.sol";
-import {IdNFT} from "../src/interfaces/IdNFT.sol";
-import {PoolLibrary} from "../src/PoolLibrary.sol";
+import {DYAD} from "./dyad.sol";
+import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
+import {IdNFT} from "../interfaces/IdNFT.sol";
+import {PoolLibrary} from "../libraries/PoolLibrary.sol";
 
 contract Pool {
   // IMPORTANT: do not change the ordering of these variables
