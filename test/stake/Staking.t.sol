@@ -66,6 +66,9 @@ contract StakeTest is Test,Deployment {
     staking.redeem(id, amount);
     staking.unstake(id);
 
+    dnft.approve(address(staking), id);
+    staking.stake(id, 100); // fee of 1%
+
     vm.stopPrank();
   }
 }

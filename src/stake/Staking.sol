@@ -21,11 +21,12 @@ contract Staking {
     dyad = DYAD(_dyad);
   }
 
+  // is needed, because `dnft.reddem` sends us eth
   receive() external payable {}
 
   function stake(uint id, uint fee) public  {
-    stakes[id] = Stake(msg.sender, fee);
     dnft.transferFrom(msg.sender, address(this), id);
+    stakes[id] = Stake(msg.sender, fee);
   }
 
   function unstake(uint id) public {
@@ -35,12 +36,12 @@ contract Staking {
   }
 
   function redeem(uint id, uint amount) public {
-    Stake memory stake = stakes[id];
     dyad.transferFrom(msg.sender, address(this), amount);
     dyad.approve(address(dnft), amount);
     uint usdInEth = dnft.redeem(id, amount);
+    Stake memory stake = stakes[id];
     uint fee = PoolLibrary.percentageOf(usdInEth, stake.fee);
+    payable(stake.owner).transfer(fee); 
     payable(msg.sender).transfer(usdInEth - fee);
-    payable(stake.owner).transfer(fee); // send fee to staker
   }
 }
