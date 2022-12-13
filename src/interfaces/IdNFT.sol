@@ -18,7 +18,7 @@ interface IdNFT {
   function pool() external view returns (address);
   function ownerOf(uint tokenId) external view returns (address);
   function updateNft(uint id, Nft memory metadata) external;
-  function mintDyad(uint id) external payable;
+  function mintDyad(uint id) external payable returns (uint);
   function withdraw(uint id, uint amount) external;
   function deposit(uint id, uint amount) external;
   function redeem(uint id, uint amount) external returns (uint);

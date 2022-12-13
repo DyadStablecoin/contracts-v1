@@ -10,9 +10,9 @@ import {dNFT} from "../../src/dNFT.sol";
 import {PoolLibrary} from "../../src/PoolLibrary.sol";
 import {OracleMock} from "./../Oracle.t.sol";
 import "../../src/dyad.sol";
-import "../../src/pool.sol";
+import "../../src/Pool.sol";
 import {Deployment} from "../../script/Deployment.sol";
-import {Staking} from "../../src/stake/Staking.sol";
+import {Staking, Position} from "../../src/stake/Staking.sol";
 
 uint constant DEPOSIT_MINIMUM = 5000000000000000000000;
 uint constant ORACLE_PRICE = 120000000000; // $1.2k
@@ -61,14 +61,19 @@ contract StakeTest is Test,Deployment {
     dyad.approve(address(dnft), amount);
     dnft.withdraw(id, amount);
     dnft.approve(address(staking), id);
-    staking.stake(id, 100); // fee of 1%
+    Position memory _position = Position(addr1, 100, addr1, 200, 8000 * 10**18);
+    staking.stake(id, _position); // fee of 1%
     dyad.approve(address(staking), amount);
-    staking.redeem(id, amount);
+    staking.redeem(id, amount - 200);
     staking.unstake(id);
 
     dnft.approve(address(staking), id);
-    staking.stake(id, 100); // fee of 1%
+    staking.stake(id, _position); // fee of 1%
 
     vm.stopPrank();
+
+    uint balancePre = dyad.balanceOf(address(this));
+    staking.mint{value: 5 ether}(id);
+    assertTrue(dyad.balanceOf(address(this)) > balancePre);
   }
 }

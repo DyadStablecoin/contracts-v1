@@ -5,43 +5,71 @@ import "forge-std/console.sol";
 import "../../src/dyad.sol";
 import {PoolLibrary} from "../PoolLibrary.sol";
 
+struct Position {
+  address owner; 
+  uint    fee;             // fee in basis points
+  address feeRecipient;
+  uint    redemptionLimit; // limit the dnft withdrawn amount can not be below
+  uint    withdrawalLimit; 
+}
+
 contract Staking {
   IdNFT public dnft;
   DYAD public dyad;
 
-  struct Stake {
-    address owner;
-    uint fee;
-  }
+  mapping (uint => Position) public positions;
 
-  mapping (uint => Stake) public stakes;
+  modifier isPositionOwner(uint id) {
+    require(msg.sender == positions[id].owner, "Staking: Not Position Owner");
+    _;
+  }
 
   constructor(address _dnft, address _dyad) {
     dnft = IdNFT(_dnft);
     dyad = DYAD(_dyad);
   }
 
-  // is needed, because `dnft.reddem` sends us eth
+  // is needed, because `dnft.redeem` sends us eth
   receive() external payable {}
 
-  function stake(uint id, uint fee) public  {
-    dnft.transferFrom(msg.sender, address(this), id);
-    stakes[id] = Stake(msg.sender, fee);
+  function stake(uint id, Position memory _position) public  {
+    dnft.transferFrom(_position.owner, address(this), id);
+    positions[id] = _position;
   }
 
-  function unstake(uint id) public {
-    require(stakes[id].owner == msg.sender, "not your stake");
-    delete stakes[id];
-    dnft.transferFrom(address(this), msg.sender, id);
+  function unstake(uint id) public isPositionOwner(id) {
+    dnft.transferFrom(address(this), positions[id].owner, id);
+    delete positions[id];
   }
 
-  function redeem(uint id, uint amount) public {
+  function setPosition(uint id, Position memory _position) external isPositionOwner(id) {
+    positions[id] = _position;
+  }
+
+  // redeem DYAD for ETH 
+  function redeem(uint id, uint amount) external {
+    Position memory _position = positions[id];
+    require(dnft.idToNft(id).withdrawn - amount >= _position.redemptionLimit,
+            "Staking: Exceeds Redemption Limit");
     dyad.transferFrom(msg.sender, address(this), amount);
     dyad.approve(address(dnft), amount);
     uint usdInEth = dnft.redeem(id, amount);
-    Stake memory stake = stakes[id];
-    uint fee = PoolLibrary.percentageOf(usdInEth, stake.fee);
-    payable(stake.owner).transfer(fee); 
+    uint fee = PoolLibrary.percentageOf(usdInEth, _position.fee);
+    payable(_position.feeRecipient).transfer(fee); 
     payable(msg.sender).transfer(usdInEth - fee);
+  }
+
+  // mint DYAD with ETH
+  function mint(uint id) external payable {
+    require(msg.value > 0, "Staking: No ETH sent");
+    Position memory _position = positions[id];
+    uint amount = dnft.mintDyad{value: msg.value}(id);
+    require(dnft.idToNft(id).withdrawn + amount <= _position.withdrawalLimit,
+            "Staking: Exceeds Withdrawl Limit");
+    dyad.approve(address(dnft), amount);
+    dnft.withdraw(id, amount);
+    uint fee = PoolLibrary.percentageOf(amount, _position.fee);
+    dyad.transfer(_position.feeRecipient, fee);
+    dyad.transfer(msg.sender, amount - fee);
   }
 }
