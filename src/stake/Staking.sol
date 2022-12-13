@@ -55,4 +55,6 @@ contract Staking {
     payable(_stake.owner).transfer(fee); 
     payable(msg.sender).transfer(usdInEth - fee);
   }
+
+  // TODO: deposit + withdraw + redeem?
 }
