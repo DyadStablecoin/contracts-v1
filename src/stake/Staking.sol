@@ -46,7 +46,7 @@ contract Staking {
     positions[id] = _position;
   }
 
-  // redeem DYAD for ETH -> Position `feeRecipient` gets a fee
+  // redeem DYAD for ETH 
   function redeem(uint id, uint amount) external {
     Position memory _position = positions[id];
     require(dnft.idToNft(id).withdrawn - amount >= _position.redemptionLimit,
