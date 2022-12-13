@@ -20,7 +20,7 @@ contract Staking {
   mapping (uint => Position) public positions;
 
   modifier isPositionOwner(uint id) {
-    require(msg.sender == positions[id].owner, "Staking: Not stake owner");
+    require(msg.sender == positions[id].owner, "Staking: Not Position Owner");
     _;
   }
 
