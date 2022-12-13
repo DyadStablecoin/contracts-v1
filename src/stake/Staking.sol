@@ -5,8 +5,7 @@ import "forge-std/console.sol";
 import "../../src/dyad.sol";
 import {PoolLibrary} from "../PoolLibrary.sol";
 
-// TODO: rename to staking
-contract Stake {
+contract Staking {
   IdNFT public dnft;
   DYAD public dyad;
 
@@ -31,6 +30,7 @@ contract Stake {
 
   function unstake(uint id) public {
     require(stakes[id].owner == msg.sender, "not your stake");
+    delete stakes[id];
     dnft.transferFrom(address(this), msg.sender, id);
   }
 

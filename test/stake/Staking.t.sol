@@ -12,7 +12,7 @@ import {OracleMock} from "./../Oracle.t.sol";
 import "../../src/dyad.sol";
 import "../../src/pool.sol";
 import {Deployment} from "../../script/Deployment.sol";
-import {Stake} from "../../src/stake/Stake.sol";
+import {Staking} from "../../src/stake/Staking.sol";
 
 uint constant DEPOSIT_MINIMUM = 5000000000000000000000;
 uint constant ORACLE_PRICE = 120000000000; // $1.2k
@@ -28,7 +28,7 @@ contract StakeTest is Test,Deployment {
   IdNFT public dnft;
   DYAD public dyad;
   Pool public pool;
-  Stake public stake;
+  Staking public staking;
   CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
   address public addr1;
 
@@ -47,7 +47,7 @@ contract StakeTest is Test,Deployment {
     dyad = DYAD(_dyad);
     dnft = IdNFT(_dnft);
     pool = Pool(_pool);
-    stake = new Stake(_dnft, _dyad);
+    staking = new Staking(_dnft, _dyad);
 
     addr1 = cheats.addr(1);
   }
@@ -60,11 +60,11 @@ contract StakeTest is Test,Deployment {
 
     dyad.approve(address(dnft), amount);
     dnft.withdraw(id, amount);
-    dnft.approve(address(stake), id);
-    stake.stake(id, 100); // fee of 1%
-    dyad.approve(address(stake), amount);
-    stake.redeem(id, amount);
-    stake.unstake(id);
+    dnft.approve(address(staking), id);
+    staking.stake(id, 100); // fee of 1%
+    dyad.approve(address(staking), amount);
+    staking.redeem(id, amount);
+    staking.unstake(id);
 
     vm.stopPrank();
   }
