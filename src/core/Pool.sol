@@ -5,6 +5,7 @@ import {DYAD} from "./dyad.sol";
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {IdNFT} from "../interfaces/IdNFT.sol";
 import {PoolLibrary} from "../libraries/PoolLibrary.sol";
+import "forge-std/console.sol";
 
 contract Pool {
   // IMPORTANT: do not change the ordering of these variables
@@ -114,7 +115,7 @@ contract Pool {
 
       IdNFT.Nft memory nft = dnft.idToNft(tokenId);
 
-      // xp accrual happens only when there is a burn.
+      // xp accrual happens only when there is a burn
       uint xpAccrual;
       // there can only be xp accrual if deposit is not 0 
       if (mode == Mode.BURNING && nft.deposit > 0) {
@@ -171,6 +172,7 @@ contract Pool {
         uint xpScaled = ((nft.xp-dnft.MIN_XP())*10000) / xpDelta;
         uint mintAvgMinted = ((nft.withdrawn+uint(nft.deposit))*10000) / (dyad.totalSupply()/(nftTotalSupply+1));
         xpMulti = PoolLibrary.getXpMulti(xpScaled/100);
+        if (mode == Mode.BURNING && xpMulti > 200) { xpMulti = 200; }
         if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } // should be 292: 242+50
         uint depositMulti = (uint(nft.deposit)*10000) / (uint(nft.deposit)+(nft.withdrawn+1));
         multiProduct = xpMulti * (mode == Mode.BURNING ? mintAvgMinted : depositMulti) / 100;
