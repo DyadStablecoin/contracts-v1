@@ -2,8 +2,8 @@
 pragma solidity ^0.8.13;
 import {IdNFT} from "../interfaces/IdNFT.sol";
 import "forge-std/console.sol";
-import "../../src/dyad.sol";
-import {PoolLibrary} from "../PoolLibrary.sol";
+import "../../src/core/dyad.sol";
+import {PoolLibrary} from "../libraries/PoolLibrary.sol";
 
 struct Position {
   address owner; 

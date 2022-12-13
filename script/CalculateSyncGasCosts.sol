@@ -2,10 +2,10 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
-import "../src/dyad.sol";
-import "../src/Pool.sol";
+import "../src/core/dyad.sol";
+import "../src/core/Pool.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
-import {dNFT} from "../src/dNFT.sol";
+import {dNFT} from "../src/core/dNFT.sol";
 import {Parameters} from "./Parameters.sol";
 import "forge-std/console.sol";
 import {Deployment} from "./Deployment.sol";

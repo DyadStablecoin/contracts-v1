@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
-import {Pool} from "../src/Pool.sol";
+import {Pool} from "../src/core/Pool.sol";
 
 contract ReadData is Script {
   Pool public pool;

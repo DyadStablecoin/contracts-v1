@@ -3,12 +3,12 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
-import "../src/dyad.sol";
-import "../src/Pool.sol";
+import "../src/core/dyad.sol";
+import "../src/core/Pool.sol";
 import "ds-test/test.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
-import {dNFT} from "../src/dNFT.sol";
-import {PoolLibrary} from "../src/PoolLibrary.sol";
+import {dNFT} from "../src/core/dNFT.sol";
+import {PoolLibrary} from "../src/libraries/PoolLibrary.sol";
 import {OracleMock} from "./Oracle.t.sol";
 
 uint constant DEPOSIT_MINIMUM = 5000000000000000000000;
