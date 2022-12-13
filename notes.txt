@@ -23,6 +23,9 @@ TODO:
 - [ ] redeem: get the latest price or lastEthPrice?
 - [ ] rename to ehjc
 
+STAKING
+- [ ] add limit
+
 
 GAS SAVINGS:
 - [ ] unchecked in loop

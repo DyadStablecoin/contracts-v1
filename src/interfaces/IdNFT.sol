@@ -21,7 +21,7 @@ interface IdNFT {
   function mintDyad(uint id) external payable;
   function withdraw(uint id, uint amount) external;
   function deposit(uint id, uint amount) external;
-  function redeem(uint id, uint amount) external;
+  function redeem(uint id, uint amount) external returns (uint);
   function setPool(address newPool) external;
   function mintNft(address receiver) external payable returns (uint id);
   function mintNftCopy(address receiver, IdNFT.Nft memory nft, uint depositMinimum) external payable returns (uint id);
@@ -34,7 +34,7 @@ interface IdNFT {
   function lastCheckpointForIdOf(uint id) external view returns (uint);
   function totalSupply() external view returns (uint);
   function idToNft(uint) external view returns (Nft memory);
-  function transferFrom(address from, address to, uint tokenId) external view returns (uint);
+  function transferFrom(address _from, address _to, uint256 _tokenId) external payable;
   function approve(address to, uint tokenId) external;
   function updateXP(uint minXP, uint maxXP) external;
   function tokenByIndex(uint index) external returns (uint);

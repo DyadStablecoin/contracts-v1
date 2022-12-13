@@ -204,11 +204,12 @@ contract Pool {
     dyad.transfer(receiver, amount);
   }
 
-  function redeem(address receiver, uint amount) external onlyNftContract {
+  function redeem(address receiver, uint amount) external onlyNftContract returns (uint usdInEth) {
     dyad.burn(amount);
     // the equivalent amount of USD denominated in ETH
-    uint usdInEth = amount*100000000 / lastEthPrice;
+    usdInEth = amount*100000000 / lastEthPrice;
     payable(receiver).transfer(usdInEth);
+    return usdInEth;
   }
 
   // Calim a liquidated nft

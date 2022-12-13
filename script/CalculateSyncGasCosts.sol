@@ -12,9 +12,9 @@ import {Deployment} from "./Deployment.sol";
 
 contract CalculateSyncGasCosts is Script, Parameters {
   function run() public {
-    address dNftAddr; address poolAddr;
+    address dNftAddr; address poolAddr; address dyadAddr;
 
-    (dNftAddr, poolAddr) = new Deployment().deploy(ORACLE_MAINNET, 0, false);
+    (dNftAddr, poolAddr, dyadAddr) = new Deployment().deploy(ORACLE_MAINNET, 0, false);
     IdNFT dnft = IdNFT(dNftAddr);
     Pool pool = Pool(poolAddr);
 

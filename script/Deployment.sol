@@ -8,7 +8,7 @@ import "../src/dyad.sol";
 import "../src/pool.sol";
 
 contract Deployment is Script {
-  function deploy(address oracle, uint depositMinimum, bool insiderAlloc) public returns (address, address) {
+  function deploy(address oracle, uint depositMinimum, bool insiderAlloc) public returns (address, address, address) {
     vm.startBroadcast();
     DYAD dyad = new DYAD();
 
@@ -22,6 +22,6 @@ contract Deployment is Script {
 
     vm.stopBroadcast();
 
-    return (address(dnft), address(pool));
+    return (address(dnft), address(pool), address(dyad));
   }
 }
