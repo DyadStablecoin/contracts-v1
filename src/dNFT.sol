@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import {DYAD} from "../src/dyad.sol";
-import {Pool} from "../src/pool.sol";
+import {Pool} from "../src/Pool.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
 
 contract dNFT is ERC721Enumerable, ERC721Burnable {

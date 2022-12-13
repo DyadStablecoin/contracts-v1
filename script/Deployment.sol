@@ -5,7 +5,7 @@ import "forge-std/Script.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
 import {dNFT} from "../src/dNFT.sol";
 import "../src/dyad.sol";
-import "../src/pool.sol";
+import "../src/Pool.sol";
 
 contract Deployment is Script {
   function deploy(address oracle, uint depositMinimum, bool insiderAlloc) public returns (address, address, address) {
