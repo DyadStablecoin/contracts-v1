@@ -171,7 +171,7 @@ contract Pool {
         uint xpScaled = ((nft.xp-dnft.MIN_XP())*10000) / xpDelta;
         uint mintAvgMinted = ((nft.withdrawn+uint(nft.deposit))*10000) / (dyad.totalSupply()/(nftTotalSupply+1));
         xpMulti = PoolLibrary.getXpMulti(xpScaled/100);
-        if (mode == Mode.BURNING && xpMulti > 200) { xpMulti = 200; }
+        if (mode == Mode.BURNING && xpMulti > 20000) { xpMulti = 20000; } // limit xpMulti to 200%
         if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } // should be 292: 242+50
         uint depositMulti = (uint(nft.deposit)*10000) / (uint(nft.deposit)+(nft.withdrawn+1));
         multiProduct = xpMulti * (mode == Mode.BURNING ? mintAvgMinted : depositMulti) / 100;
