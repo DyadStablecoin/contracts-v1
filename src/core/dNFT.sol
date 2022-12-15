@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+import "forge-std/console.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import {DYAD} from "./dyad.sol";
@@ -133,7 +134,9 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
     // mint the required dyad to cover the negative deposit. updates the deposit
     // accordingly.
-    _mintDyad(id, _depositMinimum); 
+    uint amount    = _mintDyad(id, _depositMinimum); 
+    // NOTE: nft.deposit is negative!
+    newNft.deposit = int(amount) + nft.deposit; 
     return id;
   }
 
@@ -193,6 +196,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
   // deposit dyad back into the pool
   function deposit(uint id, uint amount) external {
+    require(amount > 0, "dNFT: Deposit amount must be greater than 0");
     Nft storage nft = idToNft[id];
     // The amount you want to deposit is higher than the amount you have 
     // withdrawn
