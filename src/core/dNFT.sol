@@ -5,7 +5,12 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import {DYAD} from "./dyad.sol";
 import {Pool} from "./Pool.sol";
-import {IdNFT} from "../interfaces/IdNFT.sol";
+
+struct Nft {
+  uint withdrawn; // dyad withdrawn from the pool deposit
+  int deposit;    // dyad balance in pool
+  uint xp;        // always positive, always inflationary
+}
 
 contract dNFT is ERC721Enumerable, ERC721Burnable {
   // maximum number of nfts that can exist at one point in time
@@ -33,7 +38,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   Pool public pool;
 
   // mapping from nft id to nft data
-  mapping(uint => IdNFT.Nft) public idToNft;
+  mapping(uint => Nft) public idToNft;
 
   event NftMinted    (address indexed to, uint indexed id);
   event DyadMinted   (address indexed to, uint indexed id, uint amount);
@@ -87,7 +92,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     if (maxXP > MAX_XP) { MAX_XP = maxXP; }
   }
 
-  function updateNft(uint id, IdNFT.Nft memory nft) external onlyPool {
+  function updateNft(uint id, Nft memory nft) external onlyPool {
     idToNft[id] = nft;
   }
 
@@ -114,10 +119,10 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // Mint a new nft that will have the same xp and withdrawn amount as `nft`.
   // The deposit of the newly minted nft depends on `msg.value`.
   function mintNftCopy(address receiver,
-                       IdNFT.Nft memory nft,
+                       Nft memory nft,
                        uint depositMinimum) external payable onlyPool returns (uint) {
     uint id = _mintNft(receiver);
-    IdNFT.Nft storage newNft = idToNft[id];
+    Nft storage newNft = idToNft[id];
     // copy over xp and withdrawn. deposit is handled by _mintDyad below.
     newNft.xp        = nft.xp;
     newNft.withdrawn = nft.withdrawn;
@@ -140,7 +145,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     _mint(receiver, id); 
     numberOfMints += 1;
 
-    IdNFT.Nft storage nft = idToNft[id];
+    Nft storage nft = idToNft[id];
 
     // add MIN_XP to the nft to start with
     // We do MAX_SUPPLY - totalSupply() not to incentivice something but to
@@ -174,7 +179,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     uint cr = (dyad.totalSupply() - poolDyadBalance) * 10000 / poolDyadBalance;
     require(cr < MAX_COLLATERATION_RATIO, "CR is over 150%"); 
 
-    IdNFT.Nft storage nft = idToNft[id];
+    Nft storage nft = idToNft[id];
     require(int(amount) <= nft.deposit, "dNFT: Withdraw amount exceeds deposit");
     nft.deposit   -= int(amount);
     nft.withdrawn += amount;
@@ -184,7 +189,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
   // deposit dyad back into the pool
   function deposit(uint id, uint amount) external {
-    IdNFT.Nft storage nft = idToNft[id];
+    Nft storage nft = idToNft[id];
     // The amount you want to deposit is higher than the amount you have 
     // withdrawn
     require(amount <= nft.withdrawn, "dNFT: Deposit exceeds withdrawn");
@@ -204,7 +209,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
   // redeem DYAD for ETH
   function redeem(uint id, uint amount) external onlyNFTOwner(id) returns (uint usdInEth) {
-    IdNFT.Nft storage nft = idToNft[id];
+    Nft storage nft = idToNft[id];
     require(amount <= nft.withdrawn, "dNFT: Amount to redeem exceeds withdrawn");
     nft.withdrawn -= amount;
     dyad.transferFrom(msg.sender, address(pool), amount);

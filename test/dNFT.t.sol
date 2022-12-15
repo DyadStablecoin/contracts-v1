@@ -57,7 +57,7 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
     assertEq(dnft.totalSupply(),                             1);
     assertEq(metadata.withdrawn,                             0);
     assertEq(metadata.deposit  , int(ORACLE_PRICE*50000000000));
-    assertEq(metadata.xp       ,                        600); 
+    assertEq(metadata.xp       ,                           600); 
 
     stdstore.target(address(dnft)).sig("MIN_XP()").checked_write(uint(0));    // min xp
     stdstore.target(address(dnft)).sig("MAX_XP()").checked_write(uint(600)); // max xp
