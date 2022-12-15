@@ -17,8 +17,6 @@ import {Util} from "./util/Util.sol";
 uint constant ORACLE_PRICE = 120000000000; // $1.2k
 
 contract PoolTest is Test, Deployment, Parameters, Util {
-  using stdStorage for StdStorage;
-
   IdNFT public dnft;
   DYAD public dyad;
   Pool public pool;
