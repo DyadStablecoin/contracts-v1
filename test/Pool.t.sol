@@ -10,18 +10,13 @@ import {IdNFT} from "../src/interfaces/IdNFT.sol";
 import {dNFT} from "../src/core/dNFT.sol";
 import {PoolLibrary} from "../src/libraries/PoolLibrary.sol";
 import {OracleMock} from "./Oracle.t.sol";
+import {Deployment} from "../script/Deployment.sol";
+import {Parameters} from "../script/Parameters.sol";
+import {Util} from "./util/Util.sol";
 
-// mainnnet
-address constant PRICE_ORACLE_ADDRESS = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
 uint constant ORACLE_PRICE = 120000000000; // $1.2k
-uint constant DEPOSIT_MINIMUM = 5000000000000000000000;
 
-interface CheatCodes {
-   // Gets address for a given private key, (privateKey) => (address)
-   function addr(uint256) external returns (address);
-}
-
-contract PoolTest is Test {
+contract PoolTest is Test, Deployment, Parameters, Util {
   using stdStorage for StdStorage;
 
   IdNFT public dnft;
@@ -29,33 +24,15 @@ contract PoolTest is Test {
   Pool public pool;
   OracleMock public oracle;
 
-  // --------------------- Test Addresses ---------------------
-  CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
-  address public addr1;
-  address public addr2;
-
-  function setOraclePrice(uint price) public {
-    vm.store(address(oracle), bytes32(uint(0)), bytes32(price)); 
-  }
-
   function setUp() public {
     oracle = new OracleMock();
-    dyad = new DYAD();
+    setOraclePrice(oracle, ORACLE_PRICE); 
 
-    // set oracle price
-    setOraclePrice(ORACLE_PRICE); // $1.2k
-
-    // // init dNFT contract
-    dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, new address[](0));
-    dnft = IdNFT(address(_dnft));
-
-    pool = new Pool(address(dnft), address(dyad), address(oracle));
-
-    dnft.setPool(address(pool));
-    dyad.setMinter(address(pool));
-
-    addr1 = cheats.addr(1);
-    addr2 = cheats.addr(2);
+    address _dnft; address _pool; address _dyad;
+    (_dnft,_pool,_dyad) = deploy(address(oracle),
+                                 DEPOSIT_MINIMUM_MAINNET,
+                                 new address[](0));
+    dnft = IdNFT(_dnft); pool = Pool(_pool); dyad = DYAD(_dyad);
   }
 
   // needed, so we can receive eth transfers
@@ -72,6 +49,6 @@ contract PoolTest is Test {
   function testFailClaimNftNotClaimable() public {
     dnft.mintNft{value: 5 ether}(address(this));
     // can not claim this, because it is not claimable
-    pool.claim(0, addr1);
+    pool.claim(0, address(this));
   }
 }
