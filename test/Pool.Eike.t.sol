@@ -138,7 +138,7 @@ contract PoolTest is Test, Parameters {
 
     // this is not enough ether to claim the nft
     vm.expectRevert();
-    pool.claim{value: 1   wei}(0, address(this));
+    pool.claim{value: 1 wei}(0, address(this));
 
     // 1 ether is enough
     // IMPORTANT: this test will only pass while the eth price is above $135.

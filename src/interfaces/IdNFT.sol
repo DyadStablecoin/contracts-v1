@@ -24,7 +24,7 @@ interface IdNFT {
   function redeem(uint id, uint amount) external returns (uint);
   function setPool(address newPool) external;
   function mintNft(address receiver) external payable returns (uint id);
-  function mintNftCopy(address receiver, IdNFT.Nft memory nft, uint depositMinimum) external payable returns (uint id);
+  function mintNftCopy(address receiver, IdNFT.Nft memory nft) external payable returns (uint id);
   function burn(uint id) external;
   function balanceOf(uint id) external view returns (int);
   function xpOf(uint id) external view returns (uint);
