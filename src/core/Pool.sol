@@ -223,9 +223,7 @@ contract Pool {
     emit NftClaimed(id, dnft.ownerOf(id), receiver); 
     dnft.burn(id); // burn nft
     require(nft.deposit < 0, "dNFT: NFT is not liquidatable");
-    // mint new nft with the xp of the old one.
-    // minimum depoist amount is -nft.deposit, to make sure that the negative 
-    // deposit is covered by the new nft.
-    return dnft.mintNftCopy{value: msg.value}(receiver, nft, uint(-nft.deposit));
+    // mint new nft with the xp, withdrawn data of the old one.
+    return dnft.mintNftCopy{value: msg.value}(receiver, nft);
   }
 }
