@@ -44,7 +44,7 @@ contract LaunchTest is Test, Parameters {
     dnft       = IdNFT(address(_dnft));
     pool       = new Pool(address(dnft), address(dyad), CHAINLINK_ORACLE_ADDRESS);
     dnft.setPool  (address(pool));
-    dyad.setMinter(address(pool));
+    dyad.transferOwnership(address(pool));
 
     // directly after deployment the total supply has to be the number
     // of insider allocations.

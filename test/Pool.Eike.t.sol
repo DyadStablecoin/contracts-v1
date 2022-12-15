@@ -43,7 +43,7 @@ contract PoolTest is Test, Parameters {
 
     pool = new Pool(address(dnft), address(dyad), address(oracle));
 
-    dyad.setMinter(address(pool));
+    dyad.transferOwnership(address(pool));
     dnft.setPool(address(pool));
 
     // set oracle price

@@ -13,9 +13,13 @@ contract DYADTest is Test {
   }
 
   function testMinter() public {
-    assertEq(dyad.minter(), address(this));
-    dyad.setMinter(address(0));
-    assertEq(dyad.minter(), address(0));
+    assertEq(dyad.owner(), address(this));
+    dyad.transferOwnership(address(1));
+    assertEq(dyad.owner(), address(1));
+
+    // we can't transfer ownership again
+    vm.expectRevert();
+    dyad.transferOwnership(address(1));
   }
 
   function testMint() public { }
