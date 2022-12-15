@@ -22,6 +22,6 @@ contract Deployment is Script {
 
     vm.stopBroadcast();
 
-    return (address(dnft), address(pool), address(dyad));
+    return (address(_dnft), address(pool), address(dyad));
   }
 }

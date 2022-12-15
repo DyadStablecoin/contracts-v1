@@ -32,9 +32,10 @@ contract Staking {
   // is needed, because `dnft.redeem` sends us eth
   receive() external payable {}
 
-  function stake(uint id, Position memory _position) public  {
+  function stake(uint id, Position memory _position) public returns (Position memory) {
     dnft.transferFrom(_position.owner, address(this), id);
     positions[id] = _position;
+    return _position;
   }
 
   function unstake(uint id) public isPositionOwner(id) {
