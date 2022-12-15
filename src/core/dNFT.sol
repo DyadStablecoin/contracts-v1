@@ -16,20 +16,24 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // maximum number of nfts that can exist at one point in time
   uint constant public MAX_SUPPLY = 300;
 
-  uint constant public MAX_COLLATERATION_RATIO = 15000; // 150% in basis points
+  // 150% in basis points
+  uint constant public MAX_COLLATERATION_RATIO = 15000; 
 
+  // stores the number of nfts that have been minted. we need this in order to
+  // generate a new id for the next minted nft.
   uint public numberOfMints;
 
   // deposit minimum required to mint a new dnft
+  // should be a constant, but then some of the tests do not work because they 
+  // depend on manipulating this value.
+  // as this is only set in the constructor, it should not be a problem.
   uint public DEPOSIT_MINIMUM;
 
   // here we store the min/max value of xp over every dNFT,
   // which allows us to do a normalization, without iterating over
   // all of them to find the min/max value.
-  // Why init to 900k? Because otherwise they are set to 0 and the 
-  // normalization function in the `PoolLibrary` breaks and 900k is a nice number.
-  // every newly minted nft starts out with this MIN_XP.
   uint public MIN_XP = 300;
+
   // after minting the first nft this will be the MAX_XP. After that it will
   // be updated by the `sync` in the pool contract.
   uint public MAX_XP = MIN_XP + MAX_SUPPLY;
@@ -57,10 +61,10 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   }
 
   constructor(address _dyad,
-              uint depositMinimum,
+              uint _depositMinimum,
               address[] memory insiders) ERC721("DYAD NFT", "dNFT") {
     dyad            = DYAD(_dyad);
-    DEPOSIT_MINIMUM = depositMinimum;
+    DEPOSIT_MINIMUM = _depositMinimum;
 
     for (uint i = 0; i < insiders.length; i++) { _mintNft(insiders[i]); }
   }
@@ -87,9 +91,9 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       returns (bool)
   { return super.supportsInterface(interfaceId); }
 
-  function updateXP(uint minXP, uint maxXP) external onlyPool {
-    if (minXP < MIN_XP) { MIN_XP = minXP; }
-    if (maxXP > MAX_XP) { MAX_XP = maxXP; }
+  function updateXP(uint _minXP, uint _maxXP) external onlyPool {
+    if (_minXP < MIN_XP) { MIN_XP = _minXP; }
+    if (_maxXP > MAX_XP) { MAX_XP = _maxXP; }
   }
 
   function updateNft(uint id, Nft memory nft) external onlyPool {
@@ -108,7 +112,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
             getApproved(tokenId) == spender);
   }
 
-  // to mint a new dnft a msg.value of 'DEPOSIT_MINIMUM' USD denominated in ETH
+  // to mint a new dnft a msg.value of 'depositMinimum' USD denominated in ETH
   // is required.
   function mintNft(address receiver) external payable returns (uint) {
     uint id = _mintNft(receiver);
@@ -120,7 +124,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // The deposit of the newly minted nft depends on `msg.value`.
   function mintNftCopy(address receiver,
                        Nft memory nft,
-                       uint depositMinimum) external payable onlyPool returns (uint) {
+                       uint _depositMinimum) external payable onlyPool returns (uint) {
     uint id = _mintNft(receiver);
     Nft storage newNft = idToNft[id];
     // copy over xp and withdrawn. deposit is handled by _mintDyad below.
@@ -129,7 +133,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
     // mint the required dyad to cover the negative deposit. updates the deposit
     // accordingly.
-    _mintDyad(id, depositMinimum); 
+    _mintDyad(id, _depositMinimum); 
     return id;
   }
 
