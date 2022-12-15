@@ -14,10 +14,7 @@ import {Util} from "./util/Util.sol";
 import {Deployment} from "../script/Deployment.sol";
 import {Parameters} from "../script/Parameters.sol";
 
-// mainnnet
-address constant PRICE_ORACLE_ADDRESS = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
 uint constant ORACLE_PRICE = 120000000000; // $1.2k
-uint constant DEPOSIT_MINIMUM = 5000000000000000000000;
 
 contract dNFTTest is Test, Deployment, Parameters, Util {
   using stdStorage for StdStorage;
@@ -29,16 +26,17 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
 
   function setUp() public {
     oracle = new OracleMock();
-    dyad = new DYAD();
-
-    // set oracle price
     setOraclePrice(oracle, ORACLE_PRICE); 
 
-    address _dnft; address _pool; address _dyad;
+    address _dnft;
+    address _pool;
+    address _dyad;
     (_dnft,_pool,_dyad) = deploy(address(oracle),
                                  DEPOSIT_MINIMUM_MAINNET,
                                  new address[](0));
-    dnft = IdNFT(_dnft); pool = Pool(_pool); dyad = DYAD(_dyad);
+    dnft = IdNFT(_dnft);
+    pool = Pool(_pool);
+    dyad = DYAD(_dyad);
   }
 
   // needed, so we can receive eth transfers

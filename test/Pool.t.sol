@@ -28,11 +28,15 @@ contract PoolTest is Test, Deployment, Parameters, Util {
     oracle = new OracleMock();
     setOraclePrice(oracle, ORACLE_PRICE); 
 
-    address _dnft; address _pool; address _dyad;
+    address _dnft;
+    address _pool;
+    address _dyad;
     (_dnft,_pool,_dyad) = deploy(address(oracle),
                                  DEPOSIT_MINIMUM_MAINNET,
                                  new address[](0));
-    dnft = IdNFT(_dnft); pool = Pool(_pool); dyad = DYAD(_dyad);
+    dnft = IdNFT(_dnft);
+    pool = Pool(_pool);
+    dyad = DYAD(_dyad);
   }
 
   // needed, so we can receive eth transfers
