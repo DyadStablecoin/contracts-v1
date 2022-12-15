@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "forge-std/console.sol";
 import {DYAD} from "./dyad.sol";
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {IdNFT} from "../interfaces/IdNFT.sol";
@@ -224,7 +223,9 @@ contract Pool {
     emit NftClaimed(id, dnft.ownerOf(id), receiver); 
     dnft.burn(id); // burn nft
     require(nft.deposit < 0, "dNFT: NFT is not liquidatable");
-    // mint new nft with the xp of the old one
+    // mint new nft with the xp of the old one.
+    // minimum depoist amount is -nft.deposit, to make sure that the negative 
+    // deposit is covered by the new nft.
     return dnft.mintNftCopy{value: msg.value}(receiver, nft, uint(-nft.deposit));
   }
 }

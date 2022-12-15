@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "forge-std/console.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import {DYAD} from "./dyad.sol";
@@ -136,6 +135,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     // accordingly.
     uint amount    = _mintDyad(id, _depositMinimum); 
     // NOTE: nft.deposit is negative!
+    // the new nft deposit is the negative of the old nft deposit plus the newly
+    // minted dyad.
     newNft.deposit = int(amount) + nft.deposit; 
     return id;
   }
