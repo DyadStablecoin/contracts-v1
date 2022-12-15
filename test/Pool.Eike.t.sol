@@ -140,9 +140,13 @@ contract PoolTest is Test, Parameters {
     vm.expectRevert();
     pool.claim{value: 1 wei}(0, address(this));
 
-    // 1 ether is enough
-    // IMPORTANT: this test will only pass while the eth price is above $135.
-    uint id = pool.claim{value: 1 ether}(0, address(this));
+    vm.expectRevert();
+    // 140000000000000000 wei is $133, which is not enough to claim the nft. At
+    // least 135 is needed.
+    pool.claim{value: 140000000000000000}(0, address(this));
+
+    // 150000000000000000 wei is $142 in this scenario, which is enough to claim
+    uint id = pool.claim{value: 150000000000000000}(0, address(this));
 
     // // lets check that all the metadata moved from the burned nft to the newly minted one
     assertEq(dnft.idToNft(0).xp,        dnft.idToNft(id).xp);
