@@ -38,7 +38,7 @@ contract PoolTest is Test, Parameters {
     dyad = new DYAD();
 
     // init dNFT contract
-    dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, new address[](0));
+    dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, MAX_SUPPLY, new address[](0));
     dnft = IdNFT(address(_dnft));
 
     pool = new Pool(address(dnft), address(dyad), address(oracle));

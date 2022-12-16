@@ -33,6 +33,7 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
     address _dyad;
     (_dnft,_pool,_dyad) = deploy(address(oracle),
                                  DEPOSIT_MINIMUM_MAINNET,
+                                 MAX_SUPPLY,
                                  new address[](0));
     dnft = IdNFT(_dnft);
     pool = Pool(_pool);
@@ -57,10 +58,10 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
     assertEq(dnft.totalSupply(),                             1);
     assertEq(metadata.withdrawn,                             0);
     assertEq(metadata.deposit  , int(ORACLE_PRICE*50000000000));
-    assertEq(metadata.xp       ,                           600); 
+    assertEq(metadata.xp       ,                          1000); 
 
     stdstore.target(address(dnft)).sig("MIN_XP()").checked_write(uint(0));    // min xp
-    stdstore.target(address(dnft)).sig("MAX_XP()").checked_write(uint(600)); // max xp
+    stdstore.target(address(dnft)).sig("MAX_XP()").checked_write(uint(1000)); // max xp
     pool.sync();
   }
   function testMintNftTotalSupply() public {
