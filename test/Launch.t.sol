@@ -40,7 +40,7 @@ contract LaunchTest is Test, Parameters {
 
   function setUp() public {
     dyad       = new DYAD();
-    dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, INSIDERS); // with insider allocation
+    dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, MAX_SUPPLY, INSIDERS); 
     dnft       = IdNFT(address(_dnft));
     pool       = new Pool(address(dnft), address(dyad), CHAINLINK_ORACLE_ADDRESS);
     dnft.setPool  (address(pool));

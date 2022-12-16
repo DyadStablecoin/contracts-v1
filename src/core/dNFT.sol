@@ -14,7 +14,7 @@ struct Nft {
 
 contract dNFT is ERC721Enumerable, ERC721Burnable {
   // maximum number of nfts that can exist at one point in time
-  uint constant public MAX_SUPPLY = 300;
+  uint public MAX_SUPPLY;
 
   // 150% in basis points
   uint constant public MAX_COLLATERATION_RATIO = 15000; 
@@ -32,11 +32,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // here we store the min/max value of xp over every dNFT,
   // which allows us to do a normalization, without iterating over
   // all of them to find the min/max value.
-  uint public MIN_XP = 300;
-
-  // after minting the first nft this will be the MAX_XP. After that it will
-  // be updated by the `sync` in the pool contract.
-  uint public MAX_XP = MIN_XP + MAX_SUPPLY;
+  uint public MIN_XP; uint public MAX_XP;
 
   DYAD public dyad;
   Pool public pool;
@@ -62,9 +58,16 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
   constructor(address _dyad,
               uint _depositMinimum,
+              uint _maxSupply, 
               address[] memory insiders) ERC721("DYAD NFT", "dNFT") {
     dyad            = DYAD(_dyad);
     DEPOSIT_MINIMUM = _depositMinimum;
+    MAX_SUPPLY      = _maxSupply;
+    MIN_XP          = _maxSupply;
+
+    // before calling the `sync` function this will be the highest xp possible, 
+    // which will be assigned to the first minted nft.
+    MAX_XP          = MIN_XP + MAX_SUPPLY;
 
     for (uint i = 0; i < insiders.length; i++) { _mintNft(insiders[i]); }
   }

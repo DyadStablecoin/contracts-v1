@@ -43,7 +43,10 @@ contract StakeTest is Test, Deployment, Parameters {
     setOraclePrice(ORACLE_PRICE);
 
     address _dnft; address _pool; address _dyad;
-    (_dnft, _pool, _dyad) = new Deployment().deploy(address(oracle), DEPOSIT_MINIMUM, INSIDERS);
+    (_dnft, _pool, _dyad) = new Deployment().deploy(address(oracle),
+                                                    DEPOSIT_MINIMUM,
+                                                    MAX_SUPPLY,
+                                                    INSIDERS);
 
     dyad = DYAD(_dyad);
     dnft = IdNFT(_dnft);

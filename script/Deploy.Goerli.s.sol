@@ -8,7 +8,10 @@ import {Parameters} from "./Parameters.sol";
 // Pseudo-code, may not compile.
 contract DeployGoerli is Script, Parameters {
   function run() public {
-      new Deployment().deploy(ORACLE_GOERLI, DEPOSIT_MINIMUM_GOERLI, INSIDERS);
+      new Deployment().deploy(ORACLE_GOERLI,
+                              DEPOSIT_MINIMUM_GOERLI,
+                              MAX_SUPPLY,
+                              INSIDERS);
   }
 }
 

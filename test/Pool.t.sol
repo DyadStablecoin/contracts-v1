@@ -31,6 +31,7 @@ contract PoolTest is Test, Deployment, Parameters, Util {
     address _dyad;
     (_dnft,_pool,_dyad) = deploy(address(oracle),
                                  DEPOSIT_MINIMUM_MAINNET,
+                                 MAX_SUPPLY,
                                  new address[](0));
     dnft = IdNFT(_dnft);
     pool = Pool(_pool);

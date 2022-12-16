@@ -2,6 +2,8 @@
 pragma solidity ^0.8.13;
 
 contract Parameters {
+  uint MAX_SUPPLY = 500; 
+
   // mainnet
   address ORACLE_MAINNET = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
   uint DEPOSIT_MINIMUM_MAINNET = 5000000000000000000000; // $5k deposit minimum
