@@ -61,8 +61,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
               uint _maxSupply, 
               address[] memory insiders) ERC721("DYAD NFT", "dNFT") {
     dyad            = DYAD(_dyad);
-    MAX_SUPPLY      = _maxSupply;
     DEPOSIT_MINIMUM = _depositMinimum;
+    MAX_SUPPLY      = _maxSupply;
     MIN_XP          = _maxSupply;
 
     // before calling the `sync` function this will be the highest xp possible, 

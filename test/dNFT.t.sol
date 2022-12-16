@@ -54,14 +54,16 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
     uint id = dnft.mintNft{value: 5 ether}(address(this));
     IdNFT.Nft memory metadata = dnft.idToNft(0);
 
+    uint MAX_XP = 1000;
+
     assertEq(id,                                             0);
     assertEq(dnft.totalSupply(),                             1);
     assertEq(metadata.withdrawn,                             0);
     assertEq(metadata.deposit  , int(ORACLE_PRICE*50000000000));
-    assertEq(metadata.xp       ,                          1000); 
+    assertEq(metadata.xp       ,                          MAX_XP); 
 
-    stdstore.target(address(dnft)).sig("MIN_XP()").checked_write(uint(0));    // min xp
-    stdstore.target(address(dnft)).sig("MAX_XP()").checked_write(uint(1000)); // max xp
+    stdstore.target(address(dnft)).sig("MIN_XP()").checked_write(uint(0));      // min xp
+    stdstore.target(address(dnft)).sig("MAX_XP()").checked_write(uint(MAX_XP)); // max xp
     pool.sync();
   }
   function testMintNftTotalSupply() public {
