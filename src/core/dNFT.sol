@@ -17,7 +17,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   uint public MAX_SUPPLY;
 
   // 150% in basis points
-  uint constant public MAX_COLLATERATION_RATIO = 15000; 
+  uint constant public MIN_COLLATERATION_RATIO = 15000; 
 
   // stores the number of nfts that have been minted. we need this in order to
   // generate a new id for the next minted nft.
@@ -188,11 +188,10 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // withdraw dyad from the pool to msg.sender
   function withdraw(uint id, uint amount) external onlyNFTOwner(id) {
     uint poolDyadBalance = dyad.balanceOf(address(pool));
-    uint cr = 0;
-    if (dyad.totalSupply() - poolDyadBalance != 0) {
-      cr =  poolDyadBalance*10000 / (dyad.totalSupply() - poolDyadBalance);
-    }     
-    require(cr < MAX_COLLATERATION_RATIO, "CR is over 150%"); 
+    uint cr = MIN_COLLATERATION_RATIO;
+    uint totalWithdrawn = dyad.totalSupply() - poolDyadBalance;
+    if (totalWithdrawn != 0) { cr =  poolDyadBalance*10000 / totalWithdrawn; }     
+    require(cr >= MIN_COLLATERATION_RATIO, "CR is under 150%"); 
 
     Nft storage nft = idToNft[id];
     require(int(amount) <= nft.deposit, "dNFT: Withdraw amount exceeds deposit");
