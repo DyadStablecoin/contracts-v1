@@ -188,7 +188,10 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // withdraw dyad from the pool to msg.sender
   function withdraw(uint id, uint amount) external onlyNFTOwner(id) {
     uint poolDyadBalance = dyad.balanceOf(address(pool));
-    uint cr =  poolDyadBalance*10000 / (dyad.totalSupply() - poolDyadBalance);
+    uint cr = 0;
+    if (dyad.totalSupply() - poolDyadBalance != 0) {
+      cr =  poolDyadBalance*10000 / (dyad.totalSupply() - poolDyadBalance);
+    }     
     require(cr < MAX_COLLATERATION_RATIO, "CR is over 150%"); 
 
     Nft storage nft = idToNft[id];
