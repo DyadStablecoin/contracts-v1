@@ -58,7 +58,7 @@ contract StakeTest is Test, Deployment, Parameters {
 
   function testStake() public {
     uint amount = 100*10**18;
-    uint id = dnft.mintNft{value: 5 ether}(addr1);
+    uint id = dnft.mintNft{value: 15 ether}(addr1);
 
     vm.startPrank(addr1);
 
