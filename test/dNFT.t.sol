@@ -147,14 +147,14 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
   function testUnblockCollaterizationRatioLock() public {
     dnft.mintNft{value: 5 ether}(address(this));
     dnft.mintDyad{value: 1 ether}(0);
-    uint AMOUNT = 3000000000000000000000;
+    uint AMOUNT = 2880000000000000000000;
     // this pushes the CR under 150% 
     dnft.withdraw(0, AMOUNT);
     dyad.approve(address(dnft), AMOUNT);
     // CR is under 150% so withdraw should fail
     vm.expectRevert();
     dnft.withdraw(0, 2 ether);
-    // this returns the CR to over 150%, which enables withdrawls again
+    // // this returns the CR to over 150%, which enables withdrawls again
     dnft.deposit(0, AMOUNT);
     dnft.withdraw(0, 2 ether);
   }
