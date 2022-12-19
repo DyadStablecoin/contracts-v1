@@ -188,16 +188,20 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // withdraw dyad from the pool to msg.sender
   function withdraw(uint id, uint amount) external onlyNFTOwner(id) {
     uint poolDyadBalance = dyad.balanceOf(address(pool));
-    uint cr = MIN_COLLATERATION_RATIO;
-    uint updatedBalance = poolDyadBalance - amount;
-    uint totalWithdrawn = dyad.totalSupply() - updatedBalance;
+    uint cr              = MIN_COLLATERATION_RATIO;
+    uint updatedBalance  = poolDyadBalance - amount;
+    uint totalWithdrawn  = dyad.totalSupply() - updatedBalance;
     if (totalWithdrawn != 0) { cr =  updatedBalance*10000 / totalWithdrawn; }     
     require(cr >= MIN_COLLATERATION_RATIO, "CR is under 150%"); 
+
     Nft storage nft = idToNft[id];
     require(int(amount) <= nft.deposit, "dNFT: Withdraw amount exceeds deposit");
+
     nft.deposit   -= int(amount);
     nft.withdrawn += amount;
+
     pool.withdraw(msg.sender, amount);
+
     emit DyadWithdrawn(msg.sender, id, amount);
   }
 
@@ -205,16 +209,11 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function deposit(uint id, uint amount) external {
     require(amount > 0, "dNFT: Deposit amount must be greater than 0");
     Nft storage nft = idToNft[id];
-    // The amount you want to deposit is higher than the amount you have 
-    // withdrawn
     require(amount <= nft.withdrawn, "dNFT: Deposit exceeds withdrawn");
 
     nft.deposit   += int(amount);
     nft.withdrawn -= amount;
 
-    // transfer dyad to the nft
-    // approve the pool to spend the dyad of this contract
-    // deposit dyad in the pool
     dyad.transferFrom(msg.sender, address(this), amount);
     dyad.approve(address(pool), amount);
     pool.deposit(amount);
