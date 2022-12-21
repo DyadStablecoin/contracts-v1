@@ -47,7 +47,7 @@ contract Pool {
     uint[] xpMultis;         
   }
 
-  constructor(address _dnft, address _dyad, address oracle, uint maxSupply) {
+  constructor(address _dnft, address _dyad, address oracle) {
     dnft         = IdNFT(_dnft);
     dyad         = DYAD(_dyad);
     priceFeed    = IAggregatorV3(oracle);
@@ -55,6 +55,7 @@ contract Pool {
 
     // before calling the `sync` function this will be the highest xp possible, 
     // which will be assigned to the first minted nft.
+    uint maxSupply = dnft.MAX_SUPPLY();
     MIN_XP = maxSupply;
     MAX_XP = maxSupply * 2;
   }

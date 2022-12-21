@@ -41,7 +41,7 @@ contract PoolTest is Test, Parameters {
     dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, MAX_SUPPLY, new address[](0));
     dnft = IdNFT(address(_dnft));
 
-    pool = new Pool(address(dnft), address(dyad), address(oracle), MAX_SUPPLY);
+    pool = new Pool(address(dnft), address(dyad), address(oracle));
 
     dyad.transferOwnership(address(pool));
     dnft.setPool(address(pool));

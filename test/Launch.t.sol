@@ -42,7 +42,7 @@ contract LaunchTest is Test, Parameters {
     dyad       = new DYAD();
     dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, MAX_SUPPLY, INSIDERS); 
     dnft       = IdNFT(address(_dnft));
-    pool       = new Pool(address(dnft), address(dyad), CHAINLINK_ORACLE_ADDRESS, MAX_SUPPLY);
+    pool       = new Pool(address(dnft), address(dyad), CHAINLINK_ORACLE_ADDRESS);
     dnft.setPool(address(pool));
     dyad.transferOwnership(address(pool));
 
