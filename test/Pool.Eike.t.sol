@@ -41,7 +41,7 @@ contract PoolTest is Test, Parameters {
     dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, MAX_SUPPLY, new address[](0));
     dnft = IdNFT(address(_dnft));
 
-    pool = new Pool(address(dnft), address(dyad), address(oracle));
+    pool = new Pool(address(dnft), address(dyad), address(oracle), MAX_SUPPLY);
 
     dyad.transferOwnership(address(pool));
     dnft.setPool(address(pool));
@@ -59,8 +59,8 @@ contract PoolTest is Test, Parameters {
     setNfts();
 
     vm.store(address(pool), bytes32(uint(0)), bytes32(uint(1000 * 10**8))); // lastEthPrice
-    stdstore.target(address(dnft)).sig("MIN_XP()").checked_write(1079); // min xp
-    stdstore.target(address(dnft)).sig("MAX_XP()").checked_write(8000); // max xp
+    stdstore.target(address(pool)).sig("MIN_XP()").checked_write(1079); // min xp
+    stdstore.target(address(pool)).sig("MAX_XP()").checked_write(8000); // max xp
   }
 
   // needed, so we can receive eth transfers

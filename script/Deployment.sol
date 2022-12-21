@@ -18,7 +18,7 @@ contract Deployment is Script {
     dNFT _dnft = new dNFT(address(dyad), depositMinimum, maxSupply, insiders);
     IdNFT dnft = IdNFT(address(_dnft));
 
-    Pool pool = new Pool(address(dnft), address(dyad), oracle);
+    Pool pool = new Pool(address(dnft), address(dyad), oracle, maxSupply);
 
     dyad.transferOwnership(address(pool));
     dnft.setPool(address(pool));

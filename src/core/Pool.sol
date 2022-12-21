@@ -15,6 +15,11 @@ contract Pool {
   DYAD public dyad;
   IAggregatorV3 internal priceFeed;
 
+  // here we store the min/max value of xp over every dNFT,
+  // which allows us to do a normalization, without iterating over
+  // all of them to find the min/max value.
+  uint public MIN_XP; uint public MAX_XP;
+
   // when syncing, the protocol can be in two states:
   //   BURNING: if the price of eth went down
   //   MINTING: if the price of eth went up
@@ -41,11 +46,16 @@ contract Pool {
     uint[] xpMultis;         
   }
 
-  constructor(address _dnft, address _dyad, address oracle) {
+  constructor(address _dnft, address _dyad, address oracle, uint maxSupply) {
     dnft         = IdNFT(_dnft);
     dyad         = DYAD(_dyad);
     priceFeed    = IAggregatorV3(oracle);
     lastEthPrice = uint(getNewEthPrice());
+
+    // before calling the `sync` function this will be the highest xp possible, 
+    // which will be assigned to the first minted nft.
+    MIN_XP = maxSupply;
+    MAX_XP = maxSupply * 2;
   }
 
   // get the latest eth price from oracle
@@ -103,7 +113,7 @@ contract Pool {
     // we use these to keep track of the max/min xp values for this sync, 
     // so we can save them in storage to be used in the next sync.
     uint minXp = type(uint256).max;
-    uint maxXp = dnft.MAX_XP();
+    uint maxXp = MAX_XP;
 
     for (uint i = 0; i < dnft.totalSupply(); i++) {
       uint tokenId = dnft.tokenByIndex(i);
@@ -145,7 +155,9 @@ contract Pool {
     }
 
     // save new min/max xp in storage
-    dnft.updateXP(minXp, maxXp);
+    MIN_XP = minXp;
+    MAX_XP = maxXp;
+
     return dyadDelta;
   }
 
@@ -166,9 +178,9 @@ contract Pool {
 
       if (nft.deposit > 0) {
         // NOTE: From here on, uint(nft.deposit) is fine because it is not negative
-        uint xpDelta =  dnft.MAX_XP() - dnft.MIN_XP();
+        uint xpDelta =  MAX_XP - MIN_XP;
         if (xpDelta == 0) { xpDelta = 1; } // avoid division by 0
-        uint xpScaled = ((nft.xp-dnft.MIN_XP())*10000) / xpDelta;
+        uint xpScaled = ((nft.xp-MIN_XP)*10000) / xpDelta;
         uint mintAvgMinted = ((nft.withdrawn+uint(nft.deposit))*10000) / (dyad.totalSupply()/(nftTotalSupply+1));
         if (mode == Mode.BURNING && mintAvgMinted > 20000) { mintAvgMinted = 20000; } // limit to 200%
         xpMulti = PoolLibrary.getXpMulti(xpScaled/100);
