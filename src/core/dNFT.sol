@@ -105,6 +105,14 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function mintNft(address receiver) external payable returns (uint) {
     uint id = _mintNft(receiver);
     _mintDyad(id, DEPOSIT_MINIMUM);
+
+    // we need to check if the newly minted dnfts xp is smaller than the global
+    // xp stored in the pool. 
+    // this can happen if the dnfts are not all minted out and the sync function 
+    // increased the global minimum xp.
+    uint xp = idToNft[id].xp;
+    if (xp < pool.MIN_XP()) { pool.setMinXp(xp); }
+
     return id;
   }
 

@@ -43,7 +43,7 @@ contract LaunchTest is Test, Parameters {
     dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, MAX_SUPPLY, INSIDERS); 
     dnft       = IdNFT(address(_dnft));
     pool       = new Pool(address(dnft), address(dyad), CHAINLINK_ORACLE_ADDRESS, MAX_SUPPLY);
-    dnft.setPool  (address(pool));
+    dnft.setPool(address(pool));
     dyad.transferOwnership(address(pool));
 
     // directly after deployment the total supply has to be the number

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+import "forge-std/console.sol";
 import {DYAD} from "./dyad.sol";
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {IdNFT} from "../interfaces/IdNFT.sol";
@@ -58,12 +59,13 @@ contract Pool {
     MAX_XP = maxSupply * 2;
   }
 
+  function setMinXp(uint _minXp) external onlyNftContract { MIN_XP = _minXp; }
+
   // get the latest eth price from oracle
   function getNewEthPrice() internal view returns (int newEthPrice) {
     // NOTE: this can not be negative! (hopefully)
     ( , newEthPrice, , , ) = priceFeed.latestRoundData();
   }
-
 
   // The "heart" of the protocol.
   // - Gets the latest eth price and determines if new dyad should be minted or
@@ -160,7 +162,6 @@ contract Pool {
 
     return dyadDelta;
   }
-
 
   // NOTE: calculation of the multis is determined by the `mode`
   function calcMultis(Mode mode) private returns (Multis memory) {
