@@ -29,11 +29,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // as this is only set in the constructor, it should not be a problem.
   uint public DEPOSIT_MINIMUM;
 
-  // here we store the min/max value of xp over every dNFT,
-  // which allows us to do a normalization, without iterating over
-  // all of them to find the min/max value.
-  uint public MIN_XP; uint public MAX_XP;
-
   DYAD public dyad;
   Pool public pool;
 
@@ -63,11 +58,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     dyad            = DYAD(_dyad);
     DEPOSIT_MINIMUM = _depositMinimum;
     MAX_SUPPLY      = _maxSupply;
-    MIN_XP          = _maxSupply;
-
-    // before calling the `sync` function this will be the highest xp possible, 
-    // which will be assigned to the first minted nft.
-    MAX_XP          = MIN_XP + MAX_SUPPLY;
 
     for (uint i = 0; i < insiders.length; i++) { _mintNft(insiders[i]); }
   }
@@ -94,11 +84,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       returns (bool)
   { return super.supportsInterface(interfaceId); }
 
-  function updateXP(uint _minXP, uint _maxXP) external onlyPool {
-    if (_minXP < MIN_XP) { MIN_XP = _minXP; }
-    if (_maxXP > MAX_XP) { MAX_XP = _maxXP; }
-  }
-
   function updateNft(uint id, Nft memory nft) external onlyPool {
     idToNft[id] = nft;
   }
@@ -120,6 +105,14 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function mintNft(address receiver) external payable returns (uint) {
     uint id = _mintNft(receiver);
     _mintDyad(id, DEPOSIT_MINIMUM);
+
+    // we need to check if the newly minted dnfts xp is smaller than the global
+    // xp stored in the pool. 
+    // this can happen if the dnfts are not all minted out and the sync function 
+    // increased the global minimum xp.
+    uint xp = idToNft[id].xp;
+    if (xp < pool.MIN_XP()) { pool.setMinXp(xp); }
+
     return id;
   }
 
@@ -159,15 +152,12 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
     Nft storage nft = idToNft[id];
 
-    // add MIN_XP to the nft to start with
-    // We do MAX_SUPPLY - totalSupply() not to incentivice something but to
+    // We do MAX_SUPPLY*2 - totalSupply() not to incentivice something but to
     // break the xp symmetry.
     // +1 to compensate for the newly minted nft which increments totalSupply()
     // by 1.
-    nft.xp = MIN_XP + MAX_SUPPLY-totalSupply()+1;
+    nft.xp = (MAX_SUPPLY*2) - (totalSupply()-1);
 
-    // the new nft.xp could potentially be a new xp minimum!
-    if (nft.xp < MIN_XP) { MIN_XP = nft.xp; }
     emit NftMinted(receiver, id);
   }
 

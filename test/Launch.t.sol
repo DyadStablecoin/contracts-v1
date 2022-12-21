@@ -11,6 +11,7 @@ import {dNFT} from "../src/core/dNFT.sol";
 import {PoolLibrary} from "../src/libraries/PoolLibrary.sol";
 import {OracleMock} from "./Oracle.t.sol";
 import {Parameters} from "../script/Parameters.sol";
+import {Deployment} from "../script/Deployment.sol";
 
 interface CheatCodes {
    // Gets address for a given private key, (privateKey) => (address)
@@ -22,7 +23,7 @@ uint constant DEPOSIT_MINIMUM = 5000000000000000000000;
 
 // this should simulate the inital lauch on mainnet
 // IMPORTANT: you have to run this as a mainnet fork!!!
-contract LaunchTest is Test, Parameters {
+contract LaunchTest is Test, Parameters, Deployment {
   uint NUMBER_OF_INSIDER_NFTS;
 
   IdNFT public dnft;
@@ -39,12 +40,16 @@ contract LaunchTest is Test, Parameters {
   receive() external payable {}
 
   function setUp() public {
-    dyad       = new DYAD();
-    dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, MAX_SUPPLY, INSIDERS); 
-    dnft       = IdNFT(address(_dnft));
-    pool       = new Pool(address(dnft), address(dyad), CHAINLINK_ORACLE_ADDRESS);
-    dnft.setPool  (address(pool));
-    dyad.transferOwnership(address(pool));
+    address _dnft;
+    address _pool;
+    address _dyad;
+    (_dnft,_pool,_dyad) = deploy(CHAINLINK_ORACLE_ADDRESS,
+                                 DEPOSIT_MINIMUM,
+                                 MAX_SUPPLY,
+                                 new address[](0));
+    dnft = IdNFT(_dnft);
+    pool = Pool(_pool);
+    dyad = DYAD(_dyad);
 
     // directly after deployment the total supply has to be the number
     // of insider allocations.
