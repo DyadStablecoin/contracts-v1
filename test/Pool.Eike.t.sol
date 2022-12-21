@@ -11,6 +11,7 @@ import {dNFT} from "../src/core/dNFT.sol";
 import {PoolLibrary} from "../src/libraries/PoolLibrary.sol";
 import {OracleMock} from "./Oracle.t.sol";
 import {Parameters} from "../script/Parameters.sol";
+import {Deployment} from "../script/Deployment.sol";
 
 uint constant DEPOSIT_MINIMUM = 5000000000000000000000;
 
@@ -23,7 +24,7 @@ interface CheatCodes {
 // https://docs.google.com/spreadsheets/d/1pegDYo8hrOQZ7yZY428F_aQ_mCvK0d701mygZy-P04o/edit#gid=0
 // There are many hard coded values here that are based on the equations in the 
 // google sheet.
-contract PoolTest is Test, Parameters {
+contract PoolTest is Test, Parameters, Deployment {
   using stdStorage for StdStorage;
 
   DYAD public dyad;
@@ -35,16 +36,17 @@ contract PoolTest is Test, Parameters {
 
   function setUp() public {
     oracle = new OracleMock();
-    dyad = new DYAD();
 
-    // init dNFT contract
-    dNFT _dnft = new dNFT(address(dyad), DEPOSIT_MINIMUM, MAX_SUPPLY, new address[](0));
-    dnft = IdNFT(address(_dnft));
-
-    pool = new Pool(address(dnft), address(dyad), address(oracle));
-
-    dyad.transferOwnership(address(pool));
-    dnft.setPool(address(pool));
+    address _dnft;
+    address _pool;
+    address _dyad;
+    (_dnft,_pool,_dyad) = deploy(address(oracle),
+                                 DEPOSIT_MINIMUM_MAINNET,
+                                 MAX_SUPPLY,
+                                 new address[](0));
+    dnft = IdNFT(_dnft);
+    pool = Pool(_pool);
+    dyad = DYAD(_dyad);
 
     // set oracle price
     vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(950 * 10**8)));
