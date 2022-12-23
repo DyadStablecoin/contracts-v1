@@ -74,7 +74,7 @@ contract LaunchTest is Test, Parameters, Deployment {
   }
 
   function testFirstSync() public {
-    pool.sync();
+    dnft.sync();
   }
 
   function testMintNormallyAndSync() public {
@@ -84,7 +84,7 @@ contract LaunchTest is Test, Parameters, Deployment {
     vm.prank(addr2);
     dnft.mintNft{value: 5 ether}(address(this));
     dnft.mintNft{value: 5 ether}(address(this));
-    pool.sync();
+    dnft.sync();
   }
 
   function testWithdrawAndSync() public {
@@ -98,13 +98,13 @@ contract LaunchTest is Test, Parameters, Deployment {
     // remember the nfts are 0 indexed, so we do not need to increment by 1.
     dnft.withdraw(NUMBER_OF_INSIDER_NFTS+1, 3 ether);
 
-    pool.sync();
+    dnft.sync();
   }
 
   // very self explanatory I think. Do random stuff and see if it breaks.
   // I think you call that fuzzy testing, lol :D
   function testDoRandomStuffAndSync() public {
-    pool.sync();
+    dnft.sync();
 
     // mint nfts
     uint id1 = dnft.mintNft{value: 5 ether}(address(this));
@@ -119,7 +119,7 @@ contract LaunchTest is Test, Parameters, Deployment {
     uint id6 = dnft.mintNft{value: 8 ether}(address(this));
     uint id7 = dnft.mintNft{value: 5 ether}(address(this));
 
-    pool.sync();
+    dnft.sync();
 
     // do some withdraws
     dnft.withdraw(id1, 2 ether);
@@ -135,7 +135,7 @@ contract LaunchTest is Test, Parameters, Deployment {
     dnft.withdraw(id6, 2 ether);
     dnft.withdraw(id7, 4444444444444);
 
-    pool.sync();
+    dnft.sync();
 
     // do some deposits
     dyad.approve(address(dnft), 5 ether);
@@ -146,7 +146,7 @@ contract LaunchTest is Test, Parameters, Deployment {
     vm.prank(addr2);
     dnft.deposit(id4, 1000);
 
-    for(uint i = 0; i < 4; i++) { pool.sync(); }
+    for(uint i = 0; i < 4; i++) { dnft.sync(); }
 
     // do some redeems
     dyad.approve(address(dnft), 5 ether);
@@ -154,6 +154,6 @@ contract LaunchTest is Test, Parameters, Deployment {
     dnft.redeem(id1, 100000202);
     dnft.redeem(id1, 3000000202);
 
-    for(uint i = 0; i < 4; i++) { pool.sync(); }
+    for(uint i = 0; i < 4; i++) { dnft.sync(); }
   }
 }
