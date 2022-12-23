@@ -76,10 +76,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     require(this.ownerOf(id) == msg.sender, "dNFT: Only callable by NFT owner");
     _;
   }
-  modifier onlyPool() {
-    require(address(pool) == msg.sender, "dNFT: Only callable by Pool contract");
-    _;
-  }
   // Require CR >= `MIN_COLLATERATION_RATIO`, after removing `amount`
   modifier overCR(uint amount) {
     uint cr              = MIN_COLLATERATION_RATIO;
@@ -132,22 +128,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       returns (bool)
   { return super.supportsInterface(interfaceId); }
 
-  function updateNft(uint id, Nft memory nft) external onlyPool {
-    idToNft[id] = nft;
-  }
-
-  // VERY IMPORTANT: we add the pool here so we can burn any dnft. 
-  // This is needed to make the liquidation mechanism work.
-  function _isApprovedOrOwner(address spender,
-                              uint256 tokenId) 
-                              internal override view virtual returns (bool) {
-    address owner = ERC721.ownerOf(tokenId);
-    return (spender == address(this) || // <- only change
-            spender == owner ||
-            isApprovedForAll(owner, spender) ||
-            getApproved(tokenId) == spender);
-  }
-
   // Mint new dNFT to `to` with a deposit of atleast `DEPOSIT_MINIMUM`
   function mintNft(address to) external payable returns (uint) {
     uint id = _mintNft(to);
@@ -161,7 +141,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function mintCopy(
       address to,
       Nft memory nft
-  ) public payable onlyPool returns (uint) { // TODO: refactor to internal!
+  ) public payable returns (uint) { // TODO: refactor to internal!
       uint id = _mintNft(to);
       Nft storage newNft = idToNft[id];
       uint minDeposit = 0;
@@ -275,7 +255,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       Nft memory nft = idToNft[id];
       require(nft.isLiquidatable, "dNFT: NFT is not liquidatable");
       emit NftClaimed(id, ownerOf(id), to); 
-      burn(id); 
+      _burn(id); 
       return mintCopy(to, nft);
   }
 
@@ -294,7 +274,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     Mode mode = newEthPrice > lastEthPrice ? Mode.MINTING 
                                            : Mode.BURNING;
  
-    console.log("lastEthPrice: %s", lastEthPrice);
     // stores the eth price change in basis points
     uint ethChange = newEthPrice*10000/lastEthPrice;
     // we have to do this to get the percentage in basis points
