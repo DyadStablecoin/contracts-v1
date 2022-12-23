@@ -60,7 +60,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     _;
   }
 
-
   constructor(address _dyad,
               uint    _depositMinimum,
               uint    _maxSupply, 
@@ -155,7 +154,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       uint id,
       uint minAmount
   ) private returns (uint amount) {
-      require(msg.value > 0, "dNFT: ETH required to mint DYAD");
+      require(msg.value > 0, "dNFT: msg.value == 0");
       amount = pool.mintDyad{value: msg.value}(minAmount);
       dyad.approve(address(pool), amount);
       pool.deposit(amount);
@@ -168,11 +167,14 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       uint id,
       uint amount
   ) external onlyNFTOwner(id) overCR(amount) returns (uint) {
-      require(amount > 0, "dNFT: Withdrawl must be greater than 0");
+      require(amount > 0, "dNFT: Withdrawl == 0");
       Nft storage nft = idToNft[id];
-      require(int(amount) <= nft.deposit, "dNFT: Withdraw amount exceeds deposit");
+      uint newWithdrawn = nft.withdrawn + amount;
+      uint averageTVL   = dyad.balanceOf(address(pool)) / totalSupply();
+      require(newWithdrawn <= averageTVL,  "dNFT: New Withdrawl > average TVL");
+      require(int(amount)  <= nft.deposit, "dNFT: Withdrawl     > deposit");
+      nft.withdrawn  = newWithdrawn;
       nft.deposit   -= int(amount);
-      nft.withdrawn += amount;
       pool.withdraw(msg.sender, amount);
       emit DyadWithdrawn(msg.sender, id, amount);
       return amount;
@@ -183,9 +185,9 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       uint id, 
       uint amount
   ) external returns (uint) {
-      require(amount > 0, "dNFT: Deposit must be greater than 0");
+      require(amount > 0, "dNFT: Deposit == 0");
       Nft storage nft = idToNft[id];
-      require(amount <= nft.withdrawn, "dNFT: Deposit amount exceeds withdrawls");
+      require(amount <= nft.withdrawn, "dNFT: Deposit > withdrawn");
       nft.deposit   += int(amount);
       nft.withdrawn -= amount;
       dyad.transferFrom(msg.sender, address(this), amount);
@@ -200,9 +202,9 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       uint id,
       uint amount
   ) external onlyNFTOwner(id) returns (uint usdInEth) {
-      require(amount > 0, "dNFT: Amount to redeem must be greater than 0");
+      require(amount > 0, "dNFT: Amount to redeem == 0");
       Nft storage nft = idToNft[id];
-      require(amount <= nft.withdrawn, "dNFT: Amount to redeem exceeds withdrawn");
+      require(amount <= nft.withdrawn, "dNFT: Amount to redeem > withdrawn");
       nft.withdrawn -= amount;
       dyad.transferFrom(msg.sender, address(pool), amount);
       usdInEth = pool.redeem(msg.sender, amount);
@@ -216,9 +218,9 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       uint _to,
       uint amount
   ) external onlyNFTOwner(_from) returns (uint) {
-      require(amount > 0, "dNFT: Amount to move must be greater than 0");
+      require(amount > 0, "dNFT: Deposit == 0");
       Nft storage from = idToNft[_from];
-      require(int(amount) <= from.deposit, "dNFT: Amount to move exceeds deposit");
+      require(int(amount) <= from.deposit, "dNFT: Amount to move > deposit");
       Nft storage to   = idToNft[_to];
       from.deposit    -= int(amount);
       to.deposit      += int(amount);
