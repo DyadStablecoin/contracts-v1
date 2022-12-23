@@ -66,16 +66,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     _;
   }
 
-  // Require CR >= `MIN_COLLATERATION_RATIO`, after removing `amount`
-  modifier overCR(uint amount) {
-    uint cr              = MIN_COLLATERATION_RATIO;
-    uint updatedBalance  = dyad.balanceOf(address(this)) - amount;
-    uint totalWithdrawn  = dyad.totalSupply() - updatedBalance;
-    if (totalWithdrawn != 0) { cr =  updatedBalance*10000 / totalWithdrawn; }     
-    require(cr >= MIN_COLLATERATION_RATIO, "CR is under 150%"); 
-    _;
-  }
-
   constructor(
     address          _dyad,
     uint             _depositMinimum,
@@ -173,13 +163,17 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function withdraw(
       uint id,
       uint amount
-  ) external onlyNFTOwner(id) overCR(amount) returns (uint) {
-      require(amount > 0, "dNFT: Withdrawl == 0");
+  ) external onlyNFTOwner(id) returns (uint) {
+      require(amount > 0,                    "dNFT: Withdrawl == 0");
       Nft storage nft = idToNft[id];
+      require(int(amount)  <= nft.deposit,   "dNFT: Withdrawl > deposit");
+      uint updatedBalance  = dyad.balanceOf(address(this)) - amount;
+      uint totalWithdrawn  = dyad.totalSupply() - updatedBalance;
+      uint cr =  updatedBalance*10000 / totalWithdrawn;      
+      require(cr >= MIN_COLLATERATION_RATIO, "dNFT: CR is under 150%"); 
       uint newWithdrawn = nft.withdrawn + amount;
       uint averageTVL   = dyad.balanceOf(address(this)) / totalSupply();
-      require(newWithdrawn <= averageTVL,  "dNFT: New Withdrawl > average TVL");
-      require(int(amount)  <= nft.deposit, "dNFT: Withdrawl     > deposit");
+      require(newWithdrawn <= averageTVL,    "dNFT: New Withdrawl > average TVL");
       nft.withdrawn  = newWithdrawn;
       nft.deposit   -= int(amount);
       dyad.transfer(msg.sender, amount);
