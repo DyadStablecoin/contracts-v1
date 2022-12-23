@@ -226,7 +226,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       Nft storage nft = idToNft[id];
       require(amount <= nft.withdrawn, "dNFT: Amount to redeem > withdrawn");
       nft.withdrawn -= amount;
-      dyad.transferFrom(msg.sender, address(pool), amount);
       dyad.burn(amount);
       uint eth = amount*100000000 / lastEthPrice;
       payable(msg.sender).transfer(eth);
