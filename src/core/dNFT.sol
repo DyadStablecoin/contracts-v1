@@ -45,11 +45,20 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     require(this.ownerOf(id) == msg.sender, "dNFT: Only callable by NFT owner");
     _;
   }
-
   modifier onlyPool() {
     require(address(pool) == msg.sender, "dNFT: Only callable by Pool contract");
     _;
   }
+  // Require CR >= `MIN_COLLATERATION_RATIO`, after removing `amount`
+  modifier overCR(uint amount) {
+    uint cr              = MIN_COLLATERATION_RATIO;
+    uint updatedBalance  = dyad.balanceOf(address(pool)) - amount;
+    uint totalWithdrawn  = dyad.totalSupply() - updatedBalance;
+    if (totalWithdrawn != 0) { cr =  updatedBalance*10000 / totalWithdrawn; }     
+    require(cr >= MIN_COLLATERATION_RATIO, "CR is under 150%"); 
+    _;
+  }
+
 
   constructor(address _dyad,
               uint    _depositMinimum,
@@ -175,47 +184,44 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     emit DyadMinted(msg.sender, id, amount);
   }
 
-  // Withdraw DYAD from the pool to msg.sender
-  function withdraw(uint id, uint amount) external onlyNFTOwner(id) {
-    uint poolDyadBalance = dyad.balanceOf(address(pool));
-    uint cr              = MIN_COLLATERATION_RATIO;
-    uint updatedBalance  = poolDyadBalance - amount;
-    uint totalWithdrawn  = dyad.totalSupply() - updatedBalance;
-    if (totalWithdrawn != 0) { cr =  updatedBalance*10000 / totalWithdrawn; }     
-    require(cr >= MIN_COLLATERATION_RATIO, "CR is under 150%"); 
-
-    Nft storage nft = idToNft[id];
-    require(int(amount) <= nft.deposit, "dNFT: Withdraw amount exceeds deposit");
-
-    nft.deposit   -= int(amount);
-    nft.withdrawn += amount;
-
-    pool.withdraw(msg.sender, amount);
-
-    emit DyadWithdrawn(msg.sender, id, amount);
+  // Withdraw `amount` of DYAD from the dNFT
+  function withdraw(
+      uint id,
+      uint amount
+  ) external onlyNFTOwner(id) overCR(amount) returns (uint) {
+      require(amount > 0, "dNft: Withdrawl must be greater than 0");
+      Nft storage nft = idToNft[id];
+      require(int(amount) <= nft.deposit, "dNFT: Withdraw amount exceeds deposit");
+      nft.deposit   -= int(amount);
+      nft.withdrawn += amount;
+      pool.withdraw(msg.sender, amount);
+      emit DyadWithdrawn(msg.sender, id, amount);
+      return amount;
   }
 
-  // Deposit DYAD back into the pool
-  function deposit(uint id, uint amount) external {
-    require(amount > 0, "dNFT: Deposit amount must be greater than 0");
-    Nft storage nft = idToNft[id];
-    require(amount <= nft.withdrawn, "dNFT: Deposit exceeds withdrawn");
-
-    nft.deposit   += int(amount);
-    nft.withdrawn -= amount;
-
-    dyad.transferFrom(msg.sender, address(this), amount);
-    dyad.approve(address(pool), amount);
-    pool.deposit(amount);
-
-    emit DyadDeposited(msg.sender, id, amount);
+  // Deposit `amount` of DYAD into the dNFT
+  function deposit(
+      uint id, 
+      uint amount
+  ) external returns (uint) {
+      require(amount > 0, "dNFT: Deposit must be greater than 0");
+      Nft storage nft = idToNft[id];
+      require(amount <= nft.withdrawn, "dNFT: Deposit amount exceeds withdrawls");
+      nft.deposit   += int(amount);
+      nft.withdrawn -= amount;
+      dyad.transferFrom(msg.sender, address(this), amount);
+      dyad.approve(address(pool), amount);
+      pool.deposit(amount);
+      emit DyadDeposited(msg.sender, id, amount);
+      return amount;
   }
 
-  // Redeem `amount` of DYAD for ETH
+  // Redeem `amount` of DYAD for ETH from the dNFT
   function redeem(
       uint id,
       uint amount
   ) external onlyNFTOwner(id) returns (uint usdInEth) {
+      require(amount > 0, "dNFT: Amount to redeem must be greater than 0");
       Nft storage nft = idToNft[id];
       require(amount <= nft.withdrawn, "dNFT: Amount to redeem exceeds withdrawn");
       nft.withdrawn -= amount;
@@ -231,6 +237,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       uint _to,
       uint amount
   ) external onlyNFTOwner(_from) returns (uint) {
+      require(amount > 0, "dNFT: Amount to move must be greater than 0");
       Nft storage from = idToNft[_from];
       require(int(amount) <= from.deposit, "dNFT: Amount to move exceeds deposit");
       Nft storage to   = idToNft[_to];
