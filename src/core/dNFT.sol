@@ -141,33 +141,19 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       return id;
   }
 
-  // the main reason for this method is that we need to be able to mint
-  // nfts for the core team and investors without the deposit minimum,
-  // this happens in the constructor where we call this method directly.
+  // Mint new dNFT to `to`
   function _mintNft(address to) private returns (uint id) {
-    // we can not use totalSupply() for the id because of the liquidation
-    // mechanism, which burns and creates new nfts. This way ensures that we
-    // alway use a new id.
-    id = numberOfMints;
     require(totalSupply() < MAX_SUPPLY, "Max supply reached");
-    _mint(to, id); 
+    id = numberOfMints;
     numberOfMints += 1;
-
+    _mint(to, id); 
     Nft storage nft = idToNft[id];
-
-    // We do MAX_SUPPLY*2 - totalSupply() not to incentivice something but to
-    // break the xp symmetry.
-    // +1 to compensate for the newly minted nft which increments totalSupply()
-    // by 1.
-    nft.xp = (MAX_SUPPLY*2) - (totalSupply()-1);
-
+    nft.xp = (MAX_SUPPLY*2) - (totalSupply()-1); // break xp symmetry
     emit NftMinted(to, id);
   }
 
   // Mint new DYAD 
-  function mintDyad(
-      uint id
-  ) payable public onlyNFTOwner(id) returns (uint amount) {
+  function mintDyad(uint id) payable public onlyNFTOwner(id) returns (uint amount) {
       amount = _mintDyad(id, 0);
   }
 
