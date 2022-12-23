@@ -117,7 +117,8 @@ contract Pool {
     uint minXp = type(uint256).max;
     uint maxXp = MAX_XP;
 
-    for (uint i = 0; i < dnft.totalSupply(); i++) {
+    uint totalSupply = dnft.totalSupply();
+    for (uint i = 0; i < totalSupply; i++) {
       uint tokenId = dnft.tokenByIndex(i);
       // multi normalized by the multi sum
       uint relativeMulti = multis.multiProducts[i]*10000 / multis.multiProductsSum;

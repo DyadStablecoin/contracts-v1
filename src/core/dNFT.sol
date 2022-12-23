@@ -221,4 +221,14 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     emit DyadRedeemed(msg.sender, id, amount);
     return usdInEth;
   }
+
+  // transfer deposited DYAD to another dNFT
+  function transferDeposit(uint _from, uint _to, uint amount) external onlyNFTOwner(_from) {
+    Nft storage from = idToNft[_from];
+    require(int(amount) <= from.deposit, "dNFT: Amount to transfer exceeds deposit");
+    Nft storage to = idToNft[_to];
+
+    from.deposit -= int(amount);
+    to.deposit   += int(amount);
+  }
 }
