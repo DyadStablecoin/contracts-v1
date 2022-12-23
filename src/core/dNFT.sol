@@ -25,6 +25,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // generate a new id for the next minted nft.
   uint public numberOfMints;
 
+  uint public lastEthPrice;
+
   // deposit minimum required to mint a new dnft
   // should be a constant, but then some of the tests do not work because they 
   // depend on manipulating this value.
@@ -81,6 +83,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     DEPOSIT_MINIMUM = _depositMinimum;
     MAX_SUPPLY      = _maxSupply;
     oracle          = IAggregatorV3(_oracle);
+    lastEthPrice    = uint(getNewEthPrice());
     for (uint i = 0; i < insiders.length; i++) { _mintNft(insiders[i]); }
   }
 
@@ -224,7 +227,9 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       require(amount <= nft.withdrawn, "dNFT: Amount to redeem > withdrawn");
       nft.withdrawn -= amount;
       dyad.transferFrom(msg.sender, address(pool), amount);
-      usdInEth = pool.redeem(msg.sender, amount);
+      dyad.burn(amount);
+      uint eth = amount*100000000 / lastEthPrice;
+      payable(msg.sender).transfer(eth);
       emit DyadRedeemed(msg.sender, id, amount);
       return usdInEth;
   }

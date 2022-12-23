@@ -206,10 +206,10 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
   }
   function testRedeemDyadPoolBalance() public {
     mintAndTransfer(REDEEM_AMOUNT);
-    uint oldPoolBalance = address(pool).balance;
+    uint oldPoolBalance = address(dnft).balance;
     dnft.redeem(0, REDEEM_AMOUNT);
     // before redeeming, the pool balance should be higher than after it
-    assertTrue(address(pool).balance < oldPoolBalance); 
+    assertTrue(address(dnft).balance < oldPoolBalance); 
   }
   function testRedeemDyadTotalSupply() public {
     mintAndTransfer(REDEEM_AMOUNT);
