@@ -32,7 +32,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   DYAD public dyad;
   Pool public pool;
 
-  // mapping from nft id to nft data
+  // mapping from nft id to nft 
   mapping(uint => Nft) public idToNft;
 
   event NftMinted    (address indexed to, uint indexed id);
@@ -67,7 +67,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     dyad            = DYAD(_dyad);
     DEPOSIT_MINIMUM = _depositMinimum;
     MAX_SUPPLY      = _maxSupply;
-
     for (uint i = 0; i < insiders.length; i++) { _mintNft(insiders[i]); }
   }
 
