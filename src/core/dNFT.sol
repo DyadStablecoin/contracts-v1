@@ -164,18 +164,24 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     emit NftMinted(to, id);
   }
 
-  // Mint new DYAD and deposit it in the pool
-  function mintDyad(uint id) payable public onlyNFTOwner(id) returns (uint amount) {
-    amount = _mintDyad(id, 0);
+  // Mint new DYAD 
+  function mintDyad(
+      uint id
+  ) payable public onlyNFTOwner(id) returns (uint amount) {
+      amount = _mintDyad(id, 0);
   }
 
-  function _mintDyad(uint id, uint minAmount) private returns (uint amount) {
-    require(msg.value > 0, "You need to send some ETH to mint dyad");
-    amount = pool.mintDyad{value: msg.value}(minAmount);
-    dyad.approve(address(pool), amount);
-    pool.deposit(amount);
-    idToNft[id].deposit += int(amount);
-    emit DyadMinted(msg.sender, id, amount);
+  // Mint at least `minAmount` of DYAD to dNFT 
+  function _mintDyad(
+      uint id,
+      uint minAmount
+  ) private returns (uint amount) {
+      require(msg.value > 0, "dNFT: ETH required to mint DYAD");
+      amount = pool.mintDyad{value: msg.value}(minAmount);
+      dyad.approve(address(pool), amount);
+      pool.deposit(amount);
+      idToNft[id].deposit += int(amount);
+      emit DyadMinted(msg.sender, id, amount);
   }
 
   // Withdraw `amount` of DYAD from the dNFT
@@ -183,7 +189,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       uint id,
       uint amount
   ) external onlyNFTOwner(id) overCR(amount) returns (uint) {
-      require(amount > 0, "dNft: Withdrawl must be greater than 0");
+      require(amount > 0, "dNFT: Withdrawl must be greater than 0");
       Nft storage nft = idToNft[id];
       require(int(amount) <= nft.deposit, "dNFT: Withdraw amount exceeds deposit");
       nft.deposit   -= int(amount);
