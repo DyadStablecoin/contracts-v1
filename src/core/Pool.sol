@@ -149,7 +149,8 @@ contract Pool {
         nft.deposit += int(relativeDyadDelta);
       }
 
-      if (nft.deposit < 0) { nft.isLiquidatable = true; }
+      nft.deposit < 0 ? nft.isLiquidatable = true 
+                      : nft.isLiquidatable = false;
 
       // update nft in storage
       dnft.updateNft(tokenId, nft);
