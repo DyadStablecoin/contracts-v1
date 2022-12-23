@@ -52,8 +52,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   }
 
   constructor(address _dyad,
-              uint _depositMinimum,
-              uint _maxSupply, 
+              uint    _depositMinimum,
+              uint    _maxSupply, 
               address[] memory insiders) ERC721("DYAD NFT", "dNFT") {
     dyad            = DYAD(_dyad);
     DEPOSIT_MINIMUM = _depositMinimum;
@@ -226,7 +226,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function transferDeposit(uint _from, uint _to, uint amount) external onlyNFTOwner(_from) {
     Nft storage from = idToNft[_from];
     require(int(amount) <= from.deposit, "dNFT: Amount to transfer exceeds deposit");
-    Nft storage to = idToNft[_to];
+    Nft storage to   = idToNft[_to];
 
     from.deposit -= int(amount);
     to.deposit   += int(amount);
