@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "forge-std/console.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
@@ -138,10 +137,10 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   }
 
   // Mint new nft to `to` with the same xp and withdrawn amount as `nft`
-  function mintCopy(
+  function _mintCopy(
       address to,
       Nft memory nft
-  ) public payable returns (uint) { // TODO: refactor to internal!
+  ) internal returns (uint) { 
       uint id = _mintNft(to);
       Nft storage newNft = idToNft[id];
       uint minDeposit = 0;
@@ -256,7 +255,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       require(nft.isLiquidatable, "dNFT: NFT is not liquidatable");
       emit NftClaimed(id, ownerOf(id), to); 
       _burn(id); 
-      return mintCopy(to, nft);
+      return _mintCopy(to, nft);
   }
 
   // The "heart" of the protocol.
