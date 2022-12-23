@@ -365,6 +365,10 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
         multiProduct = xpMulti * (mode == Mode.BURNING ? mintAvgMinted : depositMulti) / 100;
       } 
 
+      if (mode == Mode.MINTING && msg.sender == ownerOf(tokenByIndex(i))) { 
+        multiProduct += PoolLibrary.percentageOf(multiProduct, 115); 
+      }
+
       multiProducts[i]  = multiProduct;
       multiProductsSum  += multiProduct;
       xpMultis[i]       = xpMulti;
