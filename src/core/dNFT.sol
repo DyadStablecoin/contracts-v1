@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+import "forge-std/console.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
@@ -28,6 +29,8 @@ struct Multis {
 }
 
 contract dNFT is ERC721Enumerable, ERC721Burnable {
+  uint public lastEthPrice;
+
   // maximum number of nfts that can exist at one point in time
   uint public MAX_SUPPLY;
 
@@ -37,8 +40,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // stores the number of nfts that have been minted. we need this in order to
   // generate a new id for the next minted nft.
   uint public numberOfMints;
-
-  uint public lastEthPrice;
 
   // deposit minimum required to mint a new dnft
   // should be a constant, but then some of the tests do not work because they 
@@ -293,6 +294,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     Mode mode = newEthPrice > lastEthPrice ? Mode.MINTING 
                                            : Mode.BURNING;
  
+    console.log("lastEthPrice: %s", lastEthPrice);
     // stores the eth price change in basis points
     uint ethChange = newEthPrice*10000/lastEthPrice;
     // we have to do this to get the percentage in basis points
@@ -378,7 +380,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   }
 
   // NOTE: calculation of the multis is determined by the `mode`
-  function calcMultis(Mode mode) private returns (Multis memory) {
+  function calcMultis(Mode mode) private view returns (Multis memory) {
     uint nftTotalSupply = totalSupply();
     uint multiProductsSum;
     uint[] memory multiProducts = new uint[](nftTotalSupply);
@@ -396,7 +398,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
         uint xpDelta =  MAX_XP - MIN_XP;
         if (xpDelta == 0) { xpDelta = 1; } // avoid division by 0
         uint xpScaled = ((nft.xp-MIN_XP)*10000) / xpDelta;
-        uint mintAvgMinted = ((nft.withdrawn+uint(nft.deposit))*10000) / (totalSupply()/(nftTotalSupply+1));
+        uint mintAvgMinted = ((nft.withdrawn+uint(nft.deposit))*10000) / (dyad.totalSupply()/(nftTotalSupply+1));
         if (mode == Mode.BURNING && mintAvgMinted > 20000) { mintAvgMinted = 20000; } // limit to 200%
         xpMulti = PoolLibrary.getXpMulti(xpScaled/100);
         if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } // should be 292: 242+50
