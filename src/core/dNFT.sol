@@ -144,7 +144,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     emit NftMinted(to, id);
   }
 
-  // Mint new DYAD 
+  // Mint and deposit DYAD into dNFT
   function mintDyad(uint id) payable public onlyNFTOwner(id) returns (uint amount) {
       amount = _mintDyad(id, 0);
   }
@@ -162,7 +162,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       emit DyadMinted(msg.sender, id, amount);
   }
 
-  // Withdraw `amount` of DYAD from the dNFT
+  // Withdraw `amount` of DYAD from dNFT
   function withdraw(
       uint id,
       uint amount
@@ -180,7 +180,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       return amount;
   }
 
-  // Deposit `amount` of DYAD into the dNFT
+  // Deposit `amount` of DYAD into dNFT
   function deposit(
       uint id, 
       uint amount
@@ -197,7 +197,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       return amount;
   }
 
-  // Redeem `amount` of DYAD for ETH from the dNFT
+  // Redeem `amount` of DYAD for ETH from dNFT
   function redeem(
       uint id,
       uint amount
