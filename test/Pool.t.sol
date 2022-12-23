@@ -40,4 +40,11 @@ contract PoolTest is Test, Deployment, Parameters, Util {
 
   // needed, so we can receive eth transfers
   receive() external payable {}
+
+  function testSyncMaxSupply() public {
+    for (uint i = 0; i < MAX_SUPPLY; i++) {
+      dnft.mintNft{value: 5 ether}(address(this));
+    }
+    dnft.sync();
+  }
 }

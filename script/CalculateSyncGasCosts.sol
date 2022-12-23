@@ -20,7 +20,7 @@ contract CalculateSyncGasCosts is Script, Parameters {
                                                              new address[](0));
     IdNFT dnft = IdNFT(dNftAddr);
 
-    for (uint i = 0; i < 300; i++) {
+    for (uint i = 0; i < MAX_SUPPLY; i++) {
       dnft.mintNft{value: 5 ether}(address(this));
     }
     uint g1 = gasleft();
