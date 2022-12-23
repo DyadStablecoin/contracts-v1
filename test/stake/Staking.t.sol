@@ -9,7 +9,7 @@ import {IdNFT} from "../../src/interfaces/IdNFT.sol";
 import {dNFT} from "../../src/core/dNFT.sol";
 import {PoolLibrary} from "../../src/libraries/PoolLibrary.sol";
 import {OracleMock} from "./../Oracle.t.sol";
-import "../../src/core/dyad.sol";
+import "../../src/core/Dyad.sol";
 import "../../src/core/Pool.sol";
 import {Deployment} from "../../script/Deployment.sol";
 import {Parameters} from "../../script/Parameters.sol";

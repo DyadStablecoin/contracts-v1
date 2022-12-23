@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
-import "../src/core/dyad.sol";
+import "../src/core/Dyad.sol";
 import "../src/core/Pool.sol";
 import "ds-test/test.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
@@ -222,5 +222,24 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
     // this should fail beacuse msg.sender is not the owner of dnft 1
     mintAndTransfer(REDEEM_AMOUNT);
     dnft.redeem(1, REDEEM_AMOUNT);
+  }
+
+  // --------------------- Move Deposit ---------------------
+  function testMoveDeposit() public {
+    uint id1 = dnft.mintNft{value: 5 ether}(address(this));
+    uint id2 = dnft.mintNft{value: 5 ether}(address(this));
+    dnft.moveDeposit(id1, id2, 100); 
+  }
+  function testFailMoveDepositExceedsDeposit() public {
+    uint id1 = dnft.mintNft{value: 5 ether}(address(this));
+    uint id2 = dnft.mintNft{value: 5 ether}(address(this));
+    // without +1 it would succeed
+    dnft.moveDeposit(id1, id2, ORACLE_PRICE*50000000000+1);
+  }
+  function testFailMoveDepositNotNftOwner() public {
+    uint id1 = dnft.mintNft{value: 5 ether}(address(this));
+    uint id2 = dnft.mintNft{value: 5 ether}(address(this));
+    vm.prank(address(0));
+    dnft.moveDeposit(id1, id2, 100);
   }
 }
