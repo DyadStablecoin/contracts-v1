@@ -96,12 +96,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     for (uint i = 0; i < insiders.length; i++) { _mintNft(insiders[i]); }
   }
 
-  // Set pool once
-  function setPool(address newPool) public {
-    require(address(pool) == address(0),"dNFT: Pool is already set");
-    pool = Pool(newPool);
-  }
-
   function getNewEthPrice() internal view returns (int newEthPrice) {
     ( , newEthPrice, , , ) = oracle.latestRoundData();
   }

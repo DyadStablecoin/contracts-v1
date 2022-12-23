@@ -21,7 +21,6 @@ contract Deployment is Script {
     Pool pool = new Pool(address(dnft), address(dyad), oracle);
 
     dyad.transferOwnership(address(dnft));
-    dnft.setPool(address(pool));
 
     vm.stopBroadcast();
 

@@ -64,15 +64,6 @@ contract LaunchTest is Test, Parameters, Deployment {
     assertEq(dnft.totalSupply(), NUMBER_OF_INSIDER_NFTS);
   }
 
-  function testDnftPoolIsCorrect() public {
-    assertEq(dnft.pool(), address(pool));
-  }
-
-  function testFailSetSetPoolTwice() public {
-    // the pool can only be set once!
-    dnft.setPool(address(pool));
-  }
-
   function testFirstSync() public {
     dnft.sync();
   }
