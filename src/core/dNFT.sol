@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+import "forge-std/console.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import {DYAD} from "./Dyad.sol";
@@ -59,7 +60,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     require(cr >= MIN_COLLATERATION_RATIO, "CR is under 150%"); 
     _;
   }
-
 
   constructor(address _dyad,
               uint    _depositMinimum,
@@ -171,8 +171,11 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       require(amount > 0, "dNFT: Withdrawl must be greater than 0");
       Nft storage nft = idToNft[id];
       require(int(amount) <= nft.deposit, "dNFT: Withdraw amount exceeds deposit");
+      uint tvl          = dyad.balanceOf(address(pool));
+      uint newWithdrawn = nft.withdrawn + amount;
+      require(newWithdrawn <= tvl / totalSupply());
+      nft.withdrawn  = newWithdrawn;
       nft.deposit   -= int(amount);
-      nft.withdrawn += amount;
       pool.withdraw(msg.sender, amount);
       emit DyadWithdrawn(msg.sender, id, amount);
       return amount;
