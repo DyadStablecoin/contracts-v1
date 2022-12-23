@@ -140,23 +140,23 @@ contract PoolTest is Test, Parameters, Deployment {
 
     // this is not enough ether to claim the nft
     vm.expectRevert();
-    pool.claim{value: 1 wei}(0, address(this));
+    pool.liquidate{value: 1 wei}(0, address(this));
 
     vm.expectRevert();
     // 140000000000000000 wei is $133, which is not enough to claim the nft. At
     // least 135 is needed.
-    pool.claim{value: 140000000000000000}(0, address(this));
+    pool.liquidate{value: 140000000000000000}(0, address(this));
 
-    // 150000000000000000 wei is $142 in this scenario, which is enough to claim
-    uint id = pool.claim{value: 150000000000000000}(0, address(this));
+    // 150000000000000000 wei is $142 in this scenario, which is enough to liquidate
+    uint id = pool.liquidate{value: 150000000000000000}(0, address(this));
 
-    // // lets check that all the metadata moved from the burned nft to the newly minted one
+    // lets check that all the metadata moved from the burned nft to the newly minted one
     assertEq(dnft.idToNft(0).xp,        dnft.idToNft(id).xp);
     assertEq(dnft.idToNft(0).withdrawn, dnft.idToNft(id).withdrawn);
 
-    // // dnft 1 has a positive deposit, and therfore is not claimable
+    // dnft 1 has a positive deposit, and therfore is not claimable
     vm.expectRevert();
-    pool.claim{value: 1 ether}(1, address(this));
+    pool.liquidate{value: 1 ether}(1, address(this));
   }
 
   function triggerMint() public returns (uint) {
@@ -189,7 +189,7 @@ contract PoolTest is Test, Parameters, Deployment {
     triggerBurn();
 
     // nft 0 is now liquidated, lets claim it!
-    pool.claim{value: 5 ether}(0, address(this));
+    pool.liquidate{value: 5 ether}(0, address(this));
 
     triggerMint();
     // sync now acts on the newly minted nft, which is a very important test, 

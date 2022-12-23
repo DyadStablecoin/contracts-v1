@@ -40,18 +40,4 @@ contract PoolTest is Test, Deployment, Parameters, Util {
 
   // needed, so we can receive eth transfers
   receive() external payable {}
-
-  // --------------------- NFT Claim ---------------------
-  function testClaimNft() public {
-    dnft.mintNft{value: 5 ether}(address(this));
-    IdNFT.Nft memory nft = dnft.idToNft(0);
-    // TODO: it seems that we have to set isClaimable to true, through our logic
-    // and not directly through state manipulation
-    nft = dnft.idToNft(0);
-  }
-  function testFailClaimNftNotClaimable() public {
-    dnft.mintNft{value: 5 ether}(address(this));
-    // can not claim this, because it is not claimable
-    pool.claim(0, address(this));
-  }
 }
