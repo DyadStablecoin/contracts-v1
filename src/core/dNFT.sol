@@ -225,7 +225,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       return usdInEth;
   }
 
-  // Move `amount` of deposited DYAD `from` one dNFT `to` another dNFT
+  // Move `amount` `from` one dNFT deposit `to` another dNFT deposit
   function moveDeposit(
       uint _from,
       uint _to,
