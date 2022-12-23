@@ -65,7 +65,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // Require CR >= `MIN_COLLATERATION_RATIO`, after removing `amount`
   modifier overCR(uint amount) {
     uint cr              = MIN_COLLATERATION_RATIO;
-    uint updatedBalance  = dyad.balanceOf(address(pool)) - amount;
+    uint updatedBalance  = dyad.balanceOf(address(this)) - amount;
     uint totalWithdrawn  = dyad.totalSupply() - updatedBalance;
     if (totalWithdrawn != 0) { cr =  updatedBalance*10000 / totalWithdrawn; }     
     require(cr >= MIN_COLLATERATION_RATIO, "CR is under 150%"); 
@@ -189,12 +189,12 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       require(amount > 0, "dNFT: Withdrawl == 0");
       Nft storage nft = idToNft[id];
       uint newWithdrawn = nft.withdrawn + amount;
-      uint averageTVL   = dyad.balanceOf(address(pool)) / totalSupply();
+      uint averageTVL   = dyad.balanceOf(address(this)) / totalSupply();
       require(newWithdrawn <= averageTVL,  "dNFT: New Withdrawl > average TVL");
       require(int(amount)  <= nft.deposit, "dNFT: Withdrawl     > deposit");
       nft.withdrawn  = newWithdrawn;
       nft.deposit   -= int(amount);
-      pool.withdraw(msg.sender, amount);
+      dyad.transfer(msg.sender, amount);
       emit DyadWithdrawn(msg.sender, id, amount);
       return amount;
   }
@@ -210,8 +210,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       nft.deposit   += int(amount);
       nft.withdrawn -= amount;
       dyad.transferFrom(msg.sender, address(this), amount);
-      dyad.approve(address(pool), amount);
-      pool.deposit(amount);
       emit DyadDeposited(msg.sender, id, amount);
       return amount;
   }
