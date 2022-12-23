@@ -15,12 +15,12 @@ contract Deployment is Script {
     vm.startBroadcast();
     DYAD dyad = new DYAD();
 
-    dNFT _dnft = new dNFT(address(dyad), depositMinimum, maxSupply, insiders);
+    dNFT _dnft = new dNFT(address(dyad), depositMinimum, maxSupply, oracle, insiders);
     IdNFT dnft = IdNFT(address(_dnft));
 
     Pool pool = new Pool(address(dnft), address(dyad), oracle);
 
-    dyad.transferOwnership(address(pool));
+    dyad.transferOwnership(address(dnft));
     dnft.setPool(address(pool));
 
     vm.stopBroadcast();

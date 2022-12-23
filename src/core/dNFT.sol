@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
+import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {DYAD} from "./Dyad.sol";
 import {Pool} from "./Pool.sol";
 
@@ -30,11 +31,22 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // as this is only set in the constructor, it should not be a problem.
   uint public DEPOSIT_MINIMUM;
 
+  // here we store the min/max value of xp over every dNFT,
+  // which allows us to do a normalization, without iterating over
+  // all of them to find the min/max value.
+  uint public MIN_XP; uint public MAX_XP;
+
   DYAD public dyad;
   Pool public pool;
+  IAggregatorV3 internal oracle;
 
   // mapping from nft id to nft 
   mapping(uint => Nft) public idToNft;
+
+  // when syncing, the protocol can be in two states:
+  //   BURNING: if the price of eth went down
+  //   MINTING: if the price of eth went up
+  enum Mode{ BURNING, MINTING }
 
   event NftMinted    (address indexed to, uint indexed id);
   event DyadMinted   (address indexed to, uint indexed id, uint amount);
@@ -63,10 +75,12 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   constructor(address _dyad,
               uint    _depositMinimum,
               uint    _maxSupply, 
+              address _oracle, 
               address[] memory insiders) ERC721("DYAD NFT", "dNFT") {
     dyad            = DYAD(_dyad);
     DEPOSIT_MINIMUM = _depositMinimum;
     MAX_SUPPLY      = _maxSupply;
+    oracle          = IAggregatorV3(_oracle);
     for (uint i = 0; i < insiders.length; i++) { _mintNft(insiders[i]); }
   }
 
@@ -74,6 +88,10 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function setPool(address newPool) public {
     require(address(pool) == address(0),"dNFT: Pool is already set");
     pool = Pool(newPool);
+  }
+
+  function getNewEthPrice() internal view returns (int newEthPrice) {
+    ( , newEthPrice, , , ) = oracle.latestRoundData();
   }
 
   // The following functions are overrides required by Solidity.
@@ -153,13 +171,14 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function _mintDyad(
       uint id,
       uint minAmount
-  ) private returns (uint amount) {
+  ) private returns (uint) {
       require(msg.value > 0, "dNFT: msg.value == 0");
-      amount = pool.mintDyad{value: msg.value}(minAmount);
-      dyad.approve(address(pool), amount);
-      pool.deposit(amount);
-      idToNft[id].deposit += int(amount);
-      emit DyadMinted(msg.sender, id, amount);
+      uint newDyad = uint(getNewEthPrice()) * msg.value/100000000;
+      require(newDyad >= minAmount, "Pool: newDyad < minAmount");
+      dyad.mint(address(this), newDyad);
+      idToNft[id].deposit += int(newDyad);
+      emit DyadMinted(msg.sender, id, newDyad);
+      return newDyad;
   }
 
   // Withdraw `amount` of DYAD from dNFT
