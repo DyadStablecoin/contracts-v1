@@ -19,13 +19,12 @@ contract CalculateSyncGasCosts is Script, Parameters {
                                                              MAX_SUPPLY,
                                                              new address[](0));
     IdNFT dnft = IdNFT(dNftAddr);
-    Pool pool = Pool(poolAddr);
 
     for (uint i = 0; i < 300; i++) {
       dnft.mintNft{value: 5 ether}(address(this));
     }
     uint g1 = gasleft();
-    pool.sync();
+    dnft.sync();
     console.log("gas used: ", g1 - gasleft());
   }
 }
