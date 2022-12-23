@@ -15,7 +15,7 @@ struct Nft {
   bool isLiquidatable;
 }
 
-// A convenient way to store the ouptput of the `calcMultis` function
+// Convenient way to store the ouptput of the `calcMultis` function
 struct Multis {
   uint[] multiProducts;
   uint   multiProductsSum; // sum of the elements in `multiProducts`
@@ -23,39 +23,34 @@ struct Multis {
 }
 
 contract dNFT is ERC721Enumerable, ERC721Burnable {
-  uint public lastEthPrice;
-
-  // maximum number of nfts that can exist at one point in time
-  uint public MAX_SUPPLY;
-
   // 150% in basis points
-  uint constant public MIN_COLLATERATION_RATIO = 15000; 
+  uint public MIN_COLLATERATION_RATIO = 15000; 
 
-  // stores the number of nfts that have been minted. we need this in order to
-  // generate a new id for the next minted nft.
-  uint public numberOfMints;
-
-  // deposit minimum required to mint a new dnft
-  // should be a constant, but then some of the tests do not work because they 
-  // depend on manipulating this value.
-  // as this is only set in the constructor, it should not be a problem.
+  // Minimum required to mint a new dNFT
   uint public DEPOSIT_MINIMUM;
 
-  // here we store the min/max value of xp over every dNFT,
-  // which allows us to do a normalization, without iterating over
-  // all of them to find the min/max value.
-  uint public MIN_XP; uint public MAX_XP;
+  // Maximum number of dNFTs that can exist simultaneously
+  uint public MAX_SUPPLY;
+
+  // ETH price from the last sync call
+  uint public lastEthPrice;
+
+  // Number of dNFTs minted so far
+  uint public numberOfMints;
+
+  // Min/Max XP over all dNFTs
+  uint public minXp; uint public maxXp;
+
+  // dNFT id => dNFT
+  mapping(uint => Nft) public idToNft;
 
   DYAD public dyad;
   Pool public pool;
   IAggregatorV3 internal oracle;
 
-  // mapping from nft id to nft 
-  mapping(uint => Nft) public idToNft;
-
-  // when syncing, the protocol can be in two states:
-  //   BURNING: if the price of eth went down
-  //   MINTING: if the price of eth went up
+  // Protocol can be in two modes:
+  // - BURNING: Price of ETH went down
+  // - MINTING: Price of ETH went up
   enum Mode{ BURNING, MINTING }
 
   event NftMinted    (address indexed to, uint indexed id);
@@ -70,6 +65,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     require(this.ownerOf(id) == msg.sender, "dNFT: Only callable by NFT owner");
     _;
   }
+
   // Require CR >= `MIN_COLLATERATION_RATIO`, after removing `amount`
   modifier overCR(uint amount) {
     uint cr              = MIN_COLLATERATION_RATIO;
@@ -80,20 +76,22 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     _;
   }
 
-  constructor(address _dyad,
-              uint    _depositMinimum,
-              uint    _maxSupply, 
-              address _oracle, 
-              address[] memory insiders) ERC721("DYAD NFT", "dNFT") {
+  constructor(
+    address          _dyad,
+    uint             _depositMinimum,
+    uint             _maxSupply, 
+    address          _oracle, 
+    address[] memory _insiders
+  ) ERC721("DYAD NFT", "dNFT") {
     dyad            = DYAD(_dyad);
-    DEPOSIT_MINIMUM = _depositMinimum;
-    MAX_SUPPLY      = _maxSupply;
     oracle          = IAggregatorV3(_oracle);
     lastEthPrice    = uint(getNewEthPrice());
-    MIN_XP = _maxSupply;
-    MAX_XP = _maxSupply * 2;
+    DEPOSIT_MINIMUM = _depositMinimum;
+    MAX_SUPPLY      = _maxSupply;
+    minXp           = _maxSupply;
+    maxXp           = _maxSupply * 2;
 
-    for (uint i = 0; i < insiders.length; i++) { _mintNft(insiders[i]); }
+    for (uint i = 0; i < _insiders.length; i++) { _mintNft(_insiders[i]); }
   }
 
   function getNewEthPrice() internal view returns (int newEthPrice) {
@@ -121,7 +119,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     uint id = _mintNft(to);
     _mintDyad(id, DEPOSIT_MINIMUM);
     uint xp = idToNft[id].xp;
-    if (xp < MIN_XP) { MIN_XP = xp; } // could be new global xp min
+    if (xp < minXp) { minXp = xp; } // could be new global xp min
     return id;
   }
 
@@ -294,8 +292,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
     // we use these to keep track of the max/min xp values for this sync, 
     // so we can save them in storage to be used in the next sync.
-    uint minXp = type(uint256).max;
-    uint maxXp = MAX_XP;
+    uint _minXp = type(uint256).max;
+    uint _maxXp = maxXp;
 
     uint totalSupply = totalSupply();
     for (uint i = 0; i < totalSupply; i++) {
@@ -335,13 +333,13 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       idToNft[tokenId] = nft;
 
       // check if this is a new xp minimum/maximum for this sync
-      if (nft.xp < minXp) { minXp = nft.xp; }
-      if (nft.xp > maxXp) { maxXp = nft.xp; }
+      if (nft.xp < _minXp) { _minXp = nft.xp; }
+      if (nft.xp > _maxXp) { _maxXp = nft.xp; }
     }
 
     // save new min/max xp in storage
-    MIN_XP = minXp;
-    MAX_XP = maxXp;
+    minXp = _minXp;
+    maxXp = _maxXp;
 
     return dyadDelta;
   }
@@ -362,9 +360,9 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
       if (nft.deposit > 0) {
         // NOTE: From here on, uint(nft.deposit) is fine because it is not negative
-        uint xpDelta =  MAX_XP - MIN_XP;
+        uint xpDelta =  maxXp - minXp;
         if (xpDelta == 0) { xpDelta = 1; } // avoid division by 0
-        uint xpScaled = ((nft.xp-MIN_XP)*10000) / xpDelta;
+        uint xpScaled = ((nft.xp-minXp)*10000) / xpDelta;
         uint mintAvgMinted = ((nft.withdrawn+uint(nft.deposit))*10000) / (dyad.totalSupply()/(nftTotalSupply+1));
         if (mode == Mode.BURNING && mintAvgMinted > 20000) { mintAvgMinted = 20000; } // limit to 200%
         xpMulti = PoolLibrary.getXpMulti(xpScaled/100);

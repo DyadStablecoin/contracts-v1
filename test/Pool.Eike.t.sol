@@ -61,8 +61,8 @@ contract PoolTest is Test, Parameters, Deployment {
     setNfts();
 
     stdstore.target(address(dnft)).sig("lastEthPrice()").checked_write(bytes32(uint(1000 * 10**8))); // min xp
-    stdstore.target(address(dnft)).sig("MIN_XP()").checked_write(1079); // min xp
-    stdstore.target(address(dnft)).sig("MAX_XP()").checked_write(8000); // max xp
+    stdstore.target(address(dnft)).sig("minXp()").checked_write(1079); // min xp
+    stdstore.target(address(dnft)).sig("maxXp()").checked_write(8000); // max xp
   }
 
   // needed, so we can receive eth transfers
