@@ -17,12 +17,7 @@ struct Nft {
 
 // A convenient way to store the ouptput of the `calcMultis` function
 struct Multis {
-  // Holds two different sort of values depending on wheather the 
-  // protocoll is in BURNING or MINTING mode.
-  //   Mode.MINTING: xp mulit * deposit multi
-  //   Mode.BURNING: xp mulit * mintAvg  
   uint[] multiProducts;
-
   uint   multiProductsSum; // sum of the elements in `multiProducts`
   uint[] xpMultis;         
 }
