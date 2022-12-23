@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import {DYAD} from "./dyad.sol";
+import {DYAD} from "./Dyad.sol";
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {IdNFT} from "../interfaces/IdNFT.sol";
 import {PoolLibrary} from "../libraries/PoolLibrary.sol";

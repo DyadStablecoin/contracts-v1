@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
-import "../src/core/dyad.sol";
+import "../src/core/Dyad.sol";
 
 contract DYADTest is Test {
   DYAD public dyad;

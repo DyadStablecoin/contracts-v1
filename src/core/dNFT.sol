@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
-import {DYAD} from "./dyad.sol";
+import {DYAD} from "./Dyad.sol";
 import {Pool} from "./Pool.sol";
 
 struct Nft {
@@ -161,7 +161,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     emit NftMinted(receiver, id);
   }
 
-  // mint new DYAD and deposit it in the pool
+  // Mint new DYAD and deposit it in the pool
   function mintDyad(uint id) payable public onlyNFTOwner(id) returns (uint amount) {
     amount = _mintDyad(id, 0);
   }
@@ -175,7 +175,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     emit DyadMinted(msg.sender, id, amount);
   }
 
-  // withdraw dyad from the pool to msg.sender
+  // Withdraw DYAD from the pool to msg.sender
   function withdraw(uint id, uint amount) external onlyNFTOwner(id) {
     uint poolDyadBalance = dyad.balanceOf(address(pool));
     uint cr              = MIN_COLLATERATION_RATIO;
@@ -195,7 +195,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     emit DyadWithdrawn(msg.sender, id, amount);
   }
 
-  // deposit dyad back into the pool
+  // Deposit DYAD back into the pool
   function deposit(uint id, uint amount) external {
     require(amount > 0, "dNFT: Deposit amount must be greater than 0");
     Nft storage nft = idToNft[id];
@@ -211,24 +211,31 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     emit DyadDeposited(msg.sender, id, amount);
   }
 
-  // redeem DYAD for ETH
-  function redeem(uint id, uint amount) external onlyNFTOwner(id) returns (uint usdInEth) {
-    Nft storage nft = idToNft[id];
-    require(amount <= nft.withdrawn, "dNFT: Amount to redeem exceeds withdrawn");
-    nft.withdrawn -= amount;
-    dyad.transferFrom(msg.sender, address(pool), amount);
-    usdInEth = pool.redeem(msg.sender, amount);
-    emit DyadRedeemed(msg.sender, id, amount);
-    return usdInEth;
+  // Redeem `amount` of DYAD for ETH
+  function redeem(
+      uint id,
+      uint amount
+  ) external onlyNFTOwner(id) returns (uint usdInEth) {
+      Nft storage nft = idToNft[id];
+      require(amount <= nft.withdrawn, "dNFT: Amount to redeem exceeds withdrawn");
+      nft.withdrawn -= amount;
+      dyad.transferFrom(msg.sender, address(pool), amount);
+      usdInEth = pool.redeem(msg.sender, amount);
+      emit DyadRedeemed(msg.sender, id, amount);
+      return usdInEth;
   }
 
-  // transfer deposited DYAD to another dNFT
-  function transferDeposit(uint _from, uint _to, uint amount) external onlyNFTOwner(_from) {
-    Nft storage from = idToNft[_from];
-    require(int(amount) <= from.deposit, "dNFT: Amount to transfer exceeds deposit");
-    Nft storage to   = idToNft[_to];
-
-    from.deposit -= int(amount);
-    to.deposit   += int(amount);
+  // Move `amount` of deposited DYAD `from` one dNFT `to` another dNFT
+  function moveDeposit(
+      uint _from,
+      uint _to,
+      uint amount
+  ) external onlyNFTOwner(_from) returns (uint) {
+      Nft storage from = idToNft[_from];
+      require(int(amount) <= from.deposit, "dNFT: Amount to move exceeds deposit");
+      Nft storage to   = idToNft[_to];
+      from.deposit    -= int(amount);
+      to.deposit      += int(amount);
+      return amount;
   }
 }

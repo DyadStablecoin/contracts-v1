@@ -38,5 +38,6 @@ interface IdNFT {
   function approve(address to, uint tokenId) external;
   function updateXP(uint minXP, uint maxXP) external;
   function tokenByIndex(uint index) external returns (uint);
+  function moveDeposit(uint from, uint to, uint amount) external;
 }
 
