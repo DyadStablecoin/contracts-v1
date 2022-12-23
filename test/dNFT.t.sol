@@ -62,9 +62,9 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
     assertEq(metadata.deposit  , int(ORACLE_PRICE*50000000000));
     assertEq(metadata.xp       ,                        MAX_XP); 
 
-    stdstore.target(address(pool)).sig("MIN_XP()").checked_write(uint(0));      // min xp
-    stdstore.target(address(pool)).sig("MAX_XP()").checked_write(uint(MAX_XP)); // max xp
-    pool.sync();
+    stdstore.target(address(dnft)).sig("MIN_XP()").checked_write(uint(0));      // min xp
+    stdstore.target(address(dnft)).sig("MAX_XP()").checked_write(uint(MAX_XP)); // max xp
+    dnft.sync();
   }
   function testMintNftTotalSupply() public {
     for (uint i = 0; i < 50; i++) {
@@ -206,10 +206,10 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
   }
   function testRedeemDyadPoolBalance() public {
     mintAndTransfer(REDEEM_AMOUNT);
-    uint oldPoolBalance = address(pool).balance;
+    uint oldPoolBalance = address(dnft).balance;
     dnft.redeem(0, REDEEM_AMOUNT);
     // before redeeming, the pool balance should be higher than after it
-    assertTrue(address(pool).balance < oldPoolBalance); 
+    assertTrue(address(dnft).balance < oldPoolBalance); 
   }
   function testRedeemDyadTotalSupply() public {
     mintAndTransfer(REDEEM_AMOUNT);

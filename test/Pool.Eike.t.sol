@@ -60,9 +60,9 @@ contract PoolTest is Test, Parameters, Deployment {
 
     setNfts();
 
-    vm.store(address(pool), bytes32(uint(0)), bytes32(uint(1000 * 10**8))); // lastEthPrice
-    stdstore.target(address(pool)).sig("MIN_XP()").checked_write(1079); // min xp
-    stdstore.target(address(pool)).sig("MAX_XP()").checked_write(8000); // max xp
+    stdstore.target(address(dnft)).sig("lastEthPrice()").checked_write(bytes32(uint(1000 * 10**8))); // min xp
+    stdstore.target(address(dnft)).sig("MIN_XP()").checked_write(1079); // min xp
+    stdstore.target(address(dnft)).sig("MAX_XP()").checked_write(8000); // max xp
   }
 
   // needed, so we can receive eth transfers
@@ -112,7 +112,7 @@ contract PoolTest is Test, Parameters, Deployment {
     // change new oracle price to something lower so we trigger the burn
     vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(950 * 10**8)));
     uint totalSupplyBefore = dyad.totalSupply();
-    uint dyadDelta = pool.sync();
+    uint dyadDelta = dnft.sync();
     // there should be less dyad now after the sync
     assertTrue(totalSupplyBefore > dyad.totalSupply());
     return dyadDelta;
@@ -129,7 +129,7 @@ contract PoolTest is Test, Parameters, Deployment {
   function testSyncBurnWithNegativeDeposit() public {
     // after the setup, nft 0 has negative deposit
     triggerBurn();
-    pool.sync();
+    dnft.sync();
   }
 
   function testClaim() public {
@@ -140,15 +140,15 @@ contract PoolTest is Test, Parameters, Deployment {
 
     // this is not enough ether to claim the nft
     vm.expectRevert();
-    pool.liquidate{value: 1 wei}(0, address(this));
+    dnft.liquidate{value: 1 wei}(0, address(this));
 
     vm.expectRevert();
     // 140000000000000000 wei is $133, which is not enough to claim the nft. At
     // least 135 is needed.
-    pool.liquidate{value: 140000000000000000}(0, address(this));
+    dnft.liquidate{value: 140000000000000000}(0, address(this));
 
     // 150000000000000000 wei is $142 in this scenario, which is enough to liquidate
-    uint id = pool.liquidate{value: 150000000000000000}(0, address(this));
+    uint id = dnft.liquidate{value: 150000000000000000}(0, address(this));
 
     // lets check that all the metadata moved from the burned nft to the newly minted one
     assertEq(dnft.idToNft(0).xp,        dnft.idToNft(id).xp);
@@ -156,14 +156,14 @@ contract PoolTest is Test, Parameters, Deployment {
 
     // dnft 1 has a positive deposit, and therfore is not claimable
     vm.expectRevert();
-    pool.liquidate{value: 1 ether}(1, address(this));
+    dnft.liquidate{value: 1 ether}(1, address(this));
   }
 
   function triggerMint() public returns (uint) {
     // change new oracle price to something higher so we trigger the mint
     vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(1100 * 10**8)));
     uint totalSupplyBefore = dyad.totalSupply();
-    uint dyadDelta = pool.sync();
+    uint dyadDelta = dnft.sync();
     // there should be more dyad now after the sync
     assertTrue(totalSupplyBefore < dyad.totalSupply());
     return dyadDelta;
@@ -189,11 +189,11 @@ contract PoolTest is Test, Parameters, Deployment {
     triggerBurn();
 
     // nft 0 is now liquidated, lets claim it!
-    pool.liquidate{value: 5 ether}(0, address(this));
+    dnft.liquidate{value: 5 ether}(0, address(this));
 
     triggerMint();
     // sync now acts on the newly minted nft, which is a very important test, 
     // because the newly minted nft has different index from the old one.
-    pool.sync();
+    dnft.sync();
   }
 }
