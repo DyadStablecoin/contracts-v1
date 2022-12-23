@@ -10,6 +10,7 @@ struct Nft {
   uint withdrawn; // dyad withdrawn from the pool deposit
   int deposit;    // dyad balance in pool
   uint xp;        // always positive, always inflationary
+  bool isLiquidatable;
 }
 
 contract dNFT is ERC721Enumerable, ERC721Burnable {
@@ -124,38 +125,32 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     return id;
   }
 
-  // Mint a new nft that will have the same xp and withdrawn amount as `nft`.
-  // The deposit of the newly minted nft depends on `msg.value`.
-  function mintNftCopy(address receiver,
-                       Nft memory nft) external payable onlyPool returns (uint) {
-    uint id = _mintNft(receiver);
-    Nft storage newNft = idToNft[id];
-    // copy over xp and withdrawn. deposit is handled by _mintDyad below.
-    newNft.xp        = nft.xp;
-    newNft.withdrawn = nft.withdrawn;
-
-    // NOTE: nft.deposit is always negative!
-    // mint the required dyad to cover the negative deposit. updates the deposit
-    // accordingly.
-    // `depositMinimum` = -nft.deposit
-    uint amount    = _mintDyad(id, uint(-nft.deposit)); 
-    // the new nft deposit is the negative of the old nft deposit plus the newly
-    // minted dyad. 
-    // NOTE: int(amount) is always >= |nft.deposit|
-    newNft.deposit = int(amount) + nft.deposit; 
-    return id;
+  // Mint new nft to `to` with the same xp and withdrawn amount as `nft`
+  function mintCopy(
+      address to,
+      Nft memory nft
+  ) external payable onlyPool returns (uint) {
+      uint id = _mintNft(to);
+      Nft storage newNft = idToNft[id];
+      uint minDeposit = 0;
+      if (nft.deposit < 0) { minDeposit = uint(-nft.deposit); }
+      uint amount = _mintDyad(id, minDeposit);
+      newNft.deposit   = int(amount) + nft.deposit;
+      newNft.xp        = nft.xp;
+      newNft.withdrawn = nft.withdrawn;
+      return id;
   }
 
   // the main reason for this method is that we need to be able to mint
   // nfts for the core team and investors without the deposit minimum,
   // this happens in the constructor where we call this method directly.
-  function _mintNft(address receiver) private returns (uint id) {
+  function _mintNft(address to) private returns (uint id) {
     // we can not use totalSupply() for the id because of the liquidation
     // mechanism, which burns and creates new nfts. This way ensures that we
     // alway use a new id.
     id = numberOfMints;
     require(totalSupply() < MAX_SUPPLY, "Max supply reached");
-    _mint(receiver, id); 
+    _mint(to, id); 
     numberOfMints += 1;
 
     Nft storage nft = idToNft[id];
@@ -166,7 +161,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     // by 1.
     nft.xp = (MAX_SUPPLY*2) - (totalSupply()-1);
 
-    emit NftMinted(receiver, id);
+    emit NftMinted(to, id);
   }
 
   // Mint new DYAD and deposit it in the pool

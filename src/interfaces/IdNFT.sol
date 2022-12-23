@@ -6,6 +6,7 @@ interface IdNFT {
     uint withdrawn;   // dyad withdrawn from the pool deposit
     int deposit;      // dyad balance in pool
     uint xp;          // always positive, always inflationary
+    bool isLiquidatable;
   }
 
   function updateMaxXP(uint newMaxXP) external;
@@ -24,7 +25,7 @@ interface IdNFT {
   function redeem(uint id, uint amount) external returns (uint);
   function setPool(address newPool) external;
   function mintNft(address receiver) external payable returns (uint id);
-  function mintNftCopy(address receiver, IdNFT.Nft memory nft) external payable returns (uint id);
+  function mintCopy(address receiver, IdNFT.Nft memory nft) external payable returns (uint id);
   function burn(uint id) external;
   function balanceOf(uint id) external view returns (int);
   function xpOf(uint id) external view returns (uint);

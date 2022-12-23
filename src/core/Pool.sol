@@ -149,6 +149,8 @@ contract Pool {
         nft.deposit += int(relativeDyadDelta);
       }
 
+      if (nft.deposit < 0) { nft.isLiquidatable = true; }
+
       // update nft in storage
       dnft.updateNft(tokenId, nft);
 
@@ -227,17 +229,15 @@ contract Pool {
     return usdInEth;
   }
 
-  // Calim a liquidated nft
-  // transfer liquidated nft from the old owner to new owner
-  // IMPORTANT: the pool has the ability to transfer any nft without
-  // any approvals.
-  function claim(uint id, address receiver) external payable returns (uint) {
-    IdNFT.Nft memory nft = dnft.idToNft(id);
-    // emit before we burn, otherwise ownerOf(id) will fail!
-    emit NftClaimed(id, dnft.ownerOf(id), receiver); 
-    dnft.burn(id); // burn nft
-    require(nft.deposit < 0, "dNFT: NFT is not liquidatable");
-    // mint new nft with the xp, withdrawn data of the old one.
-    return dnft.mintNftCopy{value: msg.value}(receiver, nft);
+  // Liquidate dNFT by burning it and minting a new copy to `to`
+  function liquidate(
+      uint id,
+      address to
+  ) external payable returns (uint) {
+      IdNFT.Nft memory nft = dnft.idToNft(id);
+      require(nft.isLiquidatable, "dNFT: NFT is not liquidatable");
+      emit NftClaimed(id, dnft.ownerOf(id), to); 
+      dnft.burn(id); 
+      return dnft.mintCopy{value: msg.value}(to, nft);
   }
 }
