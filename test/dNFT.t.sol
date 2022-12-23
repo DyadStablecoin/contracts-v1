@@ -236,4 +236,10 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
     // without +1 it would succeed
     dnft.moveDeposit(id1, id2, ORACLE_PRICE*50000000000+1);
   }
+  function testFailMoveDepositNotNftOwner() public {
+    uint id1 = dnft.mintNft{value: 5 ether}(address(this));
+    uint id2 = dnft.mintNft{value: 5 ether}(address(this));
+    vm.prank(address(0));
+    dnft.moveDeposit(id1, id2, 100);
+  }
 }
