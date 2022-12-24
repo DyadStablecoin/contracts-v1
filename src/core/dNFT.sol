@@ -50,8 +50,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // dNFT id => dNFT
   mapping(uint => Nft) public idToNft;
 
-  DYAD public dyad;
-  Pool public pool;
+  DYAD public immutable dyad;
+
   IAggregatorV3 internal oracle;
 
   // Protocol can be in two modes:

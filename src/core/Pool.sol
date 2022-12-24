@@ -11,8 +11,8 @@ contract Pool {
   // because some tests depend on this specific slot arrangement.
   uint public lastEthPrice;
 
-  IdNFT public dnft;
-  DYAD public dyad;
+  IdNFT public immutable dnft;
+  DYAD public immutable dyad;
   IAggregatorV3 internal priceFeed;
 
   // here we store the min/max value of xp over every dNFT,
