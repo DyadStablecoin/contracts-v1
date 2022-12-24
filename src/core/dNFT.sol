@@ -75,6 +75,10 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     require(amount != 0, "dNFT: Amount cannot be zero");
     _;
   }
+  modifier addressNotZero(address addr) {
+    require(addr != address(0), "dNFT: Address cannot be zero");
+    _;
+  }
 
   constructor(
     address          _dyad,
@@ -117,7 +121,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   { return super.supportsInterface(interfaceId); }
 
   // Mint new dNFT to `to` with a deposit of atleast `DEPOSIT_MINIMUM`
-  function mintNft(address to) external payable returns (uint) {
+  function mintNft(address to) external addressNotZero(to) payable returns (uint) {
     uint id = _mintNft(to);
     _mintDyad(id, DEPOSIT_MINIMUM);
     uint xp = idToNft[id].xp;
@@ -239,7 +243,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function liquidate(
       uint id,
       address to
-  ) external payable returns (uint) {
+  ) external addressNotZero(to) payable returns (uint) {
       Nft memory nft = idToNft[id];
       require(nft.isLiquidatable, "dNFT: NFT is not liquidatable");
       emit NftClaimed(id, ownerOf(id), to); 
