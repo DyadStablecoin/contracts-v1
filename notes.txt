@@ -29,7 +29,7 @@ STAKING
 
 GAS SAVINGS:
 - [ ] unchecked in loop
-- [ ] unnessary assignments like dNFT.sol line 122
+- [ ] chache state vars that are used in for loop
 
 UNCERTAINTIES:
 - [ ] can it happen that every nft deposit is negative?
