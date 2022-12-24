@@ -290,7 +290,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       uint _maxXp = maxXp;
 
       uint totalSupply = totalSupply();
-      for (uint i = 0; i < totalSupply; i++) {
+      for (uint i = 0; i < totalSupply; ) {
         uint tokenId = tokenByIndex(i);
         // multi normalized by the multi sum
         uint relativeMulti = multis.products[i]*10000 / multis.productsSum;
@@ -326,6 +326,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
         // check if this is a new xp minimum/maximum for this sync
         if (nft.xp < _minXp) { _minXp = nft.xp; }
         if (nft.xp > _maxXp) { _maxXp = nft.xp; }
+
+        unchecked { i++; }
       }
 
       // save new min/max xp in storage
@@ -344,7 +346,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       uint[] memory products = new uint[](nftTotalSupply);
       uint[] memory xps      = new uint[](nftTotalSupply);
 
-      for (uint i = 0; i < nftTotalSupply; i++) {
+      for (uint i = 0; i < nftTotalSupply; ) {
         uint tokenId = tokenByIndex(i);
         Nft memory nft     = idToNft[tokenId];
         Multi memory multi = calcMulti(mode, nft);
@@ -356,6 +358,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
         products[i]  = multi.product;
         productsSum += multi.product;
         xps[i]       = multi.xp;
+
+        unchecked { i++; }
       }
 
       // so we avoid dividing by 0 in `sync`
