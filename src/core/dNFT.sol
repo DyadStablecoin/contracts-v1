@@ -327,7 +327,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
         if (nft.xp < _minXp) { _minXp = nft.xp; }
         if (nft.xp > _maxXp) { _maxXp = nft.xp; }
 
-        unchecked { i++; }
+        unchecked { ++i; }
       }
 
       // save new min/max xp in storage
@@ -360,7 +360,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
         productsSum += multi.product;
         xps[i]       = multi.xp;
 
-        unchecked { i++; }
+        unchecked { ++i; }
       }
 
       // so we avoid dividing by 0 in `sync`
