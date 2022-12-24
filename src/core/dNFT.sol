@@ -227,7 +227,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       uint _to,
       uint amount
   ) external onlyNFTOwner(_from) amountNotZero(amount) returns (uint) {
-      require(amount > 0, "dNFT: Deposit == 0");
       Nft storage from = idToNft[_from];
       require(int(amount) <= from.deposit, "dNFT: Amount to move > deposit");
       Nft storage to   = idToNft[_to];
