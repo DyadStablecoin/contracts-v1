@@ -68,16 +68,13 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   event NftClaimed   (uint indexed id, address indexed from, address indexed to);
 
   modifier onlyNFTOwner(uint id) {
-    require(this.ownerOf(id) == msg.sender, "dNFT: Only callable by NFT owner");
-    _;
+    require(this.ownerOf(id) == msg.sender, "dNFT: Callable by dNFT owner"); _;
   }
   modifier amountNotZero(uint amount) {
-    require(amount != 0, "dNFT: Amount cannot be zero");
-    _;
+    require(amount != 0, "dNFT: Amount cannot be zero"); _;
   }
   modifier addressNotZero(address addr) {
-    require(addr != address(0), "dNFT: Address cannot be zero");
-    _;
+    require(addr != address(0), "dNFT: Address cannot be zero"); _;
   }
 
   constructor(
