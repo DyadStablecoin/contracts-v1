@@ -10,12 +10,19 @@ import "../src/core/Pool.sol";
 contract Deployment is Script {
   function deploy(address oracle,
                   uint depositMinimum,
+                  uint minCollaterizationRatio, 
                   uint maxSupply,
                   address[] memory insiders) public returns (address, address, address) {
     vm.startBroadcast();
     DYAD dyad = new DYAD();
 
-    dNFT _dnft = new dNFT(address(dyad), depositMinimum, maxSupply, oracle, insiders);
+    dNFT _dnft = new dNFT(address(dyad),
+                          depositMinimum,
+                          minCollaterizationRatio,
+                          maxSupply,
+                          oracle,
+                          insiders);
+
     IdNFT dnft = IdNFT(address(_dnft));
 
     Pool pool = new Pool(address(dnft), address(dyad), oracle);

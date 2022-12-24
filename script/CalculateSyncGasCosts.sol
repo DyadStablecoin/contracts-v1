@@ -16,6 +16,7 @@ contract CalculateSyncGasCosts is Script, Parameters {
 
     (dNftAddr, poolAddr, dyadAddr) = new Deployment().deploy(ORACLE_MAINNET,
                                                              0,
+                                                             MIN_COLLATERIZATION_RATIO, 
                                                              MAX_SUPPLY,
                                                              new address[](0));
     IdNFT dnft = IdNFT(dNftAddr);

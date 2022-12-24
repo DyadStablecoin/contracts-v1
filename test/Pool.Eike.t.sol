@@ -41,7 +41,8 @@ contract PoolTest is Test, Parameters, Deployment {
     address _pool;
     address _dyad;
     (_dnft,_pool,_dyad) = deploy(address(oracle),
-                                 DEPOSIT_MINIMUM_MAINNET,
+                                 77 * 10**8, // DEPOSIT_MINIMUM 
+                                 MIN_COLLATERIZATION_RATIO, 
                                  MAX_SUPPLY,
                                  new address[](0));
     dnft = IdNFT(_dnft);
@@ -50,8 +51,6 @@ contract PoolTest is Test, Parameters, Deployment {
 
     // set oracle price
     vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(950 * 10**8)));
-    // set DEPOSIT_MINIMUM to something super low, so we do not run into the $5k limit
-    stdstore.target(address(dnft)).sig("DEPOSIT_MINIMUM()").checked_write(77 * 10**8);
 
     // mint 10 nfts with a specific deposit to re-create the equations
     for (uint i = 0; i < 10; i++) {

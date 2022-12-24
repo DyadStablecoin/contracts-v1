@@ -45,6 +45,7 @@ contract LaunchTest is Test, Parameters, Deployment {
     address _dyad;
     (_dnft,_pool,_dyad) = deploy(CHAINLINK_ORACLE_ADDRESS,
                                  DEPOSIT_MINIMUM,
+                                 MIN_COLLATERIZATION_RATIO, 
                                  MAX_SUPPLY,
                                  new address[](0));
     dnft = IdNFT(_dnft);

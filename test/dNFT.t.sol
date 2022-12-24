@@ -33,6 +33,7 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
     address _dyad;
     (_dnft,_pool,_dyad) = deploy(address(oracle),
                                  DEPOSIT_MINIMUM_MAINNET,
+                                 MIN_COLLATERIZATION_RATIO, 
                                  MAX_SUPPLY,
                                  new address[](0));
     dnft = IdNFT(_dnft);
