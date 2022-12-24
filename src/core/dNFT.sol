@@ -3,6 +3,8 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {DYAD} from "./Dyad.sol";
 import {Pool} from "./Pool.sol";
@@ -28,7 +30,7 @@ struct Multis {
   uint[] xps;         
 }
 
-contract dNFT is ERC721Enumerable, ERC721Burnable {
+contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   // Minimum collaterization ratio required, for DYAD to be withdrawn
   uint public immutable MIN_COLLATERIZATION_RATIO; 
 
@@ -154,7 +156,9 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   }
 
   // Mint and deposit DYAD into dNFT
-  function mintDyad(uint id) payable public onlyNFTOwner(id) returns (uint amount) {
+  function mintDyad(
+      uint id
+  ) payable public nonReentrant() onlyNFTOwner(id) returns (uint amount) {
       amount = _mintDyad(id, 0);
   }
 
@@ -176,7 +180,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function withdraw(
       uint id,
       uint amount
-  ) external onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
+  ) external nonReentrant() onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
       Nft storage nft = idToNft[id];
       require(int(amount)  <= nft.deposit,    "dNFT: Withdrawl > deposit");
       uint updatedBalance  = dyad.balanceOf(address(this)) - amount;
@@ -197,7 +201,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function deposit(
       uint id, 
       uint amount
-  ) external amountNotZero(amount) returns (uint) {
+  ) external nonReentrant() amountNotZero(amount) returns (uint) {
       Nft storage nft = idToNft[id];
       require(amount <= nft.withdrawn, "dNFT: Deposit > withdrawn");
       nft.deposit   += int(amount);
@@ -211,7 +215,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function redeem(
       uint id,
       uint amount
-  ) external onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
+  ) external nonReentrant() onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
       Nft storage nft = idToNft[id];
       require(amount <= nft.withdrawn, "dNFT: Amount to redeem > withdrawn");
       nft.withdrawn -= amount;
@@ -227,7 +231,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       uint _from,
       uint _to,
       uint amount
-  ) external onlyNFTOwner(_from) amountNotZero(amount) returns (uint) {
+  ) external nonReentrant() onlyNFTOwner(_from) amountNotZero(amount) returns (uint) {
       Nft storage from = idToNft[_from];
       require(int(amount) <= from.deposit, "dNFT: Amount to move > deposit");
       Nft storage to   = idToNft[_to];
@@ -240,7 +244,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function liquidate(
       uint id,
       address to
-  ) external addressNotZero(to) payable returns (uint) {
+  ) external nonReentrant() addressNotZero(to) payable returns (uint) {
       Nft memory nft = idToNft[id];
       require(nft.isLiquidatable, "dNFT: NFT is not liquidatable");
       emit NftClaimed(id, ownerOf(id), to); 
