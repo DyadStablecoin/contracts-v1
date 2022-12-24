@@ -248,7 +248,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   // Sync DYAD by minting/burning it and updating the metadata of each dNFT
   function sync() public returns (uint) { return sync(type(uint256).max); }
 
-  // dNFT with `id` gets a boost
+  // Sync DYAD. dNFT with `id` gets a boost
   function sync(uint id) public returns (uint) {
     uint newEthPrice = uint(getNewEthPrice());
     // determine the mode we are in
