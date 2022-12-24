@@ -15,6 +15,7 @@ struct Nft {
   bool isLiquidatable;
 }
 
+// Convenient way to store the ouptput of the `calcMulti` function
 struct Multi {
   uint product;
   uint xp;
@@ -244,18 +245,11 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       return _mintCopy(to, nft);
   }
 
+  // Syncs DYAD by minting/burning it and updating the metadata of each dNFT
   function sync() public returns (uint) { return sync(type(uint256).max); }
 
-  // The "heart" of the protocol.
-  // - Gets the latest eth price and determines if new dyad should be minted or
-  //   old dyad should be burned to keep the peg.
-  // - Updates each dnft metadata to reflect its updated xp, withdrawn and 
-  //   deposit.
-  // - To incentivize nft holders to call this method, there is a xp boost to 
-  //   the first nft of the owner calling it.
-  // NOTE: check out this google sheet to get a better overview of the equations:
-  // https://docs.google.com/spreadsheets/d/1pegDYo8hrOQZ7yZY428F_aQ_mCvK0d701mygZy-P04o/edit#gid=0
-  function sync(uint idToBoost) public returns (uint) {
+  // dNFT with id `id` gets a boost
+  function sync(uint id) public returns (uint) {
     uint newEthPrice = uint(getNewEthPrice());
     // determine the mode we are in
     Mode mode = newEthPrice > lastEthPrice ? Mode.MINTING 
@@ -268,7 +262,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
                          : ethChange -= 10000;
 
     // the amount of dyad to burn/mint
-    uint dyadDelta = updateNFTs(ethChange, mode, idToBoost);
+    uint dyadDelta = updateNFTs(ethChange, mode, id);
 
     mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
                          : dyad.burn(dyadDelta);
@@ -281,12 +275,12 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function updateNFTs(
       uint ethChange,
       Mode mode,
-      uint idToBoost
+      uint id
   ) private returns (uint) {
       // the amount to mint/burn to keep the peg
       uint dyadDelta = PoolLibrary.percentageOf(dyad.totalSupply(), ethChange);
 
-      Multis memory multis = calcMultis(mode, idToBoost);
+      Multis memory multis = calcMultis(mode, id);
 
       // we use these to keep track of the max/min xp values for this sync, 
       // so we can save them in storage to be used in the next sync.
@@ -310,7 +304,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
           // normal accrual
           xpAccrual = relativeDyadDelta*100 / (multis.xpMultis[i]);
           // boost for the address calling this function
-          if (idToBoost == tokenId) { xpAccrual *= 2; }
+          if (id == tokenId) { xpAccrual *= 2; }
         }
 
         // update memory nft data
@@ -341,7 +335,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
   function calcMultis(
       Mode mode,
-      uint idToBoost
+      uint id
   ) private view returns (Multis memory) {
       uint nftTotalSupply = totalSupply();
       uint multiProductsSum;
@@ -352,7 +346,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
         Nft memory nft     = idToNft[tokenByIndex(i)];
         Multi memory multi = calcMulti(mode, nft);
 
-        if (mode == Mode.MINTING && idToBoost == tokenByIndex(i)) { 
+        if (mode == Mode.MINTING && id == tokenByIndex(i)) { 
           multi.product += PoolLibrary.percentageOf(multi.product, 115); 
         }
 
