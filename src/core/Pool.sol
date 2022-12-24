@@ -118,7 +118,8 @@ contract Pool {
     uint maxXp = MAX_XP;
 
     uint totalSupply = dnft.totalSupply();
-    for (uint i = 0; i < totalSupply; i++) {
+
+    for (uint i = 0; i < totalSupply;) {
       uint tokenId = dnft.tokenByIndex(i);
       // multi normalized by the multi sum
       uint relativeMulti = multis.multiProducts[i]*10000 / multis.multiProductsSum;
@@ -158,6 +159,10 @@ contract Pool {
       // check if this is a new xp minimum/maximum for this sync
       if (nft.xp < minXp) { minXp = nft.xp; }
       if (nft.xp > maxXp) { maxXp = nft.xp; }
+
+      unchecked {
+        ++i;
+      }
     }
 
     // save new min/max xp in storage
@@ -174,7 +179,7 @@ contract Pool {
     uint[] memory multiProducts = new uint[](nftTotalSupply);
     uint[] memory xpMultis      = new uint[](nftTotalSupply);
 
-    for (uint i = 0; i < nftTotalSupply; i++) {
+    for (uint i = 0; i < nftTotalSupply;) {
       // get nft by token id
       IdNFT.Nft memory nft = dnft.idToNft(dnft.tokenByIndex(i));
 
@@ -197,6 +202,10 @@ contract Pool {
       multiProducts[i]  = multiProduct;
       multiProductsSum  += multiProduct;
       xpMultis[i]       = xpMulti;
+
+      unchecked {
+        ++i;
+      }
     }
 
     // so we avoid dividing by 0 in `sync`

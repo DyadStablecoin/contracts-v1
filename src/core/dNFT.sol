@@ -94,7 +94,12 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     minXp                     = _maxSupply;
     maxXp                     = _maxSupply << 1;
 
-    for (uint i = 0; i < _insiders.length; i++) { _mintNft(_insiders[i]); }
+    uint256 insidersLength = _insiders.length;
+
+    // Incrementing 'i' cannot realistically overflow.
+    unchecked {
+      for (uint i = 0; i < insidersLength; ++i) _mintNft(_insiders[i]);
+    }
   }
 
   function getNewEthPrice() internal view returns (int newEthPrice) {
