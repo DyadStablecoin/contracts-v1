@@ -349,7 +349,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
 
       for (uint i = 0; i < nftTotalSupply; ) {
         uint tokenId = tokenByIndex(i);
-        Nft memory nft     = idToNft[tokenId];
+        Nft   memory nft   = idToNft[tokenId];
         Multi memory multi = calcMulti(mode, nft, nftTotalSupply, dyadTotalSupply);
 
         if (mode == Mode.MINTING && id == tokenId) { 
