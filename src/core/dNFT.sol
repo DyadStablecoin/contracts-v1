@@ -23,9 +23,9 @@ struct Multi {
 
 // Convenient way to store the ouptput of the `calcMultis` function
 struct Multis {
-  uint[] multiProducts;
-  uint   multiProductsSum; // sum of the elements in `multiProducts`
-  uint[] xpMultis;         
+  uint[] products;
+  uint   productsSum; // sum of the elements in `productsSum`
+  uint[] xps;         
 }
 
 contract dNFT is ERC721Enumerable, ERC721Burnable {
@@ -245,10 +245,10 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       return _mintCopy(to, nft);
   }
 
-  // Syncs DYAD by minting/burning it and updating the metadata of each dNFT
+  // Sync DYAD by minting/burning it and updating the metadata of each dNFT
   function sync() public returns (uint) { return sync(type(uint256).max); }
 
-  // dNFT with id `id` gets a boost
+  // dNFT with `id` gets a boost
   function sync(uint id) public returns (uint) {
     uint newEthPrice = uint(getNewEthPrice());
     // determine the mode we are in
@@ -291,7 +291,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       for (uint i = 0; i < totalSupply; i++) {
         uint tokenId = tokenByIndex(i);
         // multi normalized by the multi sum
-        uint relativeMulti = multis.multiProducts[i]*10000 / multis.multiProductsSum;
+        uint relativeMulti = multis.products[i]*10000 / multis.productsSum;
         // relative dyad delta for each nft
         uint relativeDyadDelta = PoolLibrary.percentageOf(dyadDelta, relativeMulti);
 
@@ -302,7 +302,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
         // there can only be xp accrual if deposit is not 0 
         if (mode == Mode.BURNING && nft.deposit > 0) {
           // normal accrual
-          xpAccrual = relativeDyadDelta*100 / (multis.xpMultis[i]);
+          xpAccrual = relativeDyadDelta*100 / (multis.xps[i]);
           // boost for the address calling this function
           if (id == tokenId) { xpAccrual *= 2; }
         }
@@ -338,9 +338,9 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       uint id
   ) private view returns (Multis memory) {
       uint nftTotalSupply = totalSupply();
-      uint multiProductsSum;
-      uint[] memory multiProducts = new uint[](nftTotalSupply);
-      uint[] memory xpMultis      = new uint[](nftTotalSupply);
+      uint productsSum;
+      uint[] memory products = new uint[](nftTotalSupply);
+      uint[] memory xps      = new uint[](nftTotalSupply);
 
       for (uint i = 0; i < nftTotalSupply; i++) {
         Nft memory nft     = idToNft[tokenByIndex(i)];
@@ -350,15 +350,15 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
           multi.product += PoolLibrary.percentageOf(multi.product, 115); 
         }
 
-        multiProducts[i]  = multi.product;
-        multiProductsSum += multi.product;
-        xpMultis[i]       = multi.xp;
+        products[i]  = multi.product;
+        productsSum += multi.product;
+        xps[i]       = multi.xp;
       }
 
       // so we avoid dividing by 0 in `sync`
-      if (multiProductsSum == 0) { multiProductsSum = 1; }
+      if (productsSum == 0) { productsSum = 1; }
 
-      return Multis(multiProducts, multiProductsSum, xpMultis);
+      return Multis(products, productsSum, xps);
   }
 
   function calcMulti(Mode mode, Nft memory nft) private view returns (Multi memory) {
