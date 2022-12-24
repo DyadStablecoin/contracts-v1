@@ -29,14 +29,14 @@ struct Multis {
 }
 
 contract dNFT is ERC721Enumerable, ERC721Burnable {
-  // 150% in basis points
-  uint public MIN_COLLATERATION_RATIO = 15000; 
+  // Minimum collaterization ratio required, for DYAD to be withdrawn
+  uint public immutable MIN_COLLATERIZATION_RATIO; 
 
   // Minimum required to mint a new dNFT
-  uint public DEPOSIT_MINIMUM;
+  uint public immutable DEPOSIT_MINIMUM;
 
   // Maximum number of dNFTs that can exist simultaneously
-  uint public MAX_SUPPLY;
+  uint public immutable MAX_SUPPLY;
 
   // ETH price from the last sync call
   uint public lastEthPrice;
@@ -75,17 +75,19 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   constructor(
     address          _dyad,
     uint             _depositMinimum,
+    uint             _minCollaterizationRatio,
     uint             _maxSupply, 
     address          _oracle, 
     address[] memory _insiders
   ) ERC721("DYAD NFT", "dNFT") {
-    dyad            = DYAD(_dyad);
-    oracle          = IAggregatorV3(_oracle);
-    lastEthPrice    = uint(getNewEthPrice());
-    DEPOSIT_MINIMUM = _depositMinimum;
-    MAX_SUPPLY      = _maxSupply;
-    minXp           = _maxSupply;
-    maxXp           = _maxSupply * 2;
+    dyad                      = DYAD(_dyad);
+    oracle                    = IAggregatorV3(_oracle);
+    lastEthPrice              = uint(getNewEthPrice());
+    MIN_COLLATERIZATION_RATIO = _minCollaterizationRatio;
+    DEPOSIT_MINIMUM           = _depositMinimum;
+    MAX_SUPPLY                = _maxSupply;
+    minXp                     = _maxSupply;
+    maxXp                     = _maxSupply * 2;
 
     for (uint i = 0; i < _insiders.length; i++) { _mintNft(_insiders[i]); }
   }
@@ -176,7 +178,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       uint updatedBalance  = dyad.balanceOf(address(this)) - amount;
       uint totalWithdrawn  = dyad.totalSupply() - updatedBalance;
       uint cr =  updatedBalance*10000 / totalWithdrawn;      
-      require(cr >= MIN_COLLATERATION_RATIO, "dNFT: CR is under 150%"); 
+      require(cr >= MIN_COLLATERIZATION_RATIO, "dNFT: CR is under 150%"); 
       uint newWithdrawn = nft.withdrawn + amount;
       uint averageTVL   = dyad.balanceOf(address(this)) / totalSupply();
       require(newWithdrawn <= averageTVL,    "dNFT: New Withdrawl > average TVL");
