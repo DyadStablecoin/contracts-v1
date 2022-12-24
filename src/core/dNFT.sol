@@ -210,7 +210,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function redeem(
       uint id,
       uint amount
-  ) external onlyNFTOwner(id) amountNotZero(amount) returns (uint usdInEth) {
+  ) external onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
       Nft storage nft = idToNft[id];
       require(amount <= nft.withdrawn, "dNFT: Amount to redeem > withdrawn");
       nft.withdrawn -= amount;
@@ -218,7 +218,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       uint eth = amount*100000000 / lastEthPrice;
       payable(msg.sender).transfer(eth);
       emit DyadRedeemed(msg.sender, id, amount);
-      return usdInEth;
+      return eth;
   }
 
   // Move `amount` `from` one dNFT deposit `to` another dNFT deposit
