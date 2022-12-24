@@ -71,6 +71,10 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
     require(this.ownerOf(id) == msg.sender, "dNFT: Only callable by NFT owner");
     _;
   }
+  modifier amountNotZero(uint amount) {
+    require(amount != 0, "dNFT: Amount cannot be zero");
+    _;
+  }
 
   constructor(
     address          _dyad,
@@ -171,17 +175,16 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function withdraw(
       uint id,
       uint amount
-  ) external onlyNFTOwner(id) returns (uint) {
-      require(amount > 0,                    "dNFT: Withdrawl == 0");
+  ) external onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
       Nft storage nft = idToNft[id];
-      require(int(amount)  <= nft.deposit,   "dNFT: Withdrawl > deposit");
+      require(int(amount)  <= nft.deposit,    "dNFT: Withdrawl > deposit");
       uint updatedBalance  = dyad.balanceOf(address(this)) - amount;
       uint totalWithdrawn  = dyad.totalSupply() - updatedBalance;
       uint cr =  updatedBalance*10000 / totalWithdrawn;      
-      require(cr >= MIN_COLLATERIZATION_RATIO, "dNFT: CR is under 150%"); 
+      require(cr >= MIN_COLLATERIZATION_RATIO,"dNFT: CR is under 150%"); 
       uint newWithdrawn = nft.withdrawn + amount;
       uint averageTVL   = dyad.balanceOf(address(this)) / totalSupply();
-      require(newWithdrawn <= averageTVL,    "dNFT: New Withdrawl > average TVL");
+      require(newWithdrawn <= averageTVL,     "dNFT: New Withdrawl > average TVL");
       nft.withdrawn  = newWithdrawn;
       nft.deposit   -= int(amount);
       dyad.transfer(msg.sender, amount);
@@ -193,8 +196,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function deposit(
       uint id, 
       uint amount
-  ) external returns (uint) {
-      require(amount > 0, "dNFT: Deposit == 0");
+  ) external amountNotZero(amount) returns (uint) {
       Nft storage nft = idToNft[id];
       require(amount <= nft.withdrawn, "dNFT: Deposit > withdrawn");
       nft.deposit   += int(amount);
@@ -208,8 +210,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
   function redeem(
       uint id,
       uint amount
-  ) external onlyNFTOwner(id) returns (uint usdInEth) {
-      require(amount > 0, "dNFT: Amount to redeem == 0");
+  ) external onlyNFTOwner(id) amountNotZero(amount) returns (uint usdInEth) {
       Nft storage nft = idToNft[id];
       require(amount <= nft.withdrawn, "dNFT: Amount to redeem > withdrawn");
       nft.withdrawn -= amount;
@@ -225,7 +226,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable {
       uint _from,
       uint _to,
       uint amount
-  ) external onlyNFTOwner(_from) returns (uint) {
+  ) external onlyNFTOwner(_from) amountNotZero(amount) returns (uint) {
       require(amount > 0, "dNFT: Deposit == 0");
       Nft storage from = idToNft[_from];
       require(int(amount) <= from.deposit, "dNFT: Amount to move > deposit");
