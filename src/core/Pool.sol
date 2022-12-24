@@ -56,7 +56,7 @@ contract Pool {
     // which will be assigned to the first minted nft.
     uint maxSupply = dnft.MAX_SUPPLY();
     MIN_XP = maxSupply;
-    MAX_XP = maxSupply * 2;
+    MAX_XP = maxSupply << 1;
   }
 
   function setMinXp(uint _minXp) external onlyNftContract { MIN_XP = _minXp; }
