@@ -31,6 +31,9 @@ struct Multis {
 }
 
 contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
+  // Minimum number of blocks required between sync calls
+  uint public constant BLOCKS_BETWEEN_SYNCS = 50;
+
   // Minimum collaterization ratio required, for DYAD to be withdrawn
   uint public immutable MIN_COLLATERIZATION_RATIO; 
 
@@ -39,6 +42,9 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
 
   // Maximum number of dNFTs that can exist simultaneously
   uint public immutable MAX_SUPPLY;
+
+  // Last block sync was called on
+  uint public lastSyncedBlock;
 
   // ETH price from the last sync call
   uint public lastEthPrice;
@@ -257,6 +263,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
 
   // Sync DYAD. dNFT with `id` gets a boost
   function sync(uint id) public returns (uint) {
+    require(block.number >= lastSyncedBlock + BLOCKS_BETWEEN_SYNCS);
     uint newEthPrice = uint(getNewEthPrice());
     // determine the mode we are in
     Mode mode = newEthPrice > lastEthPrice ? Mode.MINTING 
@@ -274,7 +281,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
     mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
                          : dyad.burn(dyadDelta);
 
-    lastEthPrice = newEthPrice;
+    lastEthPrice    = newEthPrice;
+    lastSyncedBlock = block.number;
     emit Synced(newEthPrice);
     return dyadDelta;
   }

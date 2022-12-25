@@ -1,0 +1,61 @@
+forge test   -vv --fork-url https://mainnet.infura.io/v3/236854d60dfc49509ab757094af19c27
+No files changed, compilation skipped
+
+Running 2 tests for test/dyad.t.sol:DYADTest
+[32m[PASS][0m testMint() (gas: 187)
+[32m[PASS][0m testMinter() (gas: 18421)
+Test result: [32mok[0m. 2 passed; 0 failed; finished in 1.15s
+
+Running 9 tests for test/Pool.Eike.t.sol:PoolTest
+[32m[PASS][0m testClaim() (gas: 909985)
+[32m[PASS][0m testSyncBurn() (gas: 316032)
+[32m[PASS][0m testSyncBurnMint() (gas: 383190)
+[32m[PASS][0m testSyncBurnMintBurn() (gas: 485063)
+[32m[PASS][0m testSyncBurnWithNegativeDeposit() (gas: 383306)
+[32m[PASS][0m testSyncLiquidation() (gas: 694777)
+[32m[PASS][0m testSyncMint() (gas: 259635)
+[32m[PASS][0m testSyncMintBurn() (gas: 385206)
+[32m[PASS][0m testSyncMintBurnMint() (gas: 462590)
+Test result: [32mok[0m. 9 passed; 0 failed; finished in 1.58s
+
+Running 1 test for test/Pool.t.sol:PoolTest
+[32m[PASS][0m testSyncMaxSupply() (gas: 167841464)
+Test result: [32mok[0m. 1 passed; 0 failed; finished in 1.62s
+
+Running 27 tests for test/dNFT.t.sol:dNFTTest
+[32m[PASS][0m testDepositDyad() (gas: 267405)
+[32m[PASS][0m testFailDepositDyadExceedsWithdrawn() (gas: 261347)
+[32m[PASS][0m testFailDepositDyadNotNftOwner() (gas: 236778)
+[32m[PASS][0m testFailMintDyadNotNftOwner() (gas: 242204)
+[32m[PASS][0m testFailMintDyadWithoutEth() (gas: 232661)
+[32m[PASS][0m testFailMintDyadWithoutOwner() (gas: 19944)
+[32m[PASS][0m testFailMintNftDepositMinimum() (gas: 145291)
+[32m[PASS][0m testFailMintNftMaximumSupply() (gas: 157221748)
+[32m[PASS][0m testFailMoveDepositExceedsDeposit() (gas: 409245)
+[32m[PASS][0m testFailMoveDepositNotNftOwner() (gas: 411709)
+[32m[PASS][0m testFailRedeemNotNftOwner() (gas: 322781)
+[32m[PASS][0m testFailSetPoolOnlyOnce() (gas: 5472)
+[32m[PASS][0m testFailWithdrawCollaterizationRationTooHigh() (gas: 254169)
+[32m[PASS][0m testFailWithdrawDyadExceedsBalance() (gas: 233098)
+[32m[PASS][0m testFailWithdrawDyadNotNftOwner() (gas: 235550)
+[32m[PASS][0m testMintDyad() (gas: 243803)
+[32m[PASS][0m testMintDyadDepositUpdated() (gas: 249621)
+[32m[PASS][0m testMintDyadWithdrawnNotUpdated() (gas: 249572)
+[32m[PASS][0m testMintNftTotalSupply() (gas: 8859123)
+[32m[PASS][0m testMintOneNft() (gas: 441176)
+[32m[PASS][0m testMoveDeposit() (gas: 407187)
+[32m[PASS][0m testRedeemDyad() (gas: 310730)
+[32m[PASS][0m testRedeemDyadPoolBalance() (gas: 311130)
+[32m[PASS][0m testRedeemDyadSenderDyadBalance() (gas: 310809)
+[32m[PASS][0m testRedeemDyadTotalSupply() (gas: 312450)
+[32m[PASS][0m testUnblockCollaterizationRatioLock() (gas: 340480)
+[32m[PASS][0m testWithdrawDyad() (gas: 305490)
+Test result: [32mok[0m. 27 passed; 0 failed; finished in 3.19s
+
+Running 5 tests for test/Launch.t.sol:LaunchTest
+[32m[PASS][0m testDoRandomStuffAndSync() (gas: 2448983)
+[32m[PASS][0m testFirstSync() (gas: 54117)
+[32m[PASS][0m testInsiderAllocation() (gas: 9670)
+[32m[PASS][0m testMintNormallyAndSync() (gas: 849622)
+[32m[PASS][0m testWithdrawAndSync() (gas: 583247)
+Test result: [32mok[0m. 5 passed; 0 failed; finished in 3.31s
