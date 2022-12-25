@@ -118,7 +118,7 @@ contract PoolTest is Test, Parameters, Deployment {
     vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(950 * 10**8)));
     uint totalSupplyBefore = dyad.totalSupply();
 
-    uint dyadDelta = dnft.sync();
+    uint dyadDelta = dnft.sync(99999);
     moveToNextBlock();
 
     // there should be less dyad now after the sync
@@ -138,7 +138,7 @@ contract PoolTest is Test, Parameters, Deployment {
     // after the setup, nft 0 has negative deposit
     triggerBurn();
 
-    dnft.sync();
+    dnft.sync(99999);
     moveToNextBlock();
 
     blockNumber += BLOCKS_BETWEEN_SYNCS;
@@ -179,7 +179,7 @@ contract PoolTest is Test, Parameters, Deployment {
     vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(1100 * 10**8)));
     uint totalSupplyBefore = dyad.totalSupply();
 
-    uint dyadDelta = dnft.sync();
+    uint dyadDelta = dnft.sync(99999);
     moveToNextBlock();
 
     // there should be more dyad now after the sync
@@ -212,7 +212,7 @@ contract PoolTest is Test, Parameters, Deployment {
     triggerMint();
     // sync now acts on the newly minted nft, which is a very important test, 
     // because the newly minted nft has different index from the old one.
-    dnft.sync();
+    dnft.sync(99999);
     moveToNextBlock();
   }
 }

@@ -63,7 +63,7 @@ contract LaunchTest is Test, Parameters, Deployment {
   }
 
   function testFirstSync() public {
-    dnft.sync();
+    dnft.sync(99999);
   }
 
   function testMintNormallyAndSync() public {
@@ -73,7 +73,7 @@ contract LaunchTest is Test, Parameters, Deployment {
     vm.prank(addr2);
     dnft.mintNft{value: 5 ether}(address(this));
     dnft.mintNft{value: 5 ether}(address(this));
-    dnft.sync();
+    dnft.sync(99999);
   }
 
   function testWithdrawAndSync() public {
@@ -87,7 +87,7 @@ contract LaunchTest is Test, Parameters, Deployment {
     // remember the nfts are 0 indexed, so we do not need to increment by 1.
     dnft.withdraw(NUMBER_OF_INSIDER_NFTS+1, 3 ether);
 
-    dnft.sync();
+    dnft.sync(99999);
   }
 
   // very self explanatory I think. Do random stuff and see if it breaks.
@@ -96,7 +96,7 @@ contract LaunchTest is Test, Parameters, Deployment {
     uint currentBlockNumber = block.number;
     uint numberOfSyncCalls  = 0;
 
-    dnft.sync();
+    dnft.sync(99999);
     numberOfSyncCalls += 1;
 
     // mint nfts
@@ -113,7 +113,7 @@ contract LaunchTest is Test, Parameters, Deployment {
     uint id7 = dnft.mintNft{value: 5 ether}(address(this));
 
     vm.roll(currentBlockNumber + (numberOfSyncCalls*BLOCKS_BETWEEN_SYNCS));
-    dnft.sync();
+    dnft.sync(99999);
     numberOfSyncCalls += 1;
 
     // do some withdraws
@@ -131,7 +131,7 @@ contract LaunchTest is Test, Parameters, Deployment {
     dnft.withdraw(id7, 4444444444444);
 
     vm.roll(currentBlockNumber + (numberOfSyncCalls*BLOCKS_BETWEEN_SYNCS));
-    dnft.sync();
+    dnft.sync(99999);
     numberOfSyncCalls += 1;
 
     // do some deposits
@@ -145,7 +145,7 @@ contract LaunchTest is Test, Parameters, Deployment {
 
     for(uint i = 0; i < 4; i++) { 
       vm.roll(currentBlockNumber + (numberOfSyncCalls*BLOCKS_BETWEEN_SYNCS));
-      dnft.sync();
+      dnft.sync(99999);
       numberOfSyncCalls += 1;
     }
 
@@ -157,7 +157,7 @@ contract LaunchTest is Test, Parameters, Deployment {
 
     for(uint i = 0; i < 4; i++) { 
       vm.roll(currentBlockNumber + (numberOfSyncCalls*BLOCKS_BETWEEN_SYNCS));
-      dnft.sync();
+      dnft.sync(99999);
       numberOfSyncCalls += 1;
     }
   }

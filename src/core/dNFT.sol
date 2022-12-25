@@ -262,10 +262,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       return _mintCopy(to, nft);
   }
 
-  // Sync by minting/burning DYAD to keep the peg and update each dNFT
-  function sync() external returns (uint) { return sync(type(uint256).max); }
-
-  // Sync DYAD. dNFT with `id` gets a boost
+  // Sync by minting/burning DYAD to keep the peg and update each dNFT.
+  // dNFT with `id` gets a boost.
   function sync(uint id) nonReentrant() public returns (uint) {
     require(block.number >= lastSyncedBlock + BLOCKS_BETWEEN_SYNCS, "dNFT: Too soon to sync");
 

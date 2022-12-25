@@ -47,3 +47,6 @@ calc-sync-gas-fees:
 
 read-data:
 	forge script script/ReadData.Goerli.s.sol --fork-url $(GOERLI_RPC)
+
+slither:
+	slither .
