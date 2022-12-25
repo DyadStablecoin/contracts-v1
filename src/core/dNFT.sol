@@ -299,6 +299,9 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint _minXp = type(uint256).max;
       uint _maxXp = maxXp;
 
+      // so we avoid dividing by 0 
+      if (multis.productsSum == 0) { multis.productsSum = 1; }
+
       uint totalSupply = totalSupply();
       for (uint i = 0; i < totalSupply; ) {
         uint tokenId           = tokenByIndex(i);
@@ -365,9 +368,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
 
         unchecked { ++i; }
       }
-
-      // so we avoid dividing by 0 in `sync`
-      if (productsSum == 0) { productsSum = 1; }
 
       return Multis(products, productsSum, xps);
   }
