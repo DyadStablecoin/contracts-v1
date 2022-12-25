@@ -31,26 +31,26 @@ struct Multis {
 }
 
 contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
-  // Minimum number of blocks required between sync calls
-  uint public immutable BLOCKS_BETWEEN_SYNCS;
-
-  // Minimum collaterization ratio required, for DYAD to be withdrawn
-  uint public immutable MIN_COLLATERIZATION_RATIO; 
+  // Maximum number of dNFTs that can exist simultaneously
+  uint public immutable MAX_SUPPLY;
 
   // Minimum required to mint a new dNFT
   uint public immutable DEPOSIT_MINIMUM;
 
-  // Maximum number of dNFTs that can exist simultaneously
-  uint public immutable MAX_SUPPLY;
+  // Minimum collaterization ratio required, for DYAD to be withdrawn
+  uint public immutable MIN_COLLATERIZATION_RATIO; 
 
-  // Last block sync was called on
-  uint public lastSyncedBlock;
+  // Minimum number of blocks required between sync calls
+  uint public immutable BLOCKS_BETWEEN_SYNCS;
 
   // ETH price from the last sync call
   uint public lastEthPrice;
 
   // Number of dNFTs minted so far
   uint public numberOfMints;
+
+  // Last block, sync was called on
+  uint public lastSyncedBlock;
 
   // Min/Max XP over all dNFTs
   uint public minXp; uint public maxXp;
