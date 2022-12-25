@@ -108,7 +108,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   ) ERC721("DYAD NFT", "dNFT") {
     dyad                      = DYAD(_dyad);
     oracle                    = IAggregatorV3(_oracle);
-    lastEthPrice              = getLatestEthPrice();
+    lastEthPrice              = _getLatestEthPrice();
     MIN_COLLATERIZATION_RATIO = _minCollaterizationRatio;
     DEPOSIT_MINIMUM           = _depositMinimum;
     BLOCKS_BETWEEN_SYNCS      = _blocksBetweenSyncs;
@@ -120,7 +120,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   }
 
   // ETH price in USD
-  function getLatestEthPrice() internal view returns (uint) {
+  function _getLatestEthPrice() internal view returns (uint) {
     ( , int newEthPrice, , , ) = oracle.latestRoundData();
     return uint(newEthPrice);
   }
@@ -190,7 +190,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint minAmount
   ) private returns (uint) {
       if (msg.value == 0) { revert NoEthSupplied(); }
-      uint newDyad = getLatestEthPrice() * msg.value/100000000;
+      uint newDyad = _getLatestEthPrice() * msg.value/100000000;
+      if (newDyad == 0)        { revert AmountZero(newDyad); }
       if (newDyad < minAmount) { revert NotReachedMinAmount(newDyad); }
       dyad.mint(address(this), newDyad);
       idToNft[id].deposit += int(newDyad);
@@ -284,7 +285,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
     }
 
     lastSyncedBlock  = block.number;
-    uint newEthPrice = getLatestEthPrice();
+    uint newEthPrice = _getLatestEthPrice();
     Mode mode        = newEthPrice > lastEthPrice ? Mode.MINTING 
                                                   : Mode.BURNING;
  

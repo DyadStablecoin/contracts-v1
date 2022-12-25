@@ -70,7 +70,7 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
   }
   function testFailMintNftMaximumSupply() public {
     // only `dnft.MAXIMUM_SUPPLY` nfts can be minted
-    for (uint i = 0; i < dnft.MAX_SUPPLY()+1; i++) {
+    for (uint i = 0; i < MAX_SUPPLY+1; i++) {
       dnft.mintNft{value: 5 ether}(address(this));
     }
   }
