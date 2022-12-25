@@ -266,20 +266,17 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   // Sync DYAD. dNFT with `id` gets a boost
   function sync(uint id) public returns (uint) {
     require(block.number >= lastSyncedBlock + BLOCKS_BETWEEN_SYNCS, "dNFT: Too soon to sync");
+
     uint newEthPrice = getLatestEthPrice();
-    // determine the mode we are in
-    Mode mode = newEthPrice > lastEthPrice ? Mode.MINTING 
-                                           : Mode.BURNING;
+    Mode mode        = newEthPrice > lastEthPrice ? Mode.MINTING 
+                                                  : Mode.BURNING;
  
-    // stores the eth price change in basis points
-    uint ethChange = newEthPrice*10000/lastEthPrice;
-    // we have to do this to get the percentage in basis points
-    mode == Mode.BURNING ? ethChange  = 10000 - ethChange 
-                         : ethChange -= 10000;
+    uint ethPriceDelta = newEthPrice*10000/lastEthPrice; 
+    // get `ethPriceDelta` in basis points
+    mode == Mode.BURNING ? ethPriceDelta  = 10000 - ethPriceDelta 
+                         : ethPriceDelta -= 10000;
 
-    // the amount of dyad to burn/mint
-    uint dyadDelta = updateNFTs(ethChange, mode, id);
-
+    uint dyadDelta = updateNFTs(ethPriceDelta, mode, id);
     mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
                          : dyad.burn(dyadDelta);
 
