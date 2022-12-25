@@ -72,6 +72,11 @@ contract PoolTest is Test, Parameters, Deployment {
   // needed, so we can receive eth transfers
   receive() external payable {}
 
+  function moveToNextBlock() public {
+    blockNumber += BLOCKS_BETWEEN_SYNCS;
+    vm.roll(blockNumber);
+  }
+
   // set withdrawn, deposit, xp
   // NOTE: I get a slot error for isClaimable so we do not set it here and 
   // leave it as it is. this seems to be broken for bool rn, see:
@@ -118,8 +123,7 @@ contract PoolTest is Test, Parameters, Deployment {
     uint totalSupplyBefore = dyad.totalSupply();
 
     uint dyadDelta = dnft.sync();
-    blockNumber += BLOCKS_BETWEEN_SYNCS;
-    vm.roll(blockNumber);
+    moveToNextBlock();
 
     // there should be less dyad now after the sync
     assertTrue(totalSupplyBefore > dyad.totalSupply());
@@ -139,6 +143,8 @@ contract PoolTest is Test, Parameters, Deployment {
     triggerBurn();
 
     dnft.sync();
+    moveToNextBlock();
+
     blockNumber += BLOCKS_BETWEEN_SYNCS;
     vm.roll(blockNumber);
 
@@ -178,8 +184,7 @@ contract PoolTest is Test, Parameters, Deployment {
     uint totalSupplyBefore = dyad.totalSupply();
 
     uint dyadDelta = dnft.sync();
-    blockNumber += BLOCKS_BETWEEN_SYNCS;
-    vm.roll(blockNumber);
+    moveToNextBlock();
 
     // there should be more dyad now after the sync
     assertTrue(totalSupplyBefore < dyad.totalSupply());
@@ -212,7 +217,6 @@ contract PoolTest is Test, Parameters, Deployment {
     // sync now acts on the newly minted nft, which is a very important test, 
     // because the newly minted nft has different index from the old one.
     dnft.sync();
-    blockNumber += BLOCKS_BETWEEN_SYNCS;
-    vm.roll(blockNumber);
+    moveToNextBlock();
   }
 }
