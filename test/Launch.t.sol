@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "../src/core/Dyad.sol";
-import "../src/core/Pool.sol";
 import "ds-test/test.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
 import {dNFT} from "../src/core/dNFT.sol";
@@ -28,7 +27,6 @@ contract LaunchTest is Test, Parameters, Deployment {
 
   IdNFT public dnft;
   DYAD public dyad;
-  Pool public pool;
   OracleMock public oracle;
 
   // --------------------- Test Addresses ---------------------
@@ -41,16 +39,14 @@ contract LaunchTest is Test, Parameters, Deployment {
 
   function setUp() public {
     address _dnft;
-    address _pool;
     address _dyad;
-    (_dnft,_pool,_dyad) = deploy(CHAINLINK_ORACLE_ADDRESS,
+    (_dnft,_dyad) = deploy(CHAINLINK_ORACLE_ADDRESS,
                                  DEPOSIT_MINIMUM,
                                  BLOCKS_BETWEEN_SYNCS, 
                                  MIN_COLLATERIZATION_RATIO, 
                                  MAX_SUPPLY,
                                  new address[](0));
     dnft = IdNFT(_dnft);
-    pool = Pool(_pool);
     dyad = DYAD(_dyad);
 
     // directly after deployment the total supply has to be the number

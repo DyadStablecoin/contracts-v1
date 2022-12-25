@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "../src/core/Dyad.sol";
-import "../src/core/Pool.sol";
 import "ds-test/test.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
 import {dNFT} from "../src/core/dNFT.sol";
@@ -28,7 +27,6 @@ contract PoolTest is Test, Parameters, Deployment {
   using stdStorage for StdStorage;
 
   DYAD public dyad;
-  Pool public pool;
   IdNFT public dnft;
   OracleMock public oracle;
 
@@ -40,16 +38,14 @@ contract PoolTest is Test, Parameters, Deployment {
     oracle = new OracleMock();
 
     address _dnft;
-    address _pool;
     address _dyad;
-    (_dnft,_pool,_dyad) = deploy(address(oracle),
-                                 77 * 10**8, // DEPOSIT_MINIMUM 
-                                 BLOCKS_BETWEEN_SYNCS, 
-                                 MIN_COLLATERIZATION_RATIO, 
-                                 MAX_SUPPLY,
-                                 new address[](0));
+    (_dnft,_dyad) = deploy(address(oracle),
+                           77 * 10**8, // DEPOSIT_MINIMUM 
+                           BLOCKS_BETWEEN_SYNCS, 
+                           MIN_COLLATERIZATION_RATIO, 
+                           MAX_SUPPLY,
+                           new address[](0));
     dnft = IdNFT(_dnft);
-    pool = Pool(_pool);
     dyad = DYAD(_dyad);
 
     // set oracle price

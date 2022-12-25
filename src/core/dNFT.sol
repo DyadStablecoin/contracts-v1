@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {DYAD} from "./Dyad.sol";
-import {Pool} from "./Pool.sol";
 import {PoolLibrary} from "../libraries/PoolLibrary.sol";
 
 struct Nft {
@@ -59,7 +58,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   mapping(uint => Nft) public idToNft;
 
   DYAD public dyad;
-  Pool public pool;
   IAggregatorV3 internal oracle;
 
   // Protocol can be in two modes:

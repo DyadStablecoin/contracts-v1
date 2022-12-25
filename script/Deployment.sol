@@ -5,7 +5,6 @@ import "forge-std/Script.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
 import {dNFT} from "../src/core/dNFT.sol";
 import "../src/core/Dyad.sol";
-import "../src/core/Pool.sol";
 import {Parameters} from "../script/Parameters.sol";
 
 contract Deployment is Script {
@@ -14,7 +13,7 @@ contract Deployment is Script {
                   uint blocksBetweenSyncs, 
                   uint minCollaterizationRatio, 
                   uint maxSupply,
-                  address[] memory insiders) public returns (address, address, address) {
+                  address[] memory insiders) public returns (address, address) {
     vm.startBroadcast();
     DYAD dyad = new DYAD();
 
@@ -28,12 +27,10 @@ contract Deployment is Script {
 
     IdNFT dnft = IdNFT(address(_dnft));
 
-    Pool pool = new Pool(address(dnft), address(dyad), oracle);
-
     dyad.transferOwnership(address(dnft));
 
     vm.stopBroadcast();
 
-    return (address(dnft), address(pool), address(dyad));
+    return (address(dnft), address(dyad));
   }
 }
