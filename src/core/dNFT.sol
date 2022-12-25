@@ -73,14 +73,18 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   event Synced       (uint newEthPrice);
   event NftClaimed   (uint indexed id, address indexed from, address indexed to);
 
+  error NotNFTOwner(uint id);
+  error AmountZero(uint amount);
+  error AddressZero(address addr);
+
   modifier onlyNFTOwner(uint id) {
-    require(this.ownerOf(id) == msg.sender, "dNFT: Callable by dNFT owner"); _;
+    if (ownerOf(id) != msg.sender) revert NotNFTOwner(id); _;
   }
   modifier amountNotZero(uint amount) {
-    require(amount != 0, "dNFT: Amount cannot be zero"); _;
+    if (amount == 0) revert AmountZero(amount); _;
   }
   modifier addressNotZero(address addr) {
-    require(addr != address(0), "dNFT: Address cannot be zero"); _;
+    if (addr == address(0)) revert AddressZero(addr); _;
   }
 
   constructor(

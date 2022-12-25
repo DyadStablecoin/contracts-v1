@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 contract Parameters {
-  uint MAX_SUPPLY = 888; 
+  uint MAX_SUPPLY = 500; 
   uint MIN_COLLATERIZATION_RATIO = 15000; 
   uint BLOCKS_BETWEEN_SYNCS = 1;
 
