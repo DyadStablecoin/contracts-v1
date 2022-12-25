@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 contract Parameters {
   uint MAX_SUPPLY = 888; 
   uint MIN_COLLATERIZATION_RATIO = 15000; 
+  uint BLOCKS_BETWEEN_SYNCS = 50;
 
   // mainnet
   address ORACLE_MAINNET = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;

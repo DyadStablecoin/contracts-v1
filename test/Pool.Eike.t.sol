@@ -42,6 +42,7 @@ contract PoolTest is Test, Parameters, Deployment {
     address _dyad;
     (_dnft,_pool,_dyad) = deploy(address(oracle),
                                  77 * 10**8, // DEPOSIT_MINIMUM 
+                                 BLOCKS_BETWEEN_SYNCS, 
                                  MIN_COLLATERIZATION_RATIO, 
                                  MAX_SUPPLY,
                                  new address[](0));

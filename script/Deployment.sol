@@ -6,10 +6,12 @@ import {IdNFT} from "../src/interfaces/IdNFT.sol";
 import {dNFT} from "../src/core/dNFT.sol";
 import "../src/core/Dyad.sol";
 import "../src/core/Pool.sol";
+import {Parameters} from "../script/Parameters.sol";
 
 contract Deployment is Script {
   function deploy(address oracle,
                   uint depositMinimum,
+                  uint blocksBetweenSyncs, 
                   uint minCollaterizationRatio, 
                   uint maxSupply,
                   address[] memory insiders) public returns (address, address, address) {
@@ -18,6 +20,7 @@ contract Deployment is Script {
 
     dNFT _dnft = new dNFT(address(dyad),
                           depositMinimum,
+                          blocksBetweenSyncs, 
                           minCollaterizationRatio,
                           maxSupply,
                           oracle,
