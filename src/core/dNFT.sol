@@ -276,7 +276,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
     mode == Mode.BURNING ? ethPriceDelta  = 10000 - ethPriceDelta 
                          : ethPriceDelta -= 10000;
 
-    uint dyadDelta = updateNFTs(ethPriceDelta, mode, id);
+    uint dyadDelta = _updateNFTs(ethPriceDelta, mode, id);
     mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
                          : dyad.burn(dyadDelta);
 
@@ -286,14 +286,14 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
     return dyadDelta;
   }
 
-  function updateNFTs(
+  function _updateNFTs(
       uint ethPriceDelta,
       Mode mode,
       uint id
   ) private returns (uint) {
       uint dyadDelta = PoolLibrary.percentageOf(dyad.totalSupply(), ethPriceDelta);
 
-      Multis memory multis = calcMultis(mode, id);
+      Multis memory multis = _calcMultis(mode, id);
 
       // local min/max xp for this sync call
       uint _minXp = type(uint256).max;
@@ -342,7 +342,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       return dyadDelta;
   }
 
-  function calcMultis(
+  function _calcMultis(
       Mode mode,
       uint id
   ) private view returns (Multis memory) {
@@ -356,7 +356,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       for (uint i = 0; i < nftTotalSupply; ) {
         uint tokenId = tokenByIndex(i);
         Nft   memory nft   = idToNft[tokenId];
-        Multi memory multi = calcMulti(mode, nft, nftTotalSupply, dyadTotalSupply);
+        Multi memory multi = _calcMulti(mode, nft, nftTotalSupply, dyadTotalSupply);
 
         if (mode == Mode.MINTING && id == tokenId) { 
           multi.product += PoolLibrary.percentageOf(multi.product, 1500); 
@@ -372,7 +372,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       return Multis(products, productsSum, xps);
   }
 
-  function calcMulti(
+  function _calcMulti(
       Mode mode,
       Nft memory nft,
       uint nftTotalSupply,
