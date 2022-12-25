@@ -56,7 +56,7 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
 
     stdstore.target(address(dnft)).sig("minXp()").checked_write(uint(0));      // min xp
     stdstore.target(address(dnft)).sig("maxXp()").checked_write(uint(MAX_XP)); // max xp
-    dnft.sync();
+    dnft.sync(99999);
   }
   function testMintNftTotalSupply() public {
     for (uint i = 0; i < 50; i++) {

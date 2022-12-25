@@ -43,17 +43,17 @@ contract PoolTest is Test, Deployment, Parameters, Util {
     for (uint i = 0; i < MAX_SUPPLY; i++) {
       dnft.mintNft{value: 5 ether}(address(this));
     }
-    dnft.sync();
+    dnft.sync(99999);
   }
 
   function testFailSyncTooSoon() public {
     // we need to wait at least `BLOCKS_BETWEEN_SYNCS` blocks between syncs
-    dnft.sync();
-    dnft.sync();
+    dnft.sync(99999);
+    dnft.sync(99999);
   }
   function testSync() public {
-    dnft.sync();
+    dnft.sync(99999);
     vm.roll(block.number + BLOCKS_BETWEEN_SYNCS);
-    dnft.sync();
+    dnft.sync(99999);
   }
 }

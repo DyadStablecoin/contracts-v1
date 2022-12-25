@@ -21,6 +21,9 @@ ltt:
 lttt:
 	forge test $(matchFile) $(matchFunction) -vvvv 
 
+gas-report:
+	forge test --gas-report --fork-url $(RPC)
+
 anvil:
 	anvil --fork-url $(RPC) --chain-id 1337 --block-time 5
 
@@ -44,3 +47,6 @@ calc-sync-gas-fees:
 
 read-data:
 	forge script script/ReadData.Goerli.s.sol --fork-url $(GOERLI_RPC)
+
+slither:
+	slither .
