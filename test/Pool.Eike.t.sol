@@ -34,6 +34,8 @@ contract PoolTest is Test, Parameters, Deployment {
 
   CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
 
+  uint blockNumber;
+
   function setUp() public {
     oracle = new OracleMock();
 
@@ -63,6 +65,8 @@ contract PoolTest is Test, Parameters, Deployment {
     stdstore.target(address(dnft)).sig("lastEthPrice()").checked_write(bytes32(uint(1000 * 10**8))); // min xp
     stdstore.target(address(dnft)).sig("minXp()").checked_write(1079); // min xp
     stdstore.target(address(dnft)).sig("maxXp()").checked_write(8000); // max xp
+
+    blockNumber = block.number;
   }
 
   // needed, so we can receive eth transfers
@@ -112,7 +116,11 @@ contract PoolTest is Test, Parameters, Deployment {
     // change new oracle price to something lower so we trigger the burn
     vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(950 * 10**8)));
     uint totalSupplyBefore = dyad.totalSupply();
+
     uint dyadDelta = dnft.sync();
+    blockNumber += BLOCKS_BETWEEN_SYNCS;
+    vm.roll(blockNumber);
+
     // there should be less dyad now after the sync
     assertTrue(totalSupplyBefore > dyad.totalSupply());
     return dyadDelta;
@@ -129,7 +137,12 @@ contract PoolTest is Test, Parameters, Deployment {
   function testSyncBurnWithNegativeDeposit() public {
     // after the setup, nft 0 has negative deposit
     triggerBurn();
+
     dnft.sync();
+    blockNumber += BLOCKS_BETWEEN_SYNCS;
+    vm.roll(blockNumber);
+
+    vm.roll(blockNumber + (1*BLOCKS_BETWEEN_SYNCS));
   }
 
   function testClaim() public {
@@ -163,7 +176,11 @@ contract PoolTest is Test, Parameters, Deployment {
     // change new oracle price to something higher so we trigger the mint
     vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(1100 * 10**8)));
     uint totalSupplyBefore = dyad.totalSupply();
+
     uint dyadDelta = dnft.sync();
+    blockNumber += BLOCKS_BETWEEN_SYNCS;
+    vm.roll(blockNumber);
+
     // there should be more dyad now after the sync
     assertTrue(totalSupplyBefore < dyad.totalSupply());
     return dyadDelta;
@@ -195,5 +212,7 @@ contract PoolTest is Test, Parameters, Deployment {
     // sync now acts on the newly minted nft, which is a very important test, 
     // because the newly minted nft has different index from the old one.
     dnft.sync();
+    blockNumber += BLOCKS_BETWEEN_SYNCS;
+    vm.roll(blockNumber);
   }
 }
