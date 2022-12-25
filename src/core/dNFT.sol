@@ -266,20 +266,17 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   // Sync DYAD. dNFT with `id` gets a boost
   function sync(uint id) public returns (uint) {
     require(block.number >= lastSyncedBlock + BLOCKS_BETWEEN_SYNCS, "dNFT: Too soon to sync");
+
     uint newEthPrice = getLatestEthPrice();
-    // determine the mode we are in
-    Mode mode = newEthPrice > lastEthPrice ? Mode.MINTING 
-                                           : Mode.BURNING;
+    Mode mode        = newEthPrice > lastEthPrice ? Mode.MINTING 
+                                                  : Mode.BURNING;
  
-    // stores the eth price change in basis points
-    uint ethChange = newEthPrice*10000/lastEthPrice;
-    // we have to do this to get the percentage in basis points
-    mode == Mode.BURNING ? ethChange  = 10000 - ethChange 
-                         : ethChange -= 10000;
+    uint ethPriceDelta = newEthPrice*10000/lastEthPrice; 
+    // get `ethPriceDelta` in basis points
+    mode == Mode.BURNING ? ethPriceDelta  = 10000 - ethPriceDelta 
+                         : ethPriceDelta -= 10000;
 
-    // the amount of dyad to burn/mint
-    uint dyadDelta = updateNFTs(ethChange, mode, id);
-
+    uint dyadDelta = updateNFTs(ethPriceDelta, mode, id);
     mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
                          : dyad.burn(dyadDelta);
 
@@ -290,46 +287,39 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   }
 
   function updateNFTs(
-      uint ethChange,
+      uint ethPriceDelta,
       Mode mode,
       uint id
   ) private returns (uint) {
-      // the amount to mint/burn to keep the peg
-      uint dyadDelta = PoolLibrary.percentageOf(dyad.totalSupply(), ethChange);
+      uint dyadDelta = PoolLibrary.percentageOf(dyad.totalSupply(), ethPriceDelta);
 
       Multis memory multis = calcMultis(mode, id);
 
-      // we use these to keep track of the max/min xp values for this sync, 
-      // so we can save them in storage to be used in the next sync.
+      // local min/max xp for this sync call
       uint _minXp = type(uint256).max;
       uint _maxXp = maxXp;
 
+      // so we avoid dividing by 0 
+      if (multis.productsSum == 0) { multis.productsSum = 1; }
+
       uint totalSupply = totalSupply();
       for (uint i = 0; i < totalSupply; ) {
-        uint tokenId = tokenByIndex(i);
-        // multi normalized by the multi sum
-        uint relativeMulti = multis.products[i]*10000 / multis.productsSum;
-        // relative dyad delta for each nft
+        uint tokenId           = tokenByIndex(i);
+        uint relativeMulti     = multis.products[i]*10000 / multis.productsSum;
         uint relativeDyadDelta = PoolLibrary.percentageOf(dyadDelta, relativeMulti);
 
         Nft memory nft = idToNft[tokenId];
 
-        // xp accrual happens only when there is a burn.
         uint xpAccrual;
-        // there can only be xp accrual if deposit is not 0 
         if (mode == Mode.BURNING && nft.deposit > 0) {
-          // normal accrual
           xpAccrual = relativeDyadDelta*100 / (multis.xps[i]);
-          // boost for the address calling this function
           if (id == tokenId) { xpAccrual *= 2; }
         }
 
-        // update memory nft data
         if (mode == Mode.BURNING) {
           nft.deposit -= int(relativeDyadDelta);
-          nft.xp      += xpAccrual/(10**18); // normalize by the dyad decimals
+          nft.xp      += xpAccrual/(10**18); // normalize by 18 decimals
         } else {
-          // NOTE: there is no xp accrual in Mode.MINTING
           nft.deposit += int(relativeDyadDelta);
         }
 
@@ -338,7 +328,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
 
         idToNft[tokenId] = nft;
 
-        // check if this is a new xp minimum/maximum for this sync
+        // check if this is a new local xp minimum/maximum for this sync call
         if (nft.xp < _minXp) { _minXp = nft.xp; }
         if (nft.xp > _maxXp) { _maxXp = nft.xp; }
 
@@ -358,6 +348,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   ) private view returns (Multis memory) {
       uint nftTotalSupply  = totalSupply();
       uint dyadTotalSupply = dyad.totalSupply();
+
       uint productsSum;
       uint[] memory products = new uint[](nftTotalSupply);
       uint[] memory xps      = new uint[](nftTotalSupply);
@@ -378,9 +369,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
         unchecked { ++i; }
       }
 
-      // so we avoid dividing by 0 in `sync`
-      if (productsSum == 0) { productsSum = 1; }
-
       return Multis(products, productsSum, xps);
   }
 
@@ -393,15 +381,21 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint multiProduct; uint xpMulti;     
 
       if (nft.deposit > 0) {
-        uint xpDelta =  maxXp - minXp;
+        uint xpDelta       = maxXp - minXp;
         if (xpDelta == 0) { xpDelta = 1; } // avoid division by 0
-        uint xpScaled = ((nft.xp-minXp)*10000) / xpDelta;
-        uint mintAvgMinted = ((nft.withdrawn+uint(nft.deposit))*10000) / (dyadTotalSupply/(nftTotalSupply+1));
-        if (mode == Mode.BURNING && mintAvgMinted > 20000) { mintAvgMinted = 20000; } // limit to 200%
+        uint xpScaled      = (nft.xp-minXp)*10000 / xpDelta;
+        uint mintedByNft   = nft.withdrawn + uint(nft.deposit);
+        uint avgTvl        = dyadTotalSupply   / nftTotalSupply;
+        uint mintAvgMinted = mintedByNft*10000 / avgTvl;
+        if (mode == Mode.BURNING && mintAvgMinted > 20000) { 
+          mintAvgMinted = 20000; // limit to 200%
+        }
         xpMulti = PoolLibrary.getXpMulti(xpScaled/100);
-        if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } // should be 292: 242+50
-        uint depositMulti = (uint(nft.deposit)*10000) / (uint(nft.deposit)+(nft.withdrawn+1));
-        multiProduct = xpMulti * (mode == Mode.BURNING ? mintAvgMinted : depositMulti) / 100;
+        if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } 
+        uint depositMulti = (uint(nft.deposit)*10000) / (mintedByNft+1);
+        multiProduct      = xpMulti * (mode == Mode.BURNING 
+                            ? mintAvgMinted 
+                            : depositMulti);
       }
 
       return Multi(multiProduct, xpMulti);
