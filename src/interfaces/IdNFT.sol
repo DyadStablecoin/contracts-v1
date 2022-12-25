@@ -41,7 +41,7 @@ interface IdNFT {
    * @dev Will revert:
    *      - If dNFT is not owned by `msg.sender`
    *      - If `amount` is 0
-   *      - If `amount` is > than dNFT's deposit
+   *      - If `amount` is > than dNFT deposit
    *      - If CR is < `MIN_COLLATERIZATION_RATIO` after withdrawl
    *      - If new withdrawl amount of dNFT > average tvl
    *      - If dyad transfer fails
@@ -54,10 +54,61 @@ interface IdNFT {
     uint amount
   ) external returns (uint);
 
-  function deposit(uint id, uint amount) external;
+  /**
+   * @notice Deposit `amount` of DYAD into dNFT
+   * @dev Will revert:
+   *      - If dNFT is not owned by `msg.sender`
+   *      - If `amount` is 0
+   *      - If `amount` is > than dNFT withdrawls
+   *      - If dyad transfer fails
+   * @param id Id of the dNFT
+   * @param amount Amount of DYAD to withdraw
+   * @return amount Amount deposited
+   */
+  function deposit(uint id, uint amount) external returns (uint);
+
+  /**
+   * @notice Redeem `amount` of DYAD for ETH from dNFT
+   * @dev Will revert:
+   *      - If dNFT is not owned by `msg.sender`
+   *      - If `amount` is 0
+   *      - If `amount` is > than dNFT withdrawls
+   * @param id Id of the dNFT
+   * @param amount Amount of DYAD to redeem
+   * @return amount Amount of ETH redeemed
+   */
+  function redeem(uint id, uint amount) external returns (uint);
+
+  /**
+   * @notice Move `amount` `from` one dNFT deposit `to` another dNFT deposit
+   * @dev Will revert:
+   *      - If `from` dNFT is not owned by `msg.sender`
+   *      - If `amount` is 0
+   *      - If `amount` is > than `from` dNFT deposit
+   * @param from Id of the dNFT to move the deposit from
+   * @param to Id of the dNFT to move the deposit to
+   * @param amount Amount of DYAD to move
+   * @return amount Amount of ETH redeemed
+   */
+  function moveDeposit(uint from, uint to, uint amount) external returns (uint);
+
+  /**
+   * @notice Liquidate dNFT by burning it and minting a new copy to `to`. Copies
+   * over the burned dNFT xp and withdrawls. The new dNFT deposit will equivalent
+   * to `msg.value` worth of DYAD.
+   * @dev Will revert:
+   *      - If `to` address is 0
+   *      - If dNFT is not liquidatable
+   *      - If `msg.value` worth of DYAD does not cover deposit of the burned dNFT
+   * @param id Id of the dNFT to move the deposit from
+   * @param to Id of the dNFT to move the deposit to
+   * @return id Id of the newly minted dNFT
+   */
+  function liquidate(uint id, address to) external payable returns (uint);
+
+  function sync(uint id) external returns (uint);
 
   function ownerOf(uint tokenId) external view returns (address);
-  function redeem(uint id, uint amount) external returns (uint);
   function mintCopy(address receiver, IdNFT.Nft memory nft) external payable returns (uint id);
   function burn(uint id) external;
   function balanceOf(uint id) external view returns (int);
@@ -65,8 +116,5 @@ interface IdNFT {
   function idToNft(uint) external view returns (Nft memory);
   function transferFrom(address _from, address _to, uint256 _tokenId) external payable;
   function tokenByIndex(uint index) external returns (uint);
-  function moveDeposit(uint from, uint to, uint amount) external;
-  function sync(uint id) external returns (uint);
-  function liquidate(uint id, address to) external payable returns (uint);
 }
 
