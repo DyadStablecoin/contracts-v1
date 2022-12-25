@@ -74,18 +74,18 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   event NftClaimed   (uint indexed id, address indexed from, address indexed to);
 
   error ReachedMaxSupply      ();
-  error NotNFTOwner           (uint id);
-  error AmountZero            (uint amount);
-  error AddressZero           (address addr);
   error NoEthSupplied         ();
+  error SyncedTooRecently     ();
+  error ExceedsAverageTVL     ();
+  error NotNFTOwner           (uint id);
+  error NotLiquidatable       (uint id);
+  error CrTooLow              (uint cr);
+  error AmountZero            (uint amount);
   error NotReachedMinAmount   (uint amount);
-  error FailedTransfer        (address to, uint amount);
   error ExceedsWithdrawalLimit(uint amount);
   error ExceedsDepositLimit   (uint amount);
-  error NotLiquidatable       (uint id);
-  error SyncedTooRecently     ();
-  error CrTooLow              (uint cr);
-  error ExceedsAverageTVL     ();
+  error AddressZero           (address addr);
+  error FailedTransfer        (address to, uint amount);
 
   modifier onlyNFTOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotNFTOwner(id); _;
