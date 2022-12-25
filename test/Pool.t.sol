@@ -49,4 +49,15 @@ contract PoolTest is Test, Deployment, Parameters, Util {
     }
     dnft.sync();
   }
+
+  function testFailSyncTooSoon() public {
+    // we need to wait at least `BLOCKS_BETWEEN_SYNCS` blocks between syncs
+    dnft.sync();
+    dnft.sync();
+  }
+  function testSync() public {
+    dnft.sync();
+    vm.roll(block.number + BLOCKS_BETWEEN_SYNCS);
+    dnft.sync();
+  }
 }
