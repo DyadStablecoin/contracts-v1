@@ -12,7 +12,6 @@ interface IdNFT {
     // if true the dNFT is open to be liquidatable
     bool isLiquidatable;
   }
-
   
   /**
    * @notice Get dNFT by id
