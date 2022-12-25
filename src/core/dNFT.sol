@@ -73,14 +73,19 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   event Synced       (uint newEthPrice);
   event NftClaimed   (uint indexed id, address indexed from, address indexed to);
 
-  error ReachedMaxSupply();
-  error NotNFTOwner(uint id);
-  error AmountZero(uint amount);
-  error AddressZero(address addr);
-  error NoEthSupplied();
-  error NotReachedMinAmount(uint amount);
-  error FailedTransfer(address to, uint amount);
+  error ReachedMaxSupply      ();
+  error NotNFTOwner           (uint id);
+  error AmountZero            (uint amount);
+  error AddressZero           (address addr);
+  error NoEthSupplied         ();
+  error NotReachedMinAmount   (uint amount);
+  error FailedTransfer        (address to, uint amount);
   error ExceedsWithdrawalLimit(uint amount);
+  error ExceedsDepositLimit   (uint amount);
+  error NotLiquidatable       (uint id);
+  error SyncedTooRecently     ();
+  error CrTooLow              (uint cr);
+  error ExceedsAverageTVL     ();
 
   modifier onlyNFTOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotNFTOwner(id); _;
@@ -199,14 +204,14 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint amount
   ) external nonReentrant() onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
       Nft storage nft = idToNft[id];
-      require(int(amount)  <= nft.deposit,    "dNFT: Withdrawl > deposit");
+      if (int(amount) > nft.deposit) { revert ExceedsDepositLimit(amount); }
       uint updatedBalance  = dyad.balanceOf(address(this)) - amount;
       uint totalWithdrawn  = dyad.totalSupply() - updatedBalance;
       uint cr =  updatedBalance*10000 / totalWithdrawn;      
-      require(cr >= MIN_COLLATERIZATION_RATIO,"dNFT: CR is under 150%"); 
+      if (cr < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(cr); }
       uint newWithdrawn = nft.withdrawn + amount;
       uint averageTVL   = dyad.balanceOf(address(this)) / totalSupply();
-      require(newWithdrawn <= averageTVL,     "dNFT: New Withdrawl > average TVL");
+      if (newWithdrawn > averageTVL) { revert ExceedsAverageTVL(); }
       nft.withdrawn  = newWithdrawn;
       nft.deposit   -= int(amount);
       bool success = dyad.transfer(msg.sender, amount);
@@ -252,7 +257,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint amount
   ) external nonReentrant() onlyNFTOwner(_from) amountNotZero(amount) returns (uint) {
       Nft storage from = idToNft[_from];
-      require(int(amount) <= from.deposit, "dNFT: Amount to move > deposit");
+      if (int(amount) > from.deposit) { revert ExceedsDepositLimit(amount); }
       Nft storage to   = idToNft[_to];
       from.deposit    -= int(amount);
       to.deposit      += int(amount);
@@ -265,7 +270,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       address to
   ) external nonReentrant() addressNotZero(to) payable returns (uint) {
       Nft memory nft = idToNft[id];
-      require(nft.isLiquidatable, "dNFT: NFT is not liquidatable");
+      if (!nft.isLiquidatable) { revert NotLiquidatable(id); }
       emit NftClaimed(id, ownerOf(id), to); 
       _burn(id); 
       return _mintCopy(to, nft);
@@ -274,7 +279,9 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   // Sync by minting/burning DYAD to keep the peg and update each dNFT.
   // dNFT with `id` gets a boost.
   function sync(uint id) nonReentrant() public returns (uint) {
-    require(block.number >= lastSyncedBlock + BLOCKS_BETWEEN_SYNCS, "dNFT: Too soon to sync");
+    if (block.number < lastSyncedBlock + BLOCKS_BETWEEN_SYNCS) { 
+      revert SyncedTooRecently(); 
+    }
 
     lastSyncedBlock  = block.number;
     uint newEthPrice = getLatestEthPrice();
