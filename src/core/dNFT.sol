@@ -345,6 +345,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   ) private view returns (Multis memory) {
       uint nftTotalSupply  = totalSupply();
       uint dyadTotalSupply = dyad.totalSupply();
+
       uint productsSum;
       uint[] memory products = new uint[](nftTotalSupply);
       uint[] memory xps      = new uint[](nftTotalSupply);
