@@ -267,9 +267,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   function sync(uint id) nonReentrant() public returns (uint) {
     require(block.number >= lastSyncedBlock + BLOCKS_BETWEEN_SYNCS, "dNFT: Too soon to sync");
 
-    uint newEthPrice = getLatestEthPrice();
-    lastEthPrice     = newEthPrice;
     lastSyncedBlock  = block.number;
+    uint newEthPrice = getLatestEthPrice();
     Mode mode        = newEthPrice > lastEthPrice ? Mode.MINTING 
                                                   : Mode.BURNING;
  
@@ -281,6 +280,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
     uint dyadDelta = _updateNFTs(ethPriceDelta, mode, id);
     mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
                          : dyad.burn(dyadDelta);
+
+    lastEthPrice = newEthPrice;
 
     emit Synced(newEthPrice);
     return dyadDelta;
