@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "../src/core/Dyad.sol";
-import "../src/core/Pool.sol";
 import "ds-test/test.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
 import {dNFT} from "../src/core/dNFT.sol";
@@ -28,25 +27,25 @@ contract PoolTest is Test, Parameters, Deployment {
   using stdStorage for StdStorage;
 
   DYAD public dyad;
-  Pool public pool;
   IdNFT public dnft;
   OracleMock public oracle;
 
   CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
 
+  uint blockNumber;
+
   function setUp() public {
     oracle = new OracleMock();
 
     address _dnft;
-    address _pool;
     address _dyad;
-    (_dnft,_pool,_dyad) = deploy(address(oracle),
-                                 77 * 10**8, // DEPOSIT_MINIMUM 
-                                 MIN_COLLATERIZATION_RATIO, 
-                                 MAX_SUPPLY,
-                                 new address[](0));
+    (_dnft,_dyad) = deploy(address(oracle),
+                           77 * 10**8, // DEPOSIT_MINIMUM 
+                           BLOCKS_BETWEEN_SYNCS, 
+                           MIN_COLLATERIZATION_RATIO, 
+                           MAX_SUPPLY,
+                           new address[](0));
     dnft = IdNFT(_dnft);
-    pool = Pool(_pool);
     dyad = DYAD(_dyad);
 
     // set oracle price
@@ -62,10 +61,17 @@ contract PoolTest is Test, Parameters, Deployment {
     stdstore.target(address(dnft)).sig("lastEthPrice()").checked_write(bytes32(uint(1000 * 10**8))); // min xp
     stdstore.target(address(dnft)).sig("minXp()").checked_write(1079); // min xp
     stdstore.target(address(dnft)).sig("maxXp()").checked_write(8000); // max xp
+
+    blockNumber = block.number;
   }
 
   // needed, so we can receive eth transfers
   receive() external payable {}
+
+  function moveToNextBlock() public {
+    blockNumber += BLOCKS_BETWEEN_SYNCS;
+    vm.roll(blockNumber);
+  }
 
   // set withdrawn, deposit, xp
   // NOTE: I get a slot error for isClaimable so we do not set it here and 
@@ -111,7 +117,10 @@ contract PoolTest is Test, Parameters, Deployment {
     // change new oracle price to something lower so we trigger the burn
     vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(950 * 10**8)));
     uint totalSupplyBefore = dyad.totalSupply();
+
     uint dyadDelta = dnft.sync();
+    moveToNextBlock();
+
     // there should be less dyad now after the sync
     assertTrue(totalSupplyBefore > dyad.totalSupply());
     return dyadDelta;
@@ -128,7 +137,14 @@ contract PoolTest is Test, Parameters, Deployment {
   function testSyncBurnWithNegativeDeposit() public {
     // after the setup, nft 0 has negative deposit
     triggerBurn();
+
     dnft.sync();
+    moveToNextBlock();
+
+    blockNumber += BLOCKS_BETWEEN_SYNCS;
+    vm.roll(blockNumber);
+
+    vm.roll(blockNumber + (1*BLOCKS_BETWEEN_SYNCS));
   }
 
   function testClaim() public {
@@ -162,7 +178,10 @@ contract PoolTest is Test, Parameters, Deployment {
     // change new oracle price to something higher so we trigger the mint
     vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(1100 * 10**8)));
     uint totalSupplyBefore = dyad.totalSupply();
+
     uint dyadDelta = dnft.sync();
+    moveToNextBlock();
+
     // there should be more dyad now after the sync
     assertTrue(totalSupplyBefore < dyad.totalSupply());
     return dyadDelta;
@@ -194,5 +213,6 @@ contract PoolTest is Test, Parameters, Deployment {
     // sync now acts on the newly minted nft, which is a very important test, 
     // because the newly minted nft has different index from the old one.
     dnft.sync();
+    moveToNextBlock();
   }
 }

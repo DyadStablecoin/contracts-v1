@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {DYAD} from "./Dyad.sol";
-import {Pool} from "./Pool.sol";
 import {PoolLibrary} from "../libraries/PoolLibrary.sol";
 
 struct Nft {
@@ -31,20 +30,26 @@ struct Multis {
 }
 
 contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
-  // Minimum collaterization ratio required, for DYAD to be withdrawn
-  uint public immutable MIN_COLLATERIZATION_RATIO; 
+  // Maximum number of dNFTs that can exist simultaneously
+  uint public immutable MAX_SUPPLY;
 
   // Minimum required to mint a new dNFT
   uint public immutable DEPOSIT_MINIMUM;
 
-  // Maximum number of dNFTs that can exist simultaneously
-  uint public immutable MAX_SUPPLY;
+  // Minimum collaterization ratio required, for DYAD to be withdrawn
+  uint public immutable MIN_COLLATERIZATION_RATIO; 
+
+  // Minimum number of blocks required between sync calls
+  uint public immutable BLOCKS_BETWEEN_SYNCS;
 
   // ETH price from the last sync call
   uint public lastEthPrice;
 
   // Number of dNFTs minted so far
   uint public numberOfMints;
+
+  // Last block, sync was called on
+  uint public lastSyncedBlock;
 
   // Min/Max XP over all dNFTs
   uint public minXp; uint public maxXp;
@@ -53,7 +58,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   mapping(uint => Nft) public idToNft;
 
   DYAD public dyad;
-  Pool public pool;
   IAggregatorV3 internal oracle;
 
   // Protocol can be in two modes:
@@ -82,6 +86,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   constructor(
     address          _dyad,
     uint             _depositMinimum,
+    uint             _blocksBetweenSyncs,
     uint             _minCollaterizationRatio,
     uint             _maxSupply, 
     address          _oracle, 
@@ -92,6 +97,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
     lastEthPrice              = uint(getNewEthPrice());
     MIN_COLLATERIZATION_RATIO = _minCollaterizationRatio;
     DEPOSIT_MINIMUM           = _depositMinimum;
+    BLOCKS_BETWEEN_SYNCS      = _blocksBetweenSyncs;
     MAX_SUPPLY                = _maxSupply;
     minXp                     = _maxSupply;
     maxXp                     = _maxSupply * 2;
@@ -257,6 +263,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
 
   // Sync DYAD. dNFT with `id` gets a boost
   function sync(uint id) public returns (uint) {
+    require(block.number >= lastSyncedBlock + BLOCKS_BETWEEN_SYNCS);
     uint newEthPrice = uint(getNewEthPrice());
     // determine the mode we are in
     Mode mode = newEthPrice > lastEthPrice ? Mode.MINTING 
@@ -274,7 +281,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
     mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
                          : dyad.burn(dyadDelta);
 
-    lastEthPrice = newEthPrice;
+    lastEthPrice    = newEthPrice;
+    lastSyncedBlock = block.number;
     emit Synced(newEthPrice);
     return dyadDelta;
   }

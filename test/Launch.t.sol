@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "../src/core/Dyad.sol";
-import "../src/core/Pool.sol";
 import "ds-test/test.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
 import {dNFT} from "../src/core/dNFT.sol";
@@ -28,7 +27,6 @@ contract LaunchTest is Test, Parameters, Deployment {
 
   IdNFT public dnft;
   DYAD public dyad;
-  Pool public pool;
   OracleMock public oracle;
 
   // --------------------- Test Addresses ---------------------
@@ -41,15 +39,14 @@ contract LaunchTest is Test, Parameters, Deployment {
 
   function setUp() public {
     address _dnft;
-    address _pool;
     address _dyad;
-    (_dnft,_pool,_dyad) = deploy(CHAINLINK_ORACLE_ADDRESS,
+    (_dnft,_dyad) = deploy(CHAINLINK_ORACLE_ADDRESS,
                                  DEPOSIT_MINIMUM,
+                                 BLOCKS_BETWEEN_SYNCS, 
                                  MIN_COLLATERIZATION_RATIO, 
                                  MAX_SUPPLY,
                                  new address[](0));
     dnft = IdNFT(_dnft);
-    pool = Pool(_pool);
     dyad = DYAD(_dyad);
 
     // directly after deployment the total supply has to be the number
@@ -96,7 +93,11 @@ contract LaunchTest is Test, Parameters, Deployment {
   // very self explanatory I think. Do random stuff and see if it breaks.
   // I think you call that fuzzy testing, lol :D
   function testDoRandomStuffAndSync() public {
+    uint currentBlockNumber = block.number;
+    uint numberOfSyncCalls  = 0;
+
     dnft.sync();
+    numberOfSyncCalls += 1;
 
     // mint nfts
     uint id1 = dnft.mintNft{value: 5 ether}(address(this));
@@ -111,7 +112,9 @@ contract LaunchTest is Test, Parameters, Deployment {
     uint id6 = dnft.mintNft{value: 8 ether}(address(this));
     uint id7 = dnft.mintNft{value: 5 ether}(address(this));
 
+    vm.roll(currentBlockNumber + (numberOfSyncCalls*BLOCKS_BETWEEN_SYNCS));
     dnft.sync();
+    numberOfSyncCalls += 1;
 
     // do some withdraws
     dnft.withdraw(id1, 2 ether);
@@ -127,7 +130,9 @@ contract LaunchTest is Test, Parameters, Deployment {
     dnft.withdraw(id6, 2 ether);
     dnft.withdraw(id7, 4444444444444);
 
+    vm.roll(currentBlockNumber + (numberOfSyncCalls*BLOCKS_BETWEEN_SYNCS));
     dnft.sync();
+    numberOfSyncCalls += 1;
 
     // do some deposits
     dyad.approve(address(dnft), 5 ether);
@@ -138,7 +143,11 @@ contract LaunchTest is Test, Parameters, Deployment {
     vm.prank(addr2);
     dnft.deposit(id4, 1000);
 
-    for(uint i = 0; i < 4; i++) { dnft.sync(); }
+    for(uint i = 0; i < 4; i++) { 
+      vm.roll(currentBlockNumber + (numberOfSyncCalls*BLOCKS_BETWEEN_SYNCS));
+      dnft.sync();
+      numberOfSyncCalls += 1;
+    }
 
     // do some redeems
     dyad.approve(address(dnft), 5 ether);
@@ -146,6 +155,10 @@ contract LaunchTest is Test, Parameters, Deployment {
     dnft.redeem(id1, 100000202);
     dnft.redeem(id1, 3000000202);
 
-    for(uint i = 0; i < 4; i++) { dnft.sync(); }
+    for(uint i = 0; i < 4; i++) { 
+      vm.roll(currentBlockNumber + (numberOfSyncCalls*BLOCKS_BETWEEN_SYNCS));
+      dnft.sync();
+      numberOfSyncCalls += 1;
+    }
   }
 }

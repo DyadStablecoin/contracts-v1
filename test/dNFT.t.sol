@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "../src/core/Dyad.sol";
-import "../src/core/Pool.sol";
 import "ds-test/test.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
 import {dNFT} from "../src/core/dNFT.sol";
@@ -21,7 +20,6 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
 
   IdNFT public dnft;
   DYAD public dyad;
-  Pool public pool;
   OracleMock public oracle;
 
   function setUp() public {
@@ -29,26 +27,19 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
     setOraclePrice(oracle, ORACLE_PRICE); 
 
     address _dnft;
-    address _pool;
     address _dyad;
-    (_dnft,_pool,_dyad) = deploy(address(oracle),
+    (_dnft,_dyad) = deploy(address(oracle),
                                  DEPOSIT_MINIMUM_MAINNET,
+                                 BLOCKS_BETWEEN_SYNCS, 
                                  MIN_COLLATERIZATION_RATIO, 
                                  MAX_SUPPLY,
                                  new address[](0));
     dnft = IdNFT(_dnft);
-    pool = Pool(_pool);
     dyad = DYAD(_dyad);
   }
 
   // needed, so we can receive eth transfers
   receive() external payable {}
-
-  function testFailSetPoolOnlyOnce() public {
-    // you can only set the pool once. As it was already set in the setUp function
-    // this should fail.
-    dnft.setPool(address(this));
-  }
 
   // --------------------- Nft Mint ---------------------
   function testMintOneNft() public {

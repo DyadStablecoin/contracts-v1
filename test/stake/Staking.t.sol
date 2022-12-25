@@ -10,7 +10,6 @@ import {dNFT} from "../../src/core/dNFT.sol";
 import {PoolLibrary} from "../../src/libraries/PoolLibrary.sol";
 import {OracleMock} from "./../Oracle.t.sol";
 import "../../src/core/Dyad.sol";
-import "../../src/core/Pool.sol";
 import {Deployment} from "../../script/Deployment.sol";
 import {Parameters} from "../../script/Parameters.sol";
 import {Staking, Position} from "../../src/stake/Staking.sol";
@@ -28,7 +27,6 @@ contract StakeTest is Test, Deployment, Parameters {
   OracleMock public oracle;
   IdNFT public dnft;
   DYAD public dyad;
-  Pool public pool;
   Staking public staking;
   CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
   address public addr1;
@@ -42,16 +40,16 @@ contract StakeTest is Test, Deployment, Parameters {
 
     setOraclePrice(ORACLE_PRICE);
 
-    address _dnft; address _pool; address _dyad;
-    (_dnft, _pool, _dyad) = new Deployment().deploy(address(oracle),
+    address _dnft; address _dyad;
+    (_dnft, _dyad) = new Deployment().deploy(address(oracle),
                                                     DEPOSIT_MINIMUM,
+                                                    BLOCKS_BETWEEN_SYNCS, 
                                                     MIN_COLLATERIZATION_RATIO, 
                                                     MAX_SUPPLY,
                                                     INSIDERS);
 
     dyad = DYAD(_dyad);
     dnft = IdNFT(_dnft);
-    pool = Pool(_pool);
     staking = new Staking(_dnft, _dyad);
 
     addr1 = cheats.addr(1);

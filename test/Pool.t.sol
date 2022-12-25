@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "../src/core/Dyad.sol";
-import "../src/core/Pool.sol";
 import "ds-test/test.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
 import {dNFT, Nft} from "../src/core/dNFT.sol";
@@ -19,7 +18,6 @@ uint constant ORACLE_PRICE = 120000000000; // $1.2k
 contract PoolTest is Test, Deployment, Parameters, Util {
   IdNFT public dnft;
   DYAD public dyad;
-  Pool public pool;
   OracleMock public oracle;
 
   function setUp() public {
@@ -27,15 +25,14 @@ contract PoolTest is Test, Deployment, Parameters, Util {
     setOraclePrice(oracle, ORACLE_PRICE); 
 
     address _dnft;
-    address _pool;
     address _dyad;
-    (_dnft,_pool,_dyad) = deploy(address(oracle),
+    (_dnft,_dyad) = deploy(address(oracle),
                                  DEPOSIT_MINIMUM_MAINNET,
+                                 BLOCKS_BETWEEN_SYNCS, 
                                  MIN_COLLATERIZATION_RATIO, 
                                  MAX_SUPPLY,
                                  new address[](0));
     dnft = IdNFT(_dnft);
-    pool = Pool(_pool);
     dyad = DYAD(_dyad);
   }
 
@@ -46,6 +43,17 @@ contract PoolTest is Test, Deployment, Parameters, Util {
     for (uint i = 0; i < MAX_SUPPLY; i++) {
       dnft.mintNft{value: 5 ether}(address(this));
     }
+    dnft.sync();
+  }
+
+  function testFailSyncTooSoon() public {
+    // we need to wait at least `BLOCKS_BETWEEN_SYNCS` blocks between syncs
+    dnft.sync();
+    dnft.sync();
+  }
+  function testSync() public {
+    dnft.sync();
+    vm.roll(block.number + BLOCKS_BETWEEN_SYNCS);
     dnft.sync();
   }
 }
