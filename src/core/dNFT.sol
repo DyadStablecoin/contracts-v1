@@ -287,46 +287,36 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   }
 
   function updateNFTs(
-      uint ethChange,
+      uint ethPriceDelta,
       Mode mode,
       uint id
   ) private returns (uint) {
-      // the amount to mint/burn to keep the peg
-      uint dyadDelta = PoolLibrary.percentageOf(dyad.totalSupply(), ethChange);
+      uint dyadDelta = PoolLibrary.percentageOf(dyad.totalSupply(), ethPriceDelta);
 
       Multis memory multis = calcMultis(mode, id);
 
-      // we use these to keep track of the max/min xp values for this sync, 
-      // so we can save them in storage to be used in the next sync.
+      // local min/max xp for this sync call
       uint _minXp = type(uint256).max;
       uint _maxXp = maxXp;
 
       uint totalSupply = totalSupply();
       for (uint i = 0; i < totalSupply; ) {
-        uint tokenId = tokenByIndex(i);
-        // multi normalized by the multi sum
-        uint relativeMulti = multis.products[i]*10000 / multis.productsSum;
-        // relative dyad delta for each nft
+        uint tokenId           = tokenByIndex(i);
+        uint relativeMulti     = multis.products[i]*10000 / multis.productsSum;
         uint relativeDyadDelta = PoolLibrary.percentageOf(dyadDelta, relativeMulti);
 
         Nft memory nft = idToNft[tokenId];
 
-        // xp accrual happens only when there is a burn.
         uint xpAccrual;
-        // there can only be xp accrual if deposit is not 0 
         if (mode == Mode.BURNING && nft.deposit > 0) {
-          // normal accrual
           xpAccrual = relativeDyadDelta*100 / (multis.xps[i]);
-          // boost for the address calling this function
           if (id == tokenId) { xpAccrual *= 2; }
         }
 
-        // update memory nft data
         if (mode == Mode.BURNING) {
           nft.deposit -= int(relativeDyadDelta);
-          nft.xp      += xpAccrual/(10**18); // normalize by the dyad decimals
+          nft.xp      += xpAccrual/(10**18); // normalize by 18 decimals
         } else {
-          // NOTE: there is no xp accrual in Mode.MINTING
           nft.deposit += int(relativeDyadDelta);
         }
 
@@ -335,7 +325,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
 
         idToNft[tokenId] = nft;
 
-        // check if this is a new xp minimum/maximum for this sync
+        // check if this is a new local xp minimum/maximum for this sync call
         if (nft.xp < _minXp) { _minXp = nft.xp; }
         if (nft.xp > _maxXp) { _maxXp = nft.xp; }
 
