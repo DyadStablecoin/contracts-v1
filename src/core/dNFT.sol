@@ -73,9 +73,13 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   event Synced       (uint newEthPrice);
   event NftClaimed   (uint indexed id, address indexed from, address indexed to);
 
+  error ReachedMaxSupply();
   error NotNFTOwner(uint id);
   error AmountZero(uint amount);
   error AddressZero(address addr);
+  error NoEthSupplied();
+  error NotReachedMinAmount(uint amount);
+  error FailedTransfer(address to, uint amount);
 
   modifier onlyNFTOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotNFTOwner(id); _;
@@ -158,7 +162,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
 
   // Mint new dNFT to `to`
   function _mintNft(address to) private returns (uint id) {
-    require(totalSupply() < MAX_SUPPLY, "Max supply reached");
+    if (totalSupply() >= MAX_SUPPLY) { revert ReachedMaxSupply(); }
     id = numberOfMints;
     numberOfMints += 1;
     _mint(to, id); 
@@ -179,9 +183,9 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint id,
       uint minAmount
   ) private returns (uint) {
-      require(msg.value > 0, "dNFT: msg.value == 0");
+      if (msg.value == 0) { revert NoEthSupplied(); }
       uint newDyad = getLatestEthPrice() * msg.value/100000000;
-      require(newDyad >= minAmount, "Pool: newDyad < minAmount");
+      if (newDyad < minAmount) { revert NotReachedMinAmount(newDyad); }
       dyad.mint(address(this), newDyad);
       idToNft[id].deposit += int(newDyad);
       emit DyadMinted(msg.sender, id, newDyad);
@@ -205,7 +209,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       nft.withdrawn  = newWithdrawn;
       nft.deposit   -= int(amount);
       bool success = dyad.transfer(msg.sender, amount);
-      require(success);
+      if (!success) { revert FailedTransfer(msg.sender, amount); }
       emit DyadWithdrawn(msg.sender, id, amount);
       return amount;
   }
@@ -220,7 +224,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       nft.deposit   += int(amount);
       nft.withdrawn -= amount;
       bool success = dyad.transferFrom(msg.sender, address(this), amount);
-      require(success);
+      if (!success) { revert FailedTransfer(address(this), amount); }
       emit DyadDeposited(msg.sender, id, amount);
       return amount;
   }
