@@ -9,8 +9,19 @@ interface IdNFT {
     int deposit;      
     // always positive, always inflationary
     uint xp;          
+    // if true the dNFT is open to be liquidatable
     bool isLiquidatable;
   }
+
+  
+  /**
+   * @notice Get dNFT by id
+   * @param id dNFT id
+   * @return dNFT 
+   */
+  function idToNft(
+    uint id
+  ) external view returns (Nft memory);
 
   /**
    * @notice Mint a new dNFT
@@ -106,15 +117,20 @@ interface IdNFT {
    */
   function liquidate(uint id, address to) external payable returns (uint);
 
+  /**
+   * @notice Sync by minting/burning DYAD to keep the peg and update each dNFT.
+   * @dev Will revert:
+   *      - If sync was called too soon after the last sync call
+   * @param id Id of the dNFT that gets a boost
+   * @return id The amount of DYAD minted/burned
+   */
   function sync(uint id) external returns (uint);
 
   function ownerOf(uint tokenId) external view returns (address);
-  function mintCopy(address receiver, IdNFT.Nft memory nft) external payable returns (uint id);
-  function burn(uint id) external;
   function balanceOf(uint id) external view returns (int);
   function totalSupply() external view returns (uint);
-  function idToNft(uint) external view returns (Nft memory);
   function transferFrom(address _from, address _to, uint256 _tokenId) external payable;
   function tokenByIndex(uint index) external returns (uint);
+  function burn(uint id) external;
 }
 
