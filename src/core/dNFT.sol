@@ -80,6 +80,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   error NoEthSupplied();
   error NotReachedMinAmount(uint amount);
   error FailedTransfer(address to, uint amount);
+  error ExceedsWithdrawalLimit(uint amount);
 
   modifier onlyNFTOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotNFTOwner(id); _;
@@ -220,7 +221,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint amount
   ) external nonReentrant() amountNotZero(amount) returns (uint) {
       Nft storage nft = idToNft[id];
-      require(amount <= nft.withdrawn, "dNFT: Deposit > withdrawn");
+      if (amount > nft.withdrawn) { revert ExceedsWithdrawalLimit(amount); }
       nft.deposit   += int(amount);
       nft.withdrawn -= amount;
       bool success = dyad.transferFrom(msg.sender, address(this), amount);
@@ -235,7 +236,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint amount
   ) external nonReentrant() onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
       Nft storage nft = idToNft[id];
-      require(amount <= nft.withdrawn, "dNFT: Amount to redeem > withdrawn");
+      if (amount > nft.withdrawn) { revert ExceedsWithdrawalLimit(amount); }
       nft.withdrawn -= amount;
       dyad.burn(amount);
       uint eth = amount*100000000 / lastEthPrice;
