@@ -126,11 +126,16 @@ interface IdNFT {
    */
   function sync(uint id) external returns (uint);
 
+  // ERC721
   function ownerOf(uint tokenId) external view returns (address);
   function balanceOf(uint id) external view returns (int);
   function totalSupply() external view returns (uint);
   function transferFrom(address _from, address _to, uint256 _tokenId) external payable;
+
+  // ERC721Enumerable
   function tokenByIndex(uint index) external returns (uint);
+
+  // ERC721Burnable
   function burn(uint id) external;
 }
 
