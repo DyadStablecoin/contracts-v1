@@ -94,7 +94,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   ) ERC721("DYAD NFT", "dNFT") {
     dyad                      = DYAD(_dyad);
     oracle                    = IAggregatorV3(_oracle);
-    lastEthPrice              = uint(getNewEthPrice());
+    lastEthPrice              = getLatestEthPrice();
     MIN_COLLATERIZATION_RATIO = _minCollaterizationRatio;
     DEPOSIT_MINIMUM           = _depositMinimum;
     BLOCKS_BETWEEN_SYNCS      = _blocksBetweenSyncs;
@@ -105,8 +105,10 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
     for (uint i = 0; i < _insiders.length; i++) { _mintNft(_insiders[i]); }
   }
 
-  function getNewEthPrice() internal view returns (int newEthPrice) {
-    ( , newEthPrice, , , ) = oracle.latestRoundData();
+  // ETH price in USD
+  function getLatestEthPrice() internal view returns (uint) {
+    ( , int newEthPrice, , , ) = oracle.latestRoundData();
+    return uint(newEthPrice);
   }
 
   // The following functions are overrides required by Solidity.
@@ -174,7 +176,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint minAmount
   ) private returns (uint) {
       require(msg.value > 0, "dNFT: msg.value == 0");
-      uint newDyad = uint(getNewEthPrice()) * msg.value/100000000;
+      uint newDyad = getLatestEthPrice() * msg.value/100000000;
       require(newDyad >= minAmount, "Pool: newDyad < minAmount");
       dyad.mint(address(this), newDyad);
       idToNft[id].deposit += int(newDyad);
@@ -258,13 +260,13 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       return _mintCopy(to, nft);
   }
 
-  // Sync DYAD by minting/burning it and updating the metadata of each dNFT
+  // Sync by minting/burning DYAD to keep the peg and update each dNFT
   function sync() external returns (uint) { return sync(type(uint256).max); }
 
   // Sync DYAD. dNFT with `id` gets a boost
   function sync(uint id) public returns (uint) {
-    require(block.number >= lastSyncedBlock + BLOCKS_BETWEEN_SYNCS);
-    uint newEthPrice = uint(getNewEthPrice());
+    require(block.number >= lastSyncedBlock + BLOCKS_BETWEEN_SYNCS, "dNFT: Too soon to sync");
+    uint newEthPrice = getLatestEthPrice();
     // determine the mode we are in
     Mode mode = newEthPrice > lastEthPrice ? Mode.MINTING 
                                            : Mode.BURNING;
