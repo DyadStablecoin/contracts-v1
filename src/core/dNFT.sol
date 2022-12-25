@@ -200,7 +200,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       require(newWithdrawn <= averageTVL,     "dNFT: New Withdrawl > average TVL");
       nft.withdrawn  = newWithdrawn;
       nft.deposit   -= int(amount);
-      dyad.transfer(msg.sender, amount);
+      bool success = dyad.transfer(msg.sender, amount);
+      require(success);
       emit DyadWithdrawn(msg.sender, id, amount);
       return amount;
   }
@@ -214,7 +215,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       require(amount <= nft.withdrawn, "dNFT: Deposit > withdrawn");
       nft.deposit   += int(amount);
       nft.withdrawn -= amount;
-      dyad.transferFrom(msg.sender, address(this), amount);
+      bool success = dyad.transferFrom(msg.sender, address(this), amount);
+      require(success);
       emit DyadDeposited(msg.sender, id, amount);
       return amount;
   }
@@ -264,7 +266,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   function sync() external returns (uint) { return sync(type(uint256).max); }
 
   // Sync DYAD. dNFT with `id` gets a boost
-  function sync(uint id) public returns (uint) {
+  function sync(uint id) nonReentrant() public returns (uint) {
     require(block.number >= lastSyncedBlock + BLOCKS_BETWEEN_SYNCS, "dNFT: Too soon to sync");
 
     uint newEthPrice = getLatestEthPrice();

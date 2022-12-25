@@ -21,6 +21,9 @@ ltt:
 lttt:
 	forge test $(matchFile) $(matchFunction) -vvvv 
 
+gas-report:
+	forge test --gas-report --fork-url $(RPC)
+
 anvil:
 	anvil --fork-url $(RPC) --chain-id 1337 --block-time 5
 
