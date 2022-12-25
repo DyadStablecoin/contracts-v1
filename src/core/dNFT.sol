@@ -398,6 +398,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
                             : depositMulti);
       }
 
-      return Multi(multiProduct/100, xpMulti);
+      return Multi(multiProduct, xpMulti);
   }
 }
