@@ -383,21 +383,21 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       if (nft.deposit > 0) {
         uint xpDelta       = maxXp - minXp;
         if (xpDelta == 0) { xpDelta = 1; } // avoid division by 0
-        uint xpScaled      = ((nft.xp-minXp)                   *10000) / xpDelta;
-        uint mintAvgMinted = ((nft.withdrawn+uint(nft.deposit))*10000) / (dyadTotalSupply/(nftTotalSupply+1));
+        uint xpScaled      = (nft.xp-minXp)*10000 / xpDelta;
+        uint mintedByNft   = nft.withdrawn + uint(nft.deposit);
+        uint avgTvl        = dyadTotalSupply   / nftTotalSupply;
+        uint mintAvgMinted = mintedByNft*10000 / avgTvl;
         if (mode == Mode.BURNING && mintAvgMinted > 20000) { 
           mintAvgMinted = 20000; // limit to 200%
         }
         xpMulti = PoolLibrary.getXpMulti(xpScaled/100);
-        if (mode == Mode.BURNING) {
-          xpMulti = 300-xpMulti;
-        } 
-        uint depositMulti = (uint(nft.deposit)*10000) / (uint(nft.deposit)+(nft.withdrawn+1));
-        multiProduct = xpMulti * (mode == Mode.BURNING 
-          ? mintAvgMinted 
-          : depositMulti) / 100;
+        if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } 
+        uint depositMulti = (uint(nft.deposit)*10000) / (mintedByNft+1);
+        multiProduct      = xpMulti * (mode == Mode.BURNING 
+                            ? mintAvgMinted 
+                            : depositMulti);
       }
 
-      return Multi(multiProduct, xpMulti);
+      return Multi(multiProduct/100, xpMulti);
   }
 }
