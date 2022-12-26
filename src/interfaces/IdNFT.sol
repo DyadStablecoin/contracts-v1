@@ -106,6 +106,7 @@ interface IdNFT {
    * @notice Liquidate dNFT by burning it and minting a new copy to `to`. Copies
    * over the burned dNFT xp and withdrawls. The new dNFT deposit will equivalent
    * to `msg.value` worth of DYAD.
+   * @dev Deletes the state of the dNFT being liquidated
    * @dev Will revert:
    *      - If `to` address is 0
    *      - If dNFT is not liquidatable
