@@ -162,12 +162,14 @@ contract PoolTest is Test, Parameters, Deployment {
     // least 135 is needed.
     dnft.liquidate{value: 140000000000000000}(0, address(this));
 
+    IdNFT.Nft memory liquidatedNft = dnft.idToNft(0);
+
     // 150000000000000000 wei is $142 in this scenario, which is enough to liquidate
     uint id = dnft.liquidate{value: 150000000000000000}(0, address(this));
 
     // lets check that all the metadata moved from the burned nft to the newly minted one
-    assertEq(dnft.idToNft(0).xp,        dnft.idToNft(id).xp);
-    assertEq(dnft.idToNft(0).withdrawn, dnft.idToNft(id).withdrawn);
+    assertEq(liquidatedNft.xp,        dnft.idToNft(id).xp);
+    assertEq(liquidatedNft.withdrawn, dnft.idToNft(id).withdrawn);
 
     // dnft 1 has a positive deposit, and therfore is not claimable
     vm.expectRevert();

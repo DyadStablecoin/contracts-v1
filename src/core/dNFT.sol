@@ -274,6 +274,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       if (!nft.isLiquidatable) { revert NotLiquidatable(id); }
       emit NftClaimed(id, ownerOf(id), to); 
       _burn(id); 
+      delete idToNft[id];
       return _mintCopy(to, nft);
   }
 
