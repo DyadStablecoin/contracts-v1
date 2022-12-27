@@ -316,7 +316,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       Mode mode,
       uint id
   ) private returns (uint) {
-      uint dyadDelta = percentageOf(dyad.totalSupply(), ethPriceDelta);
+      uint dyadDelta = _percentageOf(dyad.totalSupply(), ethPriceDelta);
 
       Multis memory multis = _calcMultis(mode, id);
 
@@ -331,7 +331,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       for (uint i = 0; i < totalSupply; ) {
         uint tokenId           = tokenByIndex(i);
         uint relativeMulti     = multis.products[i]*10000 / multis.productsSum;
-        uint relativeDyadDelta = percentageOf(dyadDelta, relativeMulti);
+        uint relativeDyadDelta = _percentageOf(dyadDelta, relativeMulti);
 
         Nft memory nft = idToNft[tokenId];
 
@@ -384,7 +384,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
         Multi memory multi = _calcMulti(mode, nft, nftTotalSupply, dyadTotalSupply);
 
         if (mode == Mode.MINTING && id == tokenId) { 
-          multi.product += percentageOf(multi.product, 1500); 
+          multi.product += _percentageOf(multi.product, 1500); 
         }
 
         products[i]  = multi.product;
@@ -415,7 +415,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
         if (mode == Mode.BURNING && mintAvgMinted > 20000) { 
           mintAvgMinted = 20000; // limit to 200%
         }
-        xpMulti = getXpMulti(xpScaled/100);
+        xpMulti = _getXpMulti(xpScaled/100);
         if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } 
         uint depositMulti = (uint(nft.deposit)*10000) / (mintedByNft+1);
         multiProduct      = xpMulti * (mode == Mode.BURNING 
@@ -426,12 +426,12 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       return Multi(multiProduct, xpMulti);
   }
 
-  function percentageOf(uint x, uint basisPoints) internal pure returns (uint) {
-    // NOTE: if x*basisPoints < 10_000 -> returns 0
-    return x*basisPoints/10000;
-  }
+  function _percentageOf(
+    uint x,
+    uint basisPoints
+  ) internal pure returns (uint) { return x*basisPoints/10000; }
 
-  function getXpMulti(uint xp) internal view returns (uint) {
+  function _getXpMulti(uint xp) internal view returns (uint) {
     // xp is like an index which maps exactly to one value in the table. That is why
     // xp must be uint and between 0 and 100.
     if (xp < 0 || xp > 100) { revert XpOutOfRange(xp); }
