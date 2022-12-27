@@ -27,7 +27,7 @@ contract CalculateSyncGasCosts is Script, Parameters {
       dnft.mintNft{value: 5 ether}(address(this));
     }
     uint g1 = gasleft();
-    dnft.sync(99999);
+    dnft.sync(0);
     console.log("gas used: ", g1 - gasleft());
   }
 }

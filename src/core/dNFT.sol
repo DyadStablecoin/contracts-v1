@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {DYAD} from "./Dyad.sol";
-import {PoolLibrary} from "../libraries/PoolLibrary.sol";
 
 struct Nft {
   uint withdrawn; // dyad withdrawn from the pool deposit
@@ -54,6 +53,12 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   // Min/Max XP over all dNFTs
   uint public minXp; uint public maxXp;
 
+  uint8[40]  XP_TABLE = [51,  51,  51,  51,  52,  53,  53,  54,  55,
+                         57,  58,  60,  63,  66,  69,  74,  79,  85,
+                         92,  99,  108, 118, 128, 139, 150, 160, 171,
+                         181, 191, 200, 207, 214, 220, 225, 230, 233,
+                         236, 239, 241, 242];
+
   // dNFT id => dNFT
   mapping(uint => Nft) public idToNft;
 
@@ -86,6 +91,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   error ExceedsDepositLimit   (uint amount);
   error AddressZero           (address addr);
   error FailedTransfer        (address to, uint amount);
+  error XpOutOfRange          (uint xp);
 
   modifier onlyNFTOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotNFTOwner(id); _;
@@ -310,7 +316,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       Mode mode,
       uint id
   ) private returns (uint) {
-      uint dyadDelta = PoolLibrary.percentageOf(dyad.totalSupply(), ethPriceDelta);
+      uint dyadDelta = percentageOf(dyad.totalSupply(), ethPriceDelta);
 
       Multis memory multis = _calcMultis(mode, id);
 
@@ -325,7 +331,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       for (uint i = 0; i < totalSupply; ) {
         uint tokenId           = tokenByIndex(i);
         uint relativeMulti     = multis.products[i]*10000 / multis.productsSum;
-        uint relativeDyadDelta = PoolLibrary.percentageOf(dyadDelta, relativeMulti);
+        uint relativeDyadDelta = percentageOf(dyadDelta, relativeMulti);
 
         Nft memory nft = idToNft[tokenId];
 
@@ -378,7 +384,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
         Multi memory multi = _calcMulti(mode, nft, nftTotalSupply, dyadTotalSupply);
 
         if (mode == Mode.MINTING && id == tokenId) { 
-          multi.product += PoolLibrary.percentageOf(multi.product, 1500); 
+          multi.product += percentageOf(multi.product, 1500); 
         }
 
         products[i]  = multi.product;
@@ -409,7 +415,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
         if (mode == Mode.BURNING && mintAvgMinted > 20000) { 
           mintAvgMinted = 20000; // limit to 200%
         }
-        xpMulti = PoolLibrary.getXpMulti(xpScaled/100);
+        xpMulti = getXpMulti(xpScaled/100);
         if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } 
         uint depositMulti = (uint(nft.deposit)*10000) / (mintedByNft+1);
         multiProduct      = xpMulti * (mode == Mode.BURNING 
@@ -418,5 +424,22 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       }
 
       return Multi(multiProduct, xpMulti);
+  }
+
+  function percentageOf(uint x, uint basisPoints) internal pure returns (uint) {
+    // NOTE: if x*basisPoints < 10_000 -> returns 0
+    return x*basisPoints/10000;
+  }
+
+  function getXpMulti(uint xp) internal view returns (uint) {
+    // xp is like an index which maps exactly to one value in the table. That is why
+    // xp must be uint and between 0 and 100.
+    if (xp < 0 || xp > 100) { revert XpOutOfRange(xp); }
+
+    // why 61?, because:
+    // the first 61 values in the table are all 50, which means we do not need 
+    // to store them in the table, but can do this compression.
+    // But we need to subtract 61 in the else statement to get the correct lookup.
+    if (xp < 61) { return 50; } else { return XP_TABLE[xp - 61]; }
   }
 }
