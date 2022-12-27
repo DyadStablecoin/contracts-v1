@@ -7,7 +7,6 @@ import "../src/core/Dyad.sol";
 import "ds-test/test.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
 import {dNFT, Nft} from "../src/core/dNFT.sol";
-import {PoolLibrary} from "../src/libraries/PoolLibrary.sol";
 import {OracleMock} from "./Oracle.t.sol";
 import {Deployment} from "../script/Deployment.sol";
 import {Parameters} from "../script/Parameters.sol";
