@@ -120,7 +120,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
     BLOCKS_BETWEEN_SYNCS      = _blocksBetweenSyncs;
     MAX_SUPPLY                = _maxSupply;
     minXp                     = _maxSupply;
-    maxXp                     = _maxSupply * 2;
+    maxXp                     = _maxSupply << 1;
 
     for (uint i = 0; i < _insiders.length; i++) { _mintNft(_insiders[i]); }
   }
@@ -179,7 +179,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
     numberOfMints += 1;
     _mint(to, id); 
     Nft storage nft = idToNft[id];
-    nft.xp = (MAX_SUPPLY*2) - (totalSupply()-1); // break xp symmetry
+    nft.xp = (MAX_SUPPLY<<1) - (totalSupply()-1); // break xp symmetry
     emit NftMinted(to, id);
   }
 
