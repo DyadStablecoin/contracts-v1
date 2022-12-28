@@ -120,7 +120,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
     BLOCKS_BETWEEN_SYNCS      = _blocksBetweenSyncs;
     MAX_SUPPLY                = _maxSupply;
     minXp                     = _maxSupply;
-    maxXp                     = _maxSupply * 2;
+    maxXp                     = _maxSupply << 1;
 
     for (uint i = 0; i < _insiders.length; i++) { _mintNft(_insiders[i]); }
   }
@@ -179,7 +179,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
     numberOfMints += 1;
     _mint(to, id); 
     Nft storage nft = idToNft[id];
-    nft.xp = (MAX_SUPPLY*2) - (totalSupply()-1); // break xp symmetry
+    nft.xp = (MAX_SUPPLY<<1) - (totalSupply()-1); // break xp symmetry
     emit NftMinted(to, id);
   }
 
@@ -301,7 +301,53 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
     mode == Mode.BURNING ? ethPriceDelta  = 10000 - ethPriceDelta 
                          : ethPriceDelta -= 10000;
 
-    uint dyadDelta = _updateNFTs(ethPriceDelta, mode, id);
+    uint dyadDelta = _percentageOf(dyad.totalSupply(), ethPriceDelta);
+
+    Multis memory multis = _calcMultis(mode, id);
+
+    // local min/max xp for this sync call
+    uint _minXp = type(uint256).max;
+    uint _maxXp = maxXp;
+
+    // so we avoid dividing by 0 
+    if (multis.productsSum == 0) { multis.productsSum = 1; }
+
+    uint totalSupply = totalSupply();
+    for (uint i = 0; i < totalSupply; ) {
+      uint tokenId           = tokenByIndex(i);
+      uint relativeMulti     = multis.products[i]*10000 / multis.productsSum;
+      uint relativeDyadDelta = _percentageOf(dyadDelta, relativeMulti);
+
+      Nft memory nft = idToNft[tokenId];
+
+      uint xpAccrual;
+      if (mode == Mode.BURNING && nft.deposit > 0) {
+        xpAccrual = relativeDyadDelta*100 / (multis.xps[i]);
+        if (id == tokenId) { xpAccrual *= 2; }
+      }
+
+      if (mode == Mode.BURNING) {
+        nft.deposit -= int(relativeDyadDelta);
+        nft.xp      += xpAccrual/(10**18); // normalize by 18 decimals
+      } else {
+        nft.deposit += int(relativeDyadDelta);
+      }
+
+      nft.deposit < 0 ? nft.isLiquidatable = true 
+                      : nft.isLiquidatable = false;
+
+      idToNft[tokenId] = nft;
+
+      // check if this is a new local xp minimum/maximum for this sync call
+      if (nft.xp < _minXp) { _minXp = nft.xp; }
+      if (nft.xp > _maxXp) { _maxXp = nft.xp; }
+
+      unchecked { ++i; }
+    }
+
+    // save new min/max xp in storage
+    minXp = _minXp;
+    maxXp = _maxXp;
 
     if (dyadDelta > 0) {
       mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 

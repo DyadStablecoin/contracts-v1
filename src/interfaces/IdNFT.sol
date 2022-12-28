@@ -126,6 +126,10 @@ interface IdNFT {
    */
   function sync(uint id) external returns (uint);
 
+  // get global min/max XP
+  function maxXp() external view returns (uint);
+  function minXp() external view returns (uint);
+
   // ERC721
   function ownerOf(uint tokenId) external view returns (address);
   function balanceOf(uint id) external view returns (int);
