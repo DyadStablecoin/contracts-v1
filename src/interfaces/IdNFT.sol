@@ -94,6 +94,7 @@ interface IdNFT {
    * @dev Will revert:
    *      - If `from` dNFT is not owned by `msg.sender`
    *      - If `amount` is 0
+   *      - If `from` == `to`
    *      - If `amount` is > than `from` dNFT deposit
    * @param from Id of the dNFT to move the deposit from
    * @param to Id of the dNFT to move the deposit to
