@@ -8,15 +8,10 @@ contract OracleMock {
   // 95000000  -> - 5%
   // 110000000 -> +10%
   // 100000000 -> +-0%
-  int public price = 0;
+  uint public price = 0;
 
-  function latestRoundData() public view returns (
-      uint80 roundId,
-      int256 answer,
-      uint256 startedAt,
-      uint256 updatedAt,
-      uint80 answeredInRound
-    ) {
-      return (1, price, 1, 1, 1);  
-    }
+  function fetchPrice() external view returns (uint)  {
+
+    return price;
+  }
 }

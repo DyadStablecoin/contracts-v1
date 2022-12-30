@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
+import {IPriceFeed} from "../interfaces/IPriceFeed.sol";
 import {DYAD} from "./Dyad.sol";
 
 struct Nft {
@@ -63,7 +63,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   mapping(uint => Nft) public idToNft;
 
   DYAD public dyad;
-  IAggregatorV3 internal oracle;
+  IPriceFeed internal oracle;
 
   // Protocol can be in two modes:
   // - BURNING: Price of ETH went down
@@ -114,7 +114,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
     address[] memory _insiders
   ) ERC721("DYAD NFT", "dNFT") {
     dyad                      = DYAD(_dyad);
-    oracle                    = IAggregatorV3(_oracle);
+    oracle                    = IPriceFeed(_oracle);
     lastEthPrice              = _getLatestEthPrice();
     MIN_COLLATERIZATION_RATIO = _minCollaterizationRatio;
     DEPOSIT_MINIMUM           = _depositMinimum;
@@ -127,9 +127,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   }
 
   // ETH price in USD
-  function _getLatestEthPrice() internal view returns (uint) {
-    ( , int newEthPrice, , , ) = oracle.latestRoundData();
-    return uint(newEthPrice);
+  function _getLatestEthPrice() internal returns (uint) {
+    return oracle.fetchPrice();
   }
 
   // The following functions are overrides required by Solidity.

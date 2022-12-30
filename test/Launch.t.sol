@@ -16,7 +16,7 @@ interface CheatCodes {
    function addr(uint256) external returns (address);
 }
 
-address constant CHAINLINK_ORACLE_ADDRESS = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
+address constant CHAINLINK_TELLOR_FALLBACK = 0x4c517D4e2C851CA76d7eC94B805269Df0f2201De;
 uint constant DEPOSIT_MINIMUM = 5000000000000000000000;
 
 // this should simulate the inital lauch on mainnet
@@ -39,7 +39,7 @@ contract LaunchTest is Test, Parameters, Deployment {
   function setUp() public {
     address _dnft;
     address _dyad;
-    (_dnft,_dyad) = deploy(CHAINLINK_ORACLE_ADDRESS,
+    (_dnft,_dyad) = deploy(CHAINLINK_TELLOR_FALLBACK,
                                  DEPOSIT_MINIMUM,
                                  BLOCKS_BETWEEN_SYNCS, 
                                  MIN_COLLATERIZATION_RATIO, 
