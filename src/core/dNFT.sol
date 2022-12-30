@@ -78,20 +78,21 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   event Synced       (uint newEthPrice);
   event NftLiquidated(uint indexed id, address indexed from, address indexed to);
 
-  error ReachedMaxSupply      ();
-  error NoEthSupplied         ();
-  error SyncedTooRecently     ();
-  error ExceedsAverageTVL     ();
-  error NotNFTOwner           (uint id);
-  error NotLiquidatable       (uint id);
-  error CrTooLow              (uint cr);
-  error AmountZero            (uint amount);
-  error NotReachedMinAmount   (uint amount);
-  error ExceedsWithdrawalLimit(uint amount);
-  error ExceedsDepositLimit   (uint amount);
-  error AddressZero           (address addr);
-  error FailedTransfer        (address to, uint amount);
-  error XpOutOfRange          (uint xp);
+  error ReachedMaxSupply       ();
+  error NoEthSupplied          ();
+  error SyncedTooRecently      ();
+  error ExceedsAverageTVL      ();
+  error NotNFTOwner            (uint id);
+  error NotLiquidatable        (uint id);
+  error CrTooLow               (uint cr);
+  error AmountZero             (uint amount);
+  error NotReachedMinAmount    (uint amount);
+  error ExceedsWithdrawalLimit (uint amount);
+  error ExceedsDepositLimit    (uint amount);
+  error AddressZero            (address addr);
+  error FailedTransfer         (address to, uint amount);
+  error XpOutOfRange           (uint xp);
+  error CannotMoveDepositToSelf(uint from, uint to, uint amount);
 
   modifier onlyNFTOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotNFTOwner(id); _;
@@ -263,6 +264,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint _to,
       uint amount
   ) external nonReentrant() onlyNFTOwner(_from) amountNotZero(amount) returns (uint) {
+      if (_from == _to) { revert CannotMoveDepositToSelf(_from, _to, amount); }
       Nft storage from = idToNft[_from];
       if (int(amount) > from.deposit) { revert ExceedsDepositLimit(amount); }
       Nft storage to   = idToNft[_to];
