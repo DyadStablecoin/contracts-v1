@@ -75,8 +75,9 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   event DyadWithdrawn(address indexed to, uint indexed id, uint amount);
   event DyadDeposited(address indexed to, uint indexed id, uint amount);
   event DyadRedeemed (address indexed to, uint indexed id, uint amount);
+  event DyadMoved    (uint    indexed from, uint    indexed to, uint amount);
+  event NftLiquidated(address indexed from, address indexed to, uint indexed id);
   event Synced       (uint newEthPrice);
-  event NftLiquidated(uint indexed id, address indexed from, address indexed to);
 
   error ReachedMaxSupply       ();
   error NoEthSupplied          ();
@@ -270,6 +271,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       Nft storage to   = idToNft[_to];
       from.deposit    -= int(amount);
       to.deposit      += int(amount);
+      emit DyadMoved(_from, _to, amount);
       return amount;
   }
 
@@ -280,7 +282,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   ) external nonReentrant() addressNotZero(to) payable returns (uint) {
       Nft memory nft = idToNft[id];
       if (!nft.isLiquidatable) { revert NotLiquidatable(id); }
-      emit NftLiquidated(id, ownerOf(id), to); 
+      emit NftLiquidated(ownerOf(id), to,  id); 
       _burn(id); 
       delete idToNft[id];
       return _mintCopy(to, nft);
