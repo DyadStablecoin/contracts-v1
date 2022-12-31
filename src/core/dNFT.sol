@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {DYAD} from "./Dyad.sol";
@@ -29,6 +30,8 @@ struct Multis {
 }
 
 contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
+  using Counters for Counters.Counter;
+
   // Maximum number of dNFTs that can exist simultaneously
   uint public immutable MAX_SUPPLY;
 
@@ -45,7 +48,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   uint public lastEthPrice;
 
   // Number of dNFTs minted so far
-  uint public numberOfMints;
+  Counters.Counter public tokenIdCounter;
 
   // Last block, sync was called on
   uint public lastSyncedBlock;
@@ -177,8 +180,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   // Mint new dNFT to `to`
   function _mintNft(address to) private returns (uint id) {
     if (totalSupply() >= MAX_SUPPLY) { revert ReachedMaxSupply(); }
-    id = numberOfMints;
-    numberOfMints += 1;
+    id = tokenIdCounter.current();
+    tokenIdCounter.increment();
     _mint(to, id); 
     Nft storage nft = idToNft[id];
     nft.xp = (MAX_SUPPLY<<1) - (totalSupply()-1); // break xp symmetry
