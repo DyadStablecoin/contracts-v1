@@ -422,8 +422,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
         uint mintedByNft   = nft.withdrawn + uint(nft.deposit);
         uint avgTvl        = dyadTotalSupply   / nftTotalSupply;
         uint mintAvgMinted = mintedByNft*10000 / avgTvl;
-        if (mode == Mode.BURNING && mintAvgMinted > 20000) { 
-          mintAvgMinted = 20000; // limit to 200%
+        if (mode == Mode.BURNING && mintAvgMinted > 50000) { 
+          mintAvgMinted = 50000; // limit to 500%
         }
         xpMulti = _getXpMulti(xpScaled/100);
         if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } 
