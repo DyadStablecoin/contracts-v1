@@ -44,6 +44,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   // Minimum number of blocks required between sync calls
   uint public immutable BLOCKS_BETWEEN_SYNCS;
 
+  uint private constant MIN_AVG_LIMIT = 50000; // 500%
+
   // ETH price from the last sync call
   uint public lastEthPrice;
 
@@ -422,8 +424,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
         uint mintedByNft   = nft.withdrawn + uint(nft.deposit);
         uint avgTvl        = dyadTotalSupply   / nftTotalSupply;
         uint mintAvgMinted = mintedByNft*10000 / avgTvl;
-        if (mode == Mode.BURNING && mintAvgMinted > 20000) { 
-          mintAvgMinted = 20000; // limit to 200%
+        if (mode == Mode.BURNING && mintAvgMinted > MIN_AVG_LIMIT) { 
+          mintAvgMinted = MIN_AVG_LIMIT;
         }
         xpMulti = _getXpMulti(xpScaled/100);
         if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } 
