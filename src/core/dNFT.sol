@@ -44,6 +44,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   // Minimum number of blocks required between sync calls
   uint public immutable BLOCKS_BETWEEN_SYNCS;
 
+  uint private constant MIN_AVG_LIMIT = 50000; // 500%
 
   // ETH price from the last sync call
   uint public lastEthPrice;
@@ -68,8 +69,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
 
   DYAD public dyad;
   IAggregatorV3 internal oracle;
-
-  uint private constant MIN_AVG_LIMIT = 50000; // 500%
 
   // Protocol can be in two modes:
   // - BURNING: Price of ETH went down
