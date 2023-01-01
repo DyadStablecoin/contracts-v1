@@ -44,6 +44,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   // Minimum number of blocks required between sync calls
   uint public immutable BLOCKS_BETWEEN_SYNCS;
 
+
   // ETH price from the last sync call
   uint public lastEthPrice;
 
@@ -67,6 +68,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
 
   DYAD public dyad;
   IAggregatorV3 internal oracle;
+
+  uint private constant MIN_AVG_LIMIT = 50000; // 500%
 
   // Protocol can be in two modes:
   // - BURNING: Price of ETH went down
@@ -422,8 +425,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
         uint mintedByNft   = nft.withdrawn + uint(nft.deposit);
         uint avgTvl        = dyadTotalSupply   / nftTotalSupply;
         uint mintAvgMinted = mintedByNft*10000 / avgTvl;
-        if (mode == Mode.BURNING && mintAvgMinted > 50000) { 
-          mintAvgMinted = 50000; // limit to 500%
+        if (mode == Mode.BURNING && mintAvgMinted > MIN_AVG_LIMIT) { 
+          mintAvgMinted = MIN_AVG_LIMIT;
         }
         xpMulti = _getXpMulti(xpScaled/100);
         if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } 
