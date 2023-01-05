@@ -131,7 +131,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
     BLOCKS_BETWEEN_SYNCS      = _blocksBetweenSyncs;
     MAX_SUPPLY                = _maxSupply;
     minXp                     = _maxSupply;
-    maxXp                     = _maxSupply << 1;
+    maxXp                     = _maxSupply << 1; // *2
 
     for (uint i = 0; i < _insiders.length; i++) { _mintNft(_insiders[i]); }
   }
