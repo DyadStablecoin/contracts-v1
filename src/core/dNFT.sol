@@ -5,6 +5,8 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {DYAD} from "./Dyad.sol";
@@ -30,7 +32,9 @@ struct Multis {
 }
 
 contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
-  using Counters for Counters.Counter;
+  using SafeCast   for int256;
+  using SignedMath for int256;
+  using Counters   for Counters.Counter;
 
   // Maximum number of dNFTs that can exist simultaneously
   uint public immutable MAX_SUPPLY;
@@ -127,7 +131,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
     BLOCKS_BETWEEN_SYNCS      = _blocksBetweenSyncs;
     MAX_SUPPLY                = _maxSupply;
     minXp                     = _maxSupply;
-    maxXp                     = _maxSupply << 1;
+    maxXp                     = _maxSupply << 1; // *2
 
     for (uint i = 0; i < _insiders.length; i++) { _mintNft(_insiders[i]); }
   }
@@ -135,7 +139,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   // ETH price in USD
   function _getLatestEthPrice() internal view returns (uint) {
     ( , int newEthPrice, , , ) = oracle.latestRoundData();
-    return uint(newEthPrice);
+    return newEthPrice.toUint256();
   }
 
   // The following functions are overrides required by Solidity.
@@ -170,8 +174,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   ) internal returns (uint) { 
       uint id = _mintNft(to);
       Nft storage newNft = idToNft[id];
-      uint minDeposit = 0;
-      if (nft.deposit < 0) { minDeposit = uint(-nft.deposit); }
+      uint minDeposit;
+      if (nft.deposit < 0) { minDeposit = nft.deposit.abs(); }
       uint amount = _mintDyad(id, minDeposit);
       newNft.deposit   = int(amount) + nft.deposit;
       newNft.xp        = nft.xp;
@@ -421,7 +425,9 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
         uint xpDelta       = maxXp - minXp;
         if (xpDelta == 0) { xpDelta = 1; } // avoid division by 0
         uint xpScaled      = (nft.xp-minXp)*10000 / xpDelta;
-        uint mintedByNft   = nft.withdrawn + uint(nft.deposit);
+        uint _deposit;
+        if (nft.deposit > 0) { _deposit = nft.deposit.toUint256(); }
+        uint mintedByNft   = nft.withdrawn + _deposit;
         uint avgTvl        = dyadTotalSupply   / nftTotalSupply;
         uint mintAvgMinted = mintedByNft*10000 / avgTvl;
         if (mode == Mode.BURNING && mintAvgMinted > MIN_AVG_LIMIT) { 
@@ -429,7 +435,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
         }
         xpMulti = _getXpMulti(xpScaled/100);
         if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } 
-        uint depositMulti = (uint(nft.deposit)*10000) / (mintedByNft+1);
+        uint depositMulti = (_deposit*10000) / (mintedByNft+1);
         multiProduct      = xpMulti * (mode == Mode.BURNING 
                             ? mintAvgMinted 
                             : depositMulti);
