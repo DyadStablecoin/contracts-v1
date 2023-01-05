@@ -86,7 +86,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   event DyadRedeemed (address indexed to, uint indexed id, uint amount);
   event DyadMoved    (uint    indexed from, uint    indexed to, uint amount);
   event NftLiquidated(address indexed from, address indexed to, uint indexed id);
-  event Synced       (uint newEthPrice);
+  event Synced       (uint id);
 
   error ReachedMaxSupply       ();
   error NoEthSupplied          ();
@@ -323,7 +323,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
 
     lastEthPrice = newEthPrice;
 
-    emit Synced(newEthPrice);
+    emit Synced(id);
     return dyadDelta;
   }
 
