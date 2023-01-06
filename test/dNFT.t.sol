@@ -118,6 +118,11 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
     assertEq(dnft.idToNft(0).withdrawn, AMOUNT_TO_WITHDRAW);
     assertEq(dnft.idToNft(0).deposit, int(ORACLE_PRICE*60000000000-AMOUNT_TO_WITHDRAW));
   }
+  function testFailBurnNotdNftContract() public {
+    uint tokenId = dnft.mintNft{value: 5 ether}(address(this));
+    dnft.withdraw(tokenId, 7000000);
+    dyad.burn(50);
+  }
   function testFailWithdrawDyadNotNftOwner() public {
     dnft.mintNft{value: 5 ether}(address(this));
     vm.prank(address(0));

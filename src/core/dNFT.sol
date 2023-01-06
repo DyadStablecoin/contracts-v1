@@ -210,7 +210,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint newDyad = _getLatestEthPrice() * msg.value/100000000;
       if (newDyad == 0)        { revert AmountZero(newDyad); }
       if (newDyad < minAmount) { revert NotReachedMinAmount(newDyad); }
-      dyad.mint(address(this), newDyad);
+      dyad.mint(newDyad);
       idToNft[id].deposit += int(newDyad);
       emit DyadMinted(msg.sender, id, newDyad);
       return newDyad;
@@ -317,7 +317,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
     uint dyadDelta = _updateNFTs(ethPriceDelta, mode, id);
 
     if (dyadDelta > 0) {
-      mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
+      mode == Mode.MINTING ? dyad.mint(dyadDelta) 
                            : dyad.burn(dyadDelta);
     }
 
