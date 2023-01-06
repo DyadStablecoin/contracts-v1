@@ -39,12 +39,15 @@ contract LaunchTest is Test, Parameters, Deployment {
   function setUp() public {
     address _dnft;
     address _dyad;
-    (_dnft,_dyad) = deploy(CHAINLINK_ORACLE_ADDRESS,
-                                 DEPOSIT_MINIMUM,
-                                 BLOCKS_BETWEEN_SYNCS, 
-                                 MIN_COLLATERIZATION_RATIO, 
-                                 MAX_SUPPLY,
-                                 new address[](0));
+    (_dnft,_dyad) = deploy(
+      DEPOSIT_MINIMUM,
+      MAX_SUPPLY,
+      BLOCKS_BETWEEN_SYNCS, 
+      MIN_COLLATERIZATION_RATIO, 
+      MAX_MINTED_BY_TVL, 
+      CHAINLINK_ORACLE_ADDRESS,
+      new address[](0)
+    );
     dnft = IdNFT(_dnft);
     dyad = DYAD(_dyad);
 

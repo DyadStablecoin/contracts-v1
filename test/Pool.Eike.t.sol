@@ -38,12 +38,15 @@ contract PoolTest is Test, Parameters, Deployment {
 
     address _dnft;
     address _dyad;
-    (_dnft,_dyad) = deploy(address(oracle),
-                           77 * 10**8, // DEPOSIT_MINIMUM 
-                           BLOCKS_BETWEEN_SYNCS, 
-                           MIN_COLLATERIZATION_RATIO, 
-                           MAX_SUPPLY,
-                           new address[](0));
+    (_dnft,_dyad) = deploy(
+      77 * 10**8, // DEPOSIT_MINIMUM 
+      MAX_SUPPLY,
+      BLOCKS_BETWEEN_SYNCS, 
+      MIN_COLLATERIZATION_RATIO, 
+      MAX_MINTED_BY_TVL,
+      address(oracle),
+      new address[](0)
+    );
     dnft = IdNFT(_dnft);
     dyad = DYAD(_dyad);
 

@@ -8,11 +8,14 @@ import {Parameters} from "./Parameters.sol";
 // Run on a local mainnet fork
 contract DeployMainnet is Script, Parameters {
    function run() public {
-      new Deployment().deploy(ORACLE_MAINNET,
-                              DEPOSIT_MINIMUM_MAINNET,
-                              BLOCKS_BETWEEN_SYNCS, 
-                              MIN_COLLATERIZATION_RATIO, 
-                              MAX_SUPPLY,
-                              INSIDERS);
+      new Deployment().deploy(
+        DEPOSIT_MINIMUM_MAINNET,
+        MAX_SUPPLY,
+        BLOCKS_BETWEEN_SYNCS,
+        MIN_COLLATERIZATION_RATIO,
+        MAX_MINTED_BY_TVL,
+        ORACLE_MAINNET,
+        INSIDERS
+      ); 
    }
 }

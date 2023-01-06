@@ -8,20 +8,24 @@ import "../src/core/Dyad.sol";
 import {Parameters} from "../script/Parameters.sol";
 
 contract Deployment is Script {
-  function deploy(address oracle,
-                  uint depositMinimum,
-                  uint blocksBetweenSyncs, 
-                  uint minCollaterizationRatio, 
-                  uint maxSupply,
-                  address[] memory insiders) public returns (address, address) {
+  function deploy(
+    uint depositMinimum,
+    uint maxSupply,
+    uint blocksBetweenSyncs,
+    uint minCollaterizationRatio,
+    uint maxMintedByTVL,
+    address oracle,
+    address[] memory insiders
+  ) public returns (address, address) {
     vm.startBroadcast();
     DYAD dyad = new DYAD();
 
     dNFT _dnft = new dNFT(address(dyad),
                           depositMinimum,
+                          maxSupply,
                           blocksBetweenSyncs, 
                           minCollaterizationRatio,
-                          maxSupply,
+                          maxMintedByTVL, 
                           oracle,
                           insiders);
 
