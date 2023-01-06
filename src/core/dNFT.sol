@@ -73,7 +73,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   // dNFT id => dNFT
   mapping(uint => Nft) public idToNft;
 
-  // Map dNFT id to the last block that deposit was called on.
+  // dNFT id => Block that deposit was called on
   // Needed to avoid deposit + withdraw in the same block, which enables
   // different flash loan attacks.
   mapping(uint => uint) private _idToBlockOfLastDeposit;
