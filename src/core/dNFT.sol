@@ -259,8 +259,8 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       nft.withdrawn -= amount;
       dyad.burn(msg.sender, amount);
       uint eth = amount*100000000 / lastEthPrice;
-      (bool sent, ) = payable(msg.sender).call{value: eth}("");
-      if (!sent) { revert FailedEthTransfer(msg.sender, eth); }
+      (bool success, ) = payable(msg.sender).call{value: eth}("");
+      if (!success) { revert FailedEthTransfer(msg.sender, eth); }
       emit DyadRedeemed(msg.sender, id, amount);
       return eth;
   }
