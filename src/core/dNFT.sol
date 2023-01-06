@@ -128,7 +128,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
 
   // ETH price in USD
   function _getLatestEthPrice() internal returns (uint) {
-    return oracle.fetchPrice();
+    return oracle.fetchPrice() / 1e10; //account for difference in expected sig digs
   }
 
   // The following functions are overrides required by Solidity.
