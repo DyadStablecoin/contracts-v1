@@ -73,6 +73,11 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   // dNFT id => dNFT
   mapping(uint => Nft) public idToNft;
 
+  // Map dNFT id to the last block that deposit was called on.
+  // Needed to avoid deposit+withdraw in the same block, which enables
+  // different flash loan attacks.
+  mapping(uint => uint) public idToBlockOfLastDeposit;
+
   DYAD public dyad;
   IAggregatorV3 internal oracle;
 
@@ -106,6 +111,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   error FailedEthTransfer      (address to, uint amount);
   error XpOutOfRange           (uint xp);
   error CannotMoveDepositToSelf(uint from, uint to, uint amount);
+  error CannotDepositAndWithdrawInSameBlock();
 
   modifier onlyNFTOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotNFTOwner(id); _;
@@ -226,6 +232,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint id,
       uint amount
   ) external onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
+      if (idToBlockOfLastDeposit[id] == block.number) { revert CannotDepositAndWithdrawInSameBlock(); }
       Nft storage nft = idToNft[id];
       if (amount.toInt256() > nft.deposit) { revert ExceedsDepositLimit(amount); }
       uint updatedBalance  = dyad.balanceOf(address(this)) - amount;
@@ -248,6 +255,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint id, 
       uint amount
   ) external amountNotZero(amount) returns (uint) {
+      idToBlockOfLastDeposit[id] = block.number;
       Nft storage nft = idToNft[id];
       if (amount > nft.withdrawn) { revert ExceedsWithdrawalLimit(amount); }
       nft.deposit   += amount.toInt256();

@@ -156,6 +156,8 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
     dnft.withdraw(0, 2 ether);
     // this returns the CR to over 150%, which enables withdrawls again
     dnft.deposit(0, AMOUNT);
+    // we can not deposit+withdraw in same block
+    vm.roll(block.number + 1);
     dnft.withdraw(0, 2 ether);
   }
 
@@ -170,6 +172,16 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
     dnft.deposit (0, AMOUNT_TO_DEPOSIT);
     assertEq(dnft.idToNft(0).withdrawn, 0);
     assertEq(dnft.idToNft(0).deposit, int(ORACLE_PRICE*50000000000));
+  }
+  function testFailDepositAndWithdrawInSameBlock() public {
+    uint AMOUNT_TO_DEPOSIT = 7000000;
+    dnft.mintNft{value: 5 ether}(address(this));
+    // withdraw dyad -> so we have something to deposit
+    dnft.withdraw(0, AMOUNT_TO_DEPOSIT);
+    // we need to approve the dnft contract to spend our dyad
+    dyad.approve(address(dnft), AMOUNT_TO_DEPOSIT);
+    dnft.deposit (0, AMOUNT_TO_DEPOSIT);
+    dnft.withdraw(0, 1);
   }
   function testFailDepositDyadNotNftOwner() public {
     dnft.mintNft{value: 5 ether}(address(this));
