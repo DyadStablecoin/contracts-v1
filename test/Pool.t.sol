@@ -6,7 +6,7 @@ import "forge-std/console.sol";
 import "../src/core/Dyad.sol";
 import "ds-test/test.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
-import {dNFT, Nft} from "../src/core/dNFT.sol";
+import {dNFT} from "../src/core/dNFT.sol";
 import {OracleMock} from "./Oracle.t.sol";
 import {Deployment} from "../script/Deployment.sol";
 import {Parameters} from "../script/Parameters.sol";
