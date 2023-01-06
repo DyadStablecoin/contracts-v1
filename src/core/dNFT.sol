@@ -65,12 +65,6 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     bool isLiquidatable;
   }
 
-  // Convenient way to store the ouptput of the `calcMulti` function
-  struct Multi {
-    uint product;
-    uint xp;
-  }
-
   // Convenient way to store the ouptput of the `calcMultis` function
   struct Multis {
     uint[] products;
@@ -395,15 +389,15 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       for (uint i = 0; i < nftTotalSupply; ) {
         uint tokenId = tokenByIndex(i);
         Nft   memory nft   = idToNft[tokenId];
-        Multi memory multi = _calcMulti(mode, nft, nftTotalSupply, dyadTotalSupply);
+        (uint product, uint xp) = _calcMulti(mode, nft, nftTotalSupply, dyadTotalSupply);
 
         if (mode == Mode.MINTING && id == tokenId) { 
-          multi.product += _percentageOf(multi.product, 1500); 
+          product += _percentageOf(product, 1500); 
         }
 
-        products[i]  = multi.product;
-        productsSum += multi.product;
-        xps[i]       = multi.xp;
+        products[i]  = product;
+        productsSum += product;
+        xps[i]       = xp;
 
         unchecked { ++i; }
       }
@@ -416,7 +410,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       Nft memory nft,
       uint nftTotalSupply,
       uint dyadTotalSupply
-  ) private view returns (Multi memory) {
+  ) private view returns (uint, uint) {
       uint multiProduct; uint xpMulti;     
 
       if (nft.deposit > 0) {
@@ -439,7 +433,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
                             : depositMulti);
       }
 
-      return Multi(multiProduct, xpMulti);
+      return (multiProduct, xpMulti);
   }
 
   function _percentageOf(
