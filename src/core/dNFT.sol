@@ -10,26 +10,6 @@ import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {DYAD} from "./Dyad.sol";
 
-struct Nft {
-  uint withdrawn; // dyad withdrawn from the pool deposit
-  int deposit;    // dyad balance in pool
-  uint xp;        // always positive, always inflationary
-  bool isLiquidatable;
-}
-
-// Convenient way to store the ouptput of the `calcMulti` function
-struct Multi {
-  uint product;
-  uint xp;
-}
-
-// Convenient way to store the ouptput of the `calcMultis` function
-struct Multis {
-  uint[] products;
-  uint   productsSum; // sum of the elements in `productsSum`
-  uint[] xps;         
-}
-
 contract dNFT is ERC721Enumerable, ReentrancyGuard {
   using SafeCast   for int256;
   using SafeCast   for uint256;
@@ -76,6 +56,27 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   // Needed to avoid deposit + withdraw in the same block, which enables
   // different flash loan attacks.
   mapping(uint => uint) private _idToBlockOfLastDeposit;
+
+  // dNFT metadata
+  struct Nft {
+    uint withdrawn; // dyad withdrawn from the pool deposit
+    int deposit;    // dyad balance in pool
+    uint xp;        // always positive, always inflationary
+    bool isLiquidatable;
+  }
+
+  // Convenient way to store the ouptput of the `calcMulti` function
+  struct Multi {
+    uint product;
+    uint xp;
+  }
+
+  // Convenient way to store the ouptput of the `calcMultis` function
+  struct Multis {
+    uint[] products;
+    uint   productsSum; // sum of the elements in `productsSum`
+    uint[] xps;         
+  }
 
   DYAD public dyad;
   IAggregatorV3 internal oracle;
