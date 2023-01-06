@@ -33,6 +33,7 @@ struct Multis {
 
 contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   using SafeCast   for int256;
+  using SafeCast   for uint256;
   using SignedMath for int256;
   using Counters   for Counters.Counter;
 
@@ -177,7 +178,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint minDeposit;
       if (nft.deposit < 0) { minDeposit = nft.deposit.abs(); }
       uint amount = _mintDyad(id, minDeposit);
-      newNft.deposit   = int(amount) + nft.deposit;
+      newNft.deposit   = amount.toInt256() + nft.deposit;
       newNft.xp        = nft.xp;
       newNft.withdrawn = nft.withdrawn;
       return id;
@@ -211,7 +212,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       if (newDyad == 0)        { revert AmountZero(newDyad); }
       if (newDyad < minAmount) { revert NotReachedMinAmount(newDyad); }
       dyad.mint(newDyad);
-      idToNft[id].deposit += int(newDyad);
+      idToNft[id].deposit += newDyad.toInt256();
       emit DyadMinted(msg.sender, id, newDyad);
       return newDyad;
   }
@@ -222,7 +223,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint amount
   ) external nonReentrant() onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
       Nft storage nft = idToNft[id];
-      if (int(amount) > nft.deposit) { revert ExceedsDepositLimit(amount); }
+      if (amount.toInt256() > nft.deposit) { revert ExceedsDepositLimit(amount); }
       uint updatedBalance  = dyad.balanceOf(address(this)) - amount;
       uint totalWithdrawn  = dyad.totalSupply() - updatedBalance;
       uint cr =  updatedBalance*10000 / totalWithdrawn;      
@@ -231,7 +232,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint averageTVL   = dyad.balanceOf(address(this)) / totalSupply();
       if (newWithdrawn > averageTVL) { revert ExceedsAverageTVL(); }
       nft.withdrawn  = newWithdrawn;
-      nft.deposit   -= int(amount);
+      nft.deposit   -= amount.toInt256();
       bool success = dyad.transfer(msg.sender, amount);
       if (!success) { revert FailedTransfer(msg.sender, amount); }
       emit DyadWithdrawn(msg.sender, id, amount);
@@ -242,10 +243,10 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   function deposit(
       uint id, 
       uint amount
-  ) external nonReentrant() amountNotZero(amount) returns (uint) {
+  ) public nonReentrant() amountNotZero(amount) returns (uint) {
       Nft storage nft = idToNft[id];
       if (amount > nft.withdrawn) { revert ExceedsWithdrawalLimit(amount); }
-      nft.deposit   += int(amount);
+      nft.deposit   += amount.toInt256();
       nft.withdrawn -= amount;
       bool success = dyad.transferFrom(msg.sender, address(this), amount);
       if (!success) { revert FailedTransfer(address(this), amount); }
@@ -257,10 +258,10 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   function redeem(
       uint id,
       uint amount
-  ) external nonReentrant() onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
+  ) external onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
       Nft storage nft = idToNft[id];
-      if (amount > nft.withdrawn) { revert ExceedsWithdrawalLimit(amount); }
-      nft.withdrawn -= amount;
+      deposit(id, amount);
+      nft.deposit -= amount.toInt256();
       dyad.burn(amount);
       uint eth = amount*100000000 / lastEthPrice;
       payable(msg.sender).transfer(eth);
@@ -276,10 +277,10 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   ) external nonReentrant() onlyNFTOwner(_from) amountNotZero(amount) returns (uint) {
       if (_from == _to) { revert CannotMoveDepositToSelf(_from, _to, amount); }
       Nft storage from = idToNft[_from];
-      if (int(amount) > from.deposit) { revert ExceedsDepositLimit(amount); }
+      if (amount.toInt256() > from.deposit) { revert ExceedsDepositLimit(amount); }
       Nft storage to   = idToNft[_to];
-      from.deposit    -= int(amount);
-      to.deposit      += int(amount);
+      from.deposit    -= amount.toInt256();
+      to.deposit      += amount.toInt256();
       emit DyadMoved(_from, _to, amount);
       return amount;
   }
@@ -358,10 +359,10 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
         }
 
         if (mode == Mode.BURNING) {
-          nft.deposit -= int(relativeDyadDelta);
+          nft.deposit -= relativeDyadDelta.toInt256();
           nft.xp      += xpAccrual/(10**18); // normalize by 18 decimals
         } else {
-          nft.deposit += int(relativeDyadDelta);
+          nft.deposit += relativeDyadDelta.toInt256();
         }
 
         nft.deposit < 0 ? nft.isLiquidatable = true 
