@@ -65,13 +65,6 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     bool isLiquidatable;
   }
 
-  // Convenient way to store the ouptput of the `calcMultis` function
-  struct Multis {
-    uint[] products;
-    uint   productsSum; // sum of the elements in `productsSum`
-    uint[] xps;         
-  }
-
   DYAD public dyad;
   IAggregatorV3 internal oracle;
 
@@ -326,26 +319,26 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   ) private returns (uint) {
       uint dyadDelta = _percentageOf(dyad.totalSupply(), ethPriceDelta);
 
-      Multis memory multis = _calcMultis(mode, id);
+      (uint[] memory products, uint productsSum, uint[] memory xps) = _calcMultis(mode, id);
 
       // local min/max xp for this sync call
       uint _minXp = type(uint256).max;
       uint _maxXp = maxXp;
 
       // so we avoid dividing by 0 
-      if (multis.productsSum == 0) { multis.productsSum = 1; }
+      if (productsSum == 0) { productsSum = 1; }
 
       uint totalSupply = totalSupply();
       for (uint i = 0; i < totalSupply; ) {
         uint tokenId           = tokenByIndex(i);
-        uint relativeMulti     = multis.products[i]*10000 / multis.productsSum;
+        uint relativeMulti     = products[i]*10000 / productsSum;
         uint relativeDyadDelta = _percentageOf(dyadDelta, relativeMulti);
 
         Nft memory nft = idToNft[tokenId];
 
         uint xpAccrual;
         if (mode == Mode.BURNING && nft.deposit > 0) {
-          xpAccrual = relativeDyadDelta*100 / (multis.xps[i]);
+          xpAccrual = relativeDyadDelta*100 / (xps[i]);
           if (id == tokenId) { xpAccrual *= 2; }
         }
 
@@ -378,7 +371,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   function _calcMultis(
       Mode mode,
       uint id
-  ) private view returns (Multis memory) {
+  ) private view returns (uint[] memory, uint, uint[] memory) {
       uint nftTotalSupply  = totalSupply();
       uint dyadTotalSupply = dyad.totalSupply();
 
@@ -402,7 +395,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
         unchecked { ++i; }
       }
 
-      return Multis(products, productsSum, xps);
+      return (products, productsSum, xps);
   }
 
   function _calcMulti(
