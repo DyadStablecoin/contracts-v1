@@ -6,7 +6,7 @@ libs = ['lib']
 # MAKES COMPILATION VERY SLOW!!
 # ir optimizer
 # viaIR = true 
-optimizer_runs = 10 #200
+optimizer_runs = 200 
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
 
