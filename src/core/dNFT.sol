@@ -57,13 +57,16 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   // different flash loan attacks.
   mapping(uint => uint) private _idToBlockOfLastDeposit;
 
-  // dNFT metadata
   struct Nft {
-    uint withdrawn; // dyad withdrawn from the pool deposit
-    int deposit;    // dyad balance in pool
-    uint xp;        // always positive, always inflationary
-    bool isLiquidatable;
+    uint withdrawn;      // dyad withdrawn from the pool deposit
+    int  deposit;        // dyad balance in pool
+    uint xp;             // always positive, always inflationary
+    bool isLiquidatable; // if true, anyone can liquidate the dNFT
   }
+
+  // Convenient way to store output of internal `calcMulti` functions
+  struct Multi  { uint   product ; uint xp; }
+  struct Multis { uint[] products; uint productsSum; uint[] xps; }
 
   DYAD public dyad;
   IAggregatorV3 internal oracle;
@@ -319,26 +322,26 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   ) private returns (uint) {
       uint dyadDelta = _percentageOf(dyad.totalSupply(), ethPriceDelta);
 
-      (uint[] memory products, uint productsSum, uint[] memory xps) = _calcMultis(mode, id);
+      Multis memory multis = _calcMultis(mode, id);
 
       // local min/max xp for this sync call
       uint _minXp = type(uint256).max;
       uint _maxXp = maxXp;
 
       // so we avoid dividing by 0 
-      if (productsSum == 0) { productsSum = 1; }
+      if (multis.productsSum == 0) { multis.productsSum = 1; }
 
       uint totalSupply = totalSupply();
       for (uint i = 0; i < totalSupply; ) {
         uint tokenId           = tokenByIndex(i);
-        uint relativeMulti     = products[i]*10000 / productsSum;
+        uint relativeMulti     = multis.products[i]*10000 / multis.productsSum;
         uint relativeDyadDelta = _percentageOf(dyadDelta, relativeMulti);
 
         Nft memory nft = idToNft[tokenId];
 
         uint xpAccrual;
         if (mode == Mode.BURNING && nft.deposit > 0) {
-          xpAccrual = relativeDyadDelta*100 / (xps[i]);
+          xpAccrual = relativeDyadDelta*100 / (multis.xps[i]);
           if (id == tokenId) { xpAccrual *= 2; }
         }
 
@@ -371,7 +374,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   function _calcMultis(
       Mode mode,
       uint id
-  ) private view returns (uint[] memory, uint, uint[] memory) {
+  ) private view returns (Multis memory) {
       uint nftTotalSupply  = totalSupply();
       uint dyadTotalSupply = dyad.totalSupply();
 
@@ -382,20 +385,20 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       for (uint i = 0; i < nftTotalSupply; ) {
         uint tokenId = tokenByIndex(i);
         Nft   memory nft   = idToNft[tokenId];
-        (uint product, uint xp) = _calcMulti(mode, nft, nftTotalSupply, dyadTotalSupply);
+        Multi memory multi = _calcMulti(mode, nft, nftTotalSupply, dyadTotalSupply);
 
         if (mode == Mode.MINTING && id == tokenId) { 
-          product += _percentageOf(product, 1500); 
+          multi.product += _percentageOf(multi.product, 1500); 
         }
 
-        products[i]  = product;
-        productsSum += product;
-        xps[i]       = xp;
+        products[i]  = multi.product;
+        productsSum += multi.product;
+        xps[i]       = multi.xp;
 
         unchecked { ++i; }
       }
 
-      return (products, productsSum, xps);
+      return Multis(products, productsSum, xps);
   }
 
   function _calcMulti(
@@ -403,7 +406,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       Nft memory nft,
       uint nftTotalSupply,
       uint dyadTotalSupply
-  ) private view returns (uint, uint) {
+  ) private view returns (Multi memory) {
       uint multiProduct; uint xpMulti;     
 
       if (nft.deposit > 0) {
@@ -426,7 +429,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
                             : depositMulti);
       }
 
-      return (multiProduct, xpMulti);
+      return Multi(multiProduct, xpMulti);
   }
 
   function _percentageOf(
