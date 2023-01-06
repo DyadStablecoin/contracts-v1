@@ -294,7 +294,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   function liquidate(
       uint id,
       address to
-  ) external nonReentrant() addressNotZero(to) payable returns (uint) {
+  ) external addressNotZero(to) payable returns (uint) {
       Nft memory nft = idToNft[id];
       if (!nft.isLiquidatable) { revert NotLiquidatable(id); }
       emit NftLiquidated(ownerOf(id), to,  id); 
@@ -305,7 +305,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
 
   // Sync by minting/burning DYAD to keep the peg and update each dNFT.
   // dNFT with `id` gets a boost.
-  function sync(uint id) nonReentrant() public returns (uint) {
+  function sync(uint id) public returns (uint) {
     if (block.number < lastSyncedBlock + BLOCKS_BETWEEN_SYNCS) { 
       revert SyncedTooRecently(); 
     }
