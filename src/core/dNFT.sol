@@ -73,6 +73,11 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   // dNFT id => dNFT
   mapping(uint => Nft) public idToNft;
 
+  // dNFT id => Block that deposit was called on
+  // Needed to avoid deposit + withdraw in the same block, which enables
+  // different flash loan attacks.
+  mapping(uint => uint) private _idToBlockOfLastDeposit;
+
   DYAD public dyad;
   IAggregatorV3 internal oracle;
 
@@ -106,6 +111,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   error FailedEthTransfer      (address to, uint amount);
   error XpOutOfRange           (uint xp);
   error CannotMoveDepositToSelf(uint from, uint to, uint amount);
+  error CannotDepositAndWithdrawInSameBlock();
 
   modifier onlyNFTOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotNFTOwner(id); _;
@@ -221,11 +227,28 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       return newDyad;
   }
 
+  // Deposit `amount` of DYAD into dNFT
+  function deposit(
+      uint id, 
+      uint amount
+  ) external amountNotZero(amount) returns (uint) {
+      _idToBlockOfLastDeposit[id] = block.number;
+      Nft storage nft = idToNft[id];
+      if (amount > nft.withdrawn) { revert ExceedsWithdrawalLimit(amount); }
+      nft.deposit   += amount.toInt256();
+      nft.withdrawn -= amount;
+      bool success = dyad.transferFrom(msg.sender, address(this), amount);
+      if (!success) { revert FailedDyadTransfer(address(this), amount); }
+      emit DyadDeposited(msg.sender, id, amount);
+      return amount;
+  }
+
   // Withdraw `amount` of DYAD from dNFT
   function withdraw(
       uint id,
       uint amount
   ) external onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
+      if (_idToBlockOfLastDeposit[id] == block.number) { revert CannotDepositAndWithdrawInSameBlock(); }
       Nft storage nft = idToNft[id];
       if (amount.toInt256() > nft.deposit) { revert ExceedsDepositLimit(amount); }
       uint updatedBalance  = dyad.balanceOf(address(this)) - amount;
@@ -240,21 +263,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       bool success = dyad.transfer(msg.sender, amount);
       if (!success) { revert FailedDyadTransfer(msg.sender, amount); }
       emit DyadWithdrawn(msg.sender, id, amount);
-      return amount;
-  }
-
-  // Deposit `amount` of DYAD into dNFT
-  function deposit(
-      uint id, 
-      uint amount
-  ) external amountNotZero(amount) returns (uint) {
-      Nft storage nft = idToNft[id];
-      if (amount > nft.withdrawn) { revert ExceedsWithdrawalLimit(amount); }
-      nft.deposit   += amount.toInt256();
-      nft.withdrawn -= amount;
-      bool success = dyad.transferFrom(msg.sender, address(this), amount);
-      if (!success) { revert FailedDyadTransfer(address(this), amount); }
-      emit DyadDeposited(msg.sender, id, amount);
       return amount;
   }
 
