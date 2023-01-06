@@ -121,7 +121,7 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
   function testFailBurnNotdNftContract() public {
     uint tokenId = dnft.mintNft{value: 5 ether}(address(this));
     dnft.withdraw(tokenId, 7000000);
-    dyad.burn(50);
+    dyad.burn(msg.sender, 50);
   }
   function testFailWithdrawDyadNotNftOwner() public {
     dnft.mintNft{value: 5 ether}(address(this));

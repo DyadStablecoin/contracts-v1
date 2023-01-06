@@ -8,6 +8,6 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 contract DYAD is ERC20, Ownable {
   constructor() ERC20("DYAD Stablecoin", "DYAD") {}
 
-  function mint(uint amount) public onlyOwner { _mint(owner(), amount); }
-  function burn(uint amount) public onlyOwner { _burn(owner(), amount); }
+  function mint(address to,   uint amount) public onlyOwner { _mint(to,   amount); }
+  function burn(address from, uint amount) public onlyOwner { _burn(from, amount); }
 }

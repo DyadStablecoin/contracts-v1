@@ -211,7 +211,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint newDyad = _getLatestEthPrice() * msg.value/100000000;
       if (newDyad == 0)        { revert AmountZero(newDyad); }
       if (newDyad < minAmount) { revert NotReachedMinAmount(newDyad); }
-      dyad.mint(newDyad);
+      dyad.mint(address(this), newDyad);
       idToNft[id].deposit += newDyad.toInt256();
       emit DyadMinted(msg.sender, id, newDyad);
       return newDyad;
@@ -243,7 +243,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   function deposit(
       uint id, 
       uint amount
-  ) public nonReentrant() amountNotZero(amount) returns (uint) {
+  ) external nonReentrant() amountNotZero(amount) returns (uint) {
       Nft storage nft = idToNft[id];
       if (amount > nft.withdrawn) { revert ExceedsWithdrawalLimit(amount); }
       nft.deposit   += amount.toInt256();
@@ -258,11 +258,11 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   function redeem(
       uint id,
       uint amount
-  ) external onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
+  ) external nonReentrant() onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
       Nft storage nft = idToNft[id];
-      deposit(id, amount);
-      nft.deposit -= amount.toInt256();
-      dyad.burn(amount);
+      if (amount > nft.withdrawn) { revert ExceedsWithdrawalLimit(amount); }
+      nft.withdrawn -= amount;
+      dyad.burn(msg.sender, amount);
       uint eth = amount*100000000 / lastEthPrice;
       payable(msg.sender).transfer(eth);
       emit DyadRedeemed(msg.sender, id, amount);
@@ -318,8 +318,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
     uint dyadDelta = _updateNFTs(ethPriceDelta, mode, id);
 
     if (dyadDelta > 0) {
-      mode == Mode.MINTING ? dyad.mint(dyadDelta) 
-                           : dyad.burn(dyadDelta);
+      mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
+                           : dyad.burn(address(this), dyadDelta);
     }
 
     lastEthPrice = newEthPrice;
