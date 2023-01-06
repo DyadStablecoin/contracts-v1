@@ -71,10 +71,10 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   DYAD public dyad;
   IAggregatorV3 internal oracle;
 
-  // Protocol can be in two modes:
-  // - BURNING: Price of ETH went down
-  // - MINTING: Price of ETH went up
-  enum Mode{ BURNING, MINTING }
+  enum Mode { 
+    BURNING, // Price of ETH went down
+    MINTING  // Price of ETH went up
+  }
 
   event NftMinted    (address indexed to, uint indexed id);
   event DyadMinted   (address indexed to, uint indexed id, uint amount);
