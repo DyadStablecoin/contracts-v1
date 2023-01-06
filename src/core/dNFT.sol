@@ -439,7 +439,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
         if (mode == Mode.BURNING && mintedByTvl > MAX_MINTED_BY_TVL) { 
           mintedByTvl = MAX_MINTED_BY_TVL;
         }
-        xpMulti = _getXpMulti(xpScaled/100);
+        xpMulti = _xpToMulti(xpScaled/100);
         if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } 
         uint depositMulti = (_deposit*10000) / (mintedByNft+1);
         multiProduct      = xpMulti * (mode == Mode.BURNING 
@@ -453,17 +453,14 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   function _percentageOf(
     uint x,
     uint basisPoints
-  ) internal pure returns (uint) { return x*basisPoints/10000; }
+  ) private pure returns (uint) { return x*basisPoints/10000; }
 
-  function _getXpMulti(uint xp) internal view returns (uint) {
-    // xp is like an index which maps exactly to one value in the table. That is why
-    // xp must be uint and between 0 and 100.
+  // maps xp to a multiplier
+  function _xpToMulti(uint xp) private view returns (uint) {
     if (xp < 0 || xp > 100) { revert XpOutOfRange(xp); }
 
-    // why 61?, because:
-    // the first 61 values in the table are all 50, which means we do not need 
-    // to store them in the table, but can do this compression.
-    // But we need to subtract 61 in the else statement to get the correct lookup.
-    if (xp < 61) { return 50; } else { return XP_TABLE[xp - 61]; }
+    // - xp from 0 to 60 maps to 50, so we do not have to store it in the XP_TABLE
+    // - if xp is over 60, we have to subtract 60+1 from it to get the correct index
+    if (xp <= 60) { return 50; } else { return XP_TABLE[xp - 60 - 1]; }
   }
 }
