@@ -202,7 +202,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   // Mint and deposit DYAD into dNFT
   function mintDyad(
       uint id
-  ) payable public nonReentrant() onlyNFTOwner(id) returns (uint amount) {
+  ) payable public onlyNFTOwner(id) returns (uint amount) {
       amount = _mintDyad(id, 0);
   }
 
@@ -247,7 +247,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   function deposit(
       uint id, 
       uint amount
-  ) external nonReentrant() amountNotZero(amount) returns (uint) {
+  ) external amountNotZero(amount) returns (uint) {
       Nft storage nft = idToNft[id];
       if (amount > nft.withdrawn) { revert ExceedsWithdrawalLimit(amount); }
       nft.deposit   += amount.toInt256();
@@ -279,7 +279,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint _from,
       uint _to,
       uint amount
-  ) external nonReentrant() onlyNFTOwner(_from) amountNotZero(amount) returns (uint) {
+  ) external onlyNFTOwner(_from) amountNotZero(amount) returns (uint) {
       if (_from == _to) { revert CannotMoveDepositToSelf(_from, _to, amount); }
       Nft storage from = idToNft[_from];
       if (amount.toInt256() > from.deposit) { revert ExceedsDepositLimit(amount); }
