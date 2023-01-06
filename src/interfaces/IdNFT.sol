@@ -56,6 +56,7 @@ interface IdNFT {
    * @dev Will revert:
    *      - If dNFT is not owned by `msg.sender`
    *      - If `amount` is 0
+   *      - If deposit call for `id` happened in the same block
    *      - If `amount` is > than dNFT deposit
    *      - If CR is < `MIN_COLLATERIZATION_RATIO` after withdrawl
    *      - If new withdrawl amount of dNFT > average tvl
