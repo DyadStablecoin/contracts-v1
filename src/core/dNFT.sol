@@ -225,7 +225,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   function withdraw(
       uint id,
       uint amount
-  ) external nonReentrant() onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
+  ) external onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
       Nft storage nft = idToNft[id];
       if (amount.toInt256() > nft.deposit) { revert ExceedsDepositLimit(amount); }
       uint updatedBalance  = dyad.balanceOf(address(this)) - amount;
