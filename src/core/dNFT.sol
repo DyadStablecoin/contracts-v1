@@ -202,7 +202,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   // Mint and deposit DYAD into dNFT
   function mintDyad(
       uint id
-  ) payable public nonReentrant() onlyNFTOwner(id) returns (uint amount) {
+  ) payable public onlyNFTOwner(id) returns (uint amount) {
       amount = _mintDyad(id, 0);
   }
 
@@ -225,7 +225,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   function withdraw(
       uint id,
       uint amount
-  ) external nonReentrant() onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
+  ) external onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
       Nft storage nft = idToNft[id];
       if (amount.toInt256() > nft.deposit) { revert ExceedsDepositLimit(amount); }
       uint updatedBalance  = dyad.balanceOf(address(this)) - amount;
@@ -247,7 +247,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   function deposit(
       uint id, 
       uint amount
-  ) external nonReentrant() amountNotZero(amount) returns (uint) {
+  ) external amountNotZero(amount) returns (uint) {
       Nft storage nft = idToNft[id];
       if (amount > nft.withdrawn) { revert ExceedsWithdrawalLimit(amount); }
       nft.deposit   += amount.toInt256();
@@ -279,7 +279,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       uint _from,
       uint _to,
       uint amount
-  ) external nonReentrant() onlyNFTOwner(_from) amountNotZero(amount) returns (uint) {
+  ) external onlyNFTOwner(_from) amountNotZero(amount) returns (uint) {
       if (_from == _to) { revert CannotMoveDepositToSelf(_from, _to, amount); }
       Nft storage from = idToNft[_from];
       if (amount.toInt256() > from.deposit) { revert ExceedsDepositLimit(amount); }
@@ -294,7 +294,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   function liquidate(
       uint id,
       address to
-  ) external nonReentrant() addressNotZero(to) payable returns (uint) {
+  ) external addressNotZero(to) payable returns (uint) {
       Nft memory nft = idToNft[id];
       if (!nft.isLiquidatable) { revert NotLiquidatable(id); }
       emit NftLiquidated(ownerOf(id), to,  id); 
@@ -305,7 +305,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
 
   // Sync by minting/burning DYAD to keep the peg and update each dNFT.
   // dNFT with `id` gets a boost.
-  function sync(uint id) nonReentrant() public returns (uint) {
+  function sync(uint id) public returns (uint) {
     if (block.number < lastSyncedBlock + BLOCKS_BETWEEN_SYNCS) { 
       revert SyncedTooRecently(); 
     }
