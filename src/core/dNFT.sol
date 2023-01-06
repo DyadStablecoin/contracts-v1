@@ -102,7 +102,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   error ExceedsWithdrawalLimit (uint amount);
   error ExceedsDepositLimit    (uint amount);
   error AddressZero            (address addr);
-  error FailedTransfer         (address to, uint amount);
+  error FailedDyadTransfer     (address to, uint amount);
+  error FailedEthTransfer      (address to, uint amount);
   error XpOutOfRange           (uint xp);
   error CannotMoveDepositToSelf(uint from, uint to, uint amount);
 
@@ -237,7 +238,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       nft.withdrawn  = newWithdrawn;
       nft.deposit   -= amount.toInt256();
       bool success = dyad.transfer(msg.sender, amount);
-      if (!success) { revert FailedTransfer(msg.sender, amount); }
+      if (!success) { revert FailedDyadTransfer(msg.sender, amount); }
       emit DyadWithdrawn(msg.sender, id, amount);
       return amount;
   }
@@ -252,7 +253,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       nft.deposit   += amount.toInt256();
       nft.withdrawn -= amount;
       bool success = dyad.transferFrom(msg.sender, address(this), amount);
-      if (!success) { revert FailedTransfer(address(this), amount); }
+      if (!success) { revert FailedDyadTransfer(address(this), amount); }
       emit DyadDeposited(msg.sender, id, amount);
       return amount;
   }
@@ -267,7 +268,8 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       nft.withdrawn -= amount;
       dyad.burn(msg.sender, amount);
       uint eth = amount*100000000 / lastEthPrice;
-      payable(msg.sender).transfer(eth);
+      (bool sent, ) = payable(msg.sender).call{value: eth}("");
+      if (!sent) { revert FailedEthTransfer(msg.sender, eth); }
       emit DyadRedeemed(msg.sender, id, amount);
       return eth;
   }
