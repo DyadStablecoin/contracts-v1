@@ -37,19 +37,20 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   using SignedMath for int256;
   using Counters   for Counters.Counter;
 
-  // Maximum number of dNFTs that can exist simultaneously
-  uint public immutable MAX_SUPPLY;
-
   // Minimum required to mint a new dNFT
   uint public immutable DEPOSIT_MINIMUM;
 
-  // Minimum collaterization ratio required, for DYAD to be withdrawn
-  uint public immutable MIN_COLLATERIZATION_RATIO; 
+  // Maximum number of dNFTs that can exist simultaneously
+  uint public immutable MAX_SUPPLY;
 
   // Minimum number of blocks required between sync calls
   uint public immutable BLOCKS_BETWEEN_SYNCS;
 
-  uint private constant MIN_AVG_LIMIT = 50000; // 500%
+  // Minimum collaterization ratio required, for DYAD to be withdrawn
+  uint public immutable MIN_COLLATERIZATION_RATIO; 
+
+  // Maximum % of DYAD that can be minted by TVL 
+  uint public immutable MAX_MINTED_BY_TVL; 
 
   // ETH price from the last sync call
   uint public lastEthPrice;
@@ -118,19 +119,21 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   constructor(
     address          _dyad,
     uint             _depositMinimum,
+    uint             _maxSupply, 
     uint             _blocksBetweenSyncs,
     uint             _minCollaterizationRatio,
-    uint             _maxSupply, 
+    uint             _maxMintedByTVL,
     address          _oracle, 
     address[] memory _insiders
   ) ERC721("DYAD NFT", "dNFT") {
     dyad                      = DYAD(_dyad);
     oracle                    = IAggregatorV3(_oracle);
     lastEthPrice              = _getLatestEthPrice();
-    MIN_COLLATERIZATION_RATIO = _minCollaterizationRatio;
     DEPOSIT_MINIMUM           = _depositMinimum;
-    BLOCKS_BETWEEN_SYNCS      = _blocksBetweenSyncs;
     MAX_SUPPLY                = _maxSupply;
+    BLOCKS_BETWEEN_SYNCS      = _blocksBetweenSyncs;
+    MIN_COLLATERIZATION_RATIO = _minCollaterizationRatio;
+    MAX_MINTED_BY_TVL         = _maxMintedByTVL;
     minXp                     = _maxSupply;
     maxXp                     = _maxSupply << 1; // *2
 
@@ -424,21 +427,21 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
 
       if (nft.deposit > 0) {
         uint xpDelta       = maxXp - minXp;
-        if (xpDelta == 0) { xpDelta = 1; } // avoid division by 0
+        if (xpDelta == 0)  { xpDelta = 1; } // avoid division by 0
         uint xpScaled      = (nft.xp-minXp)*10000 / xpDelta;
         uint _deposit;
         if (nft.deposit > 0) { _deposit = nft.deposit.toUint256(); }
-        uint mintedByNft   = nft.withdrawn + _deposit;
-        uint avgTvl        = dyadTotalSupply   / nftTotalSupply;
-        uint mintAvgMinted = mintedByNft*10000 / avgTvl;
-        if (mode == Mode.BURNING && mintAvgMinted > MIN_AVG_LIMIT) { 
-          mintAvgMinted = MIN_AVG_LIMIT;
+        uint mintedByNft     = nft.withdrawn + _deposit;
+        uint avgTvl          = dyadTotalSupply   / nftTotalSupply;
+        uint mintedByTvl     = mintedByNft*10000 / avgTvl;
+        if (mode == Mode.BURNING && mintedByTvl > MAX_MINTED_BY_TVL) { 
+          mintedByTvl = MAX_MINTED_BY_TVL;
         }
         xpMulti = _getXpMulti(xpScaled/100);
         if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } 
         uint depositMulti = (_deposit*10000) / (mintedByNft+1);
         multiProduct      = xpMulti * (mode == Mode.BURNING 
-                            ? mintAvgMinted 
+                            ? mintedByTvl 
                             : depositMulti);
       }
 

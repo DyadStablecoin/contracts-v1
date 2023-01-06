@@ -5,6 +5,7 @@ contract Parameters {
   uint MAX_SUPPLY = 500; 
   uint MIN_COLLATERIZATION_RATIO = 15000; 
   uint BLOCKS_BETWEEN_SYNCS = 1;
+  uint MAX_MINTED_BY_TVL = 50000; // 500%
 
   // mainnet
   address ORACLE_MAINNET = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
