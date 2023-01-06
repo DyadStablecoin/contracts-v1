@@ -63,11 +63,11 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   // Min/Max XP over all dNFTs
   uint public minXp; uint public maxXp;
 
-  uint8[40]  XP_TABLE = [51,  51,  51,  51,  52,  53,  53,  54,  55,
-                         57,  58,  60,  63,  66,  69,  74,  79,  85,
-                         92,  99,  108, 118, 128, 139, 150, 160, 171,
-                         181, 191, 200, 207, 214, 220, 225, 230, 233,
-                         236, 239, 241, 242];
+  uint8[40] XP_TABLE = [51,  51,  51,  51,  52,  53,  53,  54,  55,
+                        57,  58,  60,  63,  66,  69,  74,  79,  85,
+                        92,  99,  108, 118, 128, 139, 150, 160, 171,
+                        181, 191, 200, 207, 214, 220, 225, 230, 233,
+                        236, 239, 241, 242];
 
   // dNFT id => dNFT
   mapping(uint => Nft) public idToNft;
