@@ -192,7 +192,15 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
   }
   function testRedeemDyad() public {
     mintAndTransfer(REDEEM_AMOUNT);
+    uint withdrawlsBefore = dnft.idToNft(0).withdrawn;
+    uint dyadBalanceBefore = dyad.balanceOf(address(this));
     dnft.redeem(0, REDEEM_AMOUNT);
+    uint withdrawlsAfter = dnft.idToNft(0).withdrawn;
+    uint dyadBalanceAfter = dyad.balanceOf(address(this));
+    assertEq(withdrawlsAfter, 0);
+    assertTrue(withdrawlsBefore > withdrawlsAfter);
+    assertEq(dyadBalanceAfter, 0);
+    assertTrue(dyadBalanceBefore > dyadBalanceAfter);
   }
   function testRedeemDyadSenderDyadBalance() public {
     mintAndTransfer(REDEEM_AMOUNT);
