@@ -227,6 +227,22 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       return newDyad;
   }
 
+  // Deposit `amount` of DYAD into dNFT
+  function deposit(
+      uint id, 
+      uint amount
+  ) external amountNotZero(amount) returns (uint) {
+      _idToBlockOfLastDeposit[id] = block.number;
+      Nft storage nft = idToNft[id];
+      if (amount > nft.withdrawn) { revert ExceedsWithdrawalLimit(amount); }
+      nft.deposit   += amount.toInt256();
+      nft.withdrawn -= amount;
+      bool success = dyad.transferFrom(msg.sender, address(this), amount);
+      if (!success) { revert FailedDyadTransfer(address(this), amount); }
+      emit DyadDeposited(msg.sender, id, amount);
+      return amount;
+  }
+
   // Withdraw `amount` of DYAD from dNFT
   function withdraw(
       uint id,
@@ -247,22 +263,6 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
       bool success = dyad.transfer(msg.sender, amount);
       if (!success) { revert FailedDyadTransfer(msg.sender, amount); }
       emit DyadWithdrawn(msg.sender, id, amount);
-      return amount;
-  }
-
-  // Deposit `amount` of DYAD into dNFT
-  function deposit(
-      uint id, 
-      uint amount
-  ) external amountNotZero(amount) returns (uint) {
-      _idToBlockOfLastDeposit[id] = block.number;
-      Nft storage nft = idToNft[id];
-      if (amount > nft.withdrawn) { revert ExceedsWithdrawalLimit(amount); }
-      nft.deposit   += amount.toInt256();
-      nft.withdrawn -= amount;
-      bool success = dyad.transferFrom(msg.sender, address(this), amount);
-      if (!success) { revert FailedDyadTransfer(address(this), amount); }
-      emit DyadDeposited(msg.sender, id, amount);
       return amount;
   }
 
