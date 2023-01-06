@@ -49,6 +49,7 @@ contract dNFT is ERC721Enumerable, ERC721Burnable, ReentrancyGuard {
   // Minimum collaterization ratio required, for DYAD to be withdrawn
   uint public immutable MIN_COLLATERIZATION_RATIO; 
 
+  // Maximum % of DYAD that can be minted by TVL 
   uint public immutable MAX_MINTED_BY_TVL; 
 
   // ETH price from the last sync call
