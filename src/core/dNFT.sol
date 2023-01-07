@@ -174,7 +174,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       uint minAmount
   ) private returns (uint) {
       if (msg.value == 0) { revert NoEthSupplied(); }
-      uint newDyad = _getLatestEthPrice() * msg.value/100000000;
+      uint newDyad = msg.value/100000000 * _getLatestEthPrice();
       if (newDyad == 0)        { revert AmountZero(newDyad); }
       if (newDyad < minAmount) { revert NotReachedMinAmount(newDyad); }
       dyad.mint(address(this), newDyad);
@@ -208,9 +208,9 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
         revert CannotDepositAndWithdrawInSameBlock(); } // stops flash loan attacks
       Nft storage nft = idToNft[id];
       if (amount.toInt256() > nft.deposit) { revert ExceedsDepositLimit(amount); }
-      uint updatedBalance  = dyad.balanceOf(address(this)) - amount;
-      uint totalWithdrawn  = dyad.totalSupply() - updatedBalance;
-      uint cr =  updatedBalance*10000 / totalWithdrawn;      
+      uint collatVault    = address(this).balance/100000000 * _getLatestEthPrice();
+      uint totalWithdrawn = dyad.totalSupply() - dyad.balanceOf(address(this)) + amount;
+      uint cr = collatVault*10000 / totalWithdrawn;
       if (cr < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(cr); }
       uint newWithdrawn = nft.withdrawn + amount;
       uint averageTVL   = dyad.balanceOf(address(this)) / totalSupply();
