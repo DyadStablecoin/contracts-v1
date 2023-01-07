@@ -299,12 +299,14 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       uint _maxXp          = maxXp;              // local max
       uint productsSum     = multis.productsSum; // saves gas
       if (productsSum == 0) { productsSum = 1; } // to avoid dividing by 0 
-      uint totalSupply     = totalSupply();
+      uint nftTotalSupply  = totalSupply();
 
-      for (uint i = 0; i < totalSupply; ) {
+      for (uint i = 0; i < nftTotalSupply; ) {
         uint tokenId           = tokenByIndex(i);
-        uint relativeMulti     = multis.products[i]*10000 / productsSum;
-        uint relativeDyadDelta = _percentageOf(dyadDelta, relativeMulti);
+        uint relativeDyadDelta = _percentageOf(
+          dyadDelta,
+          multis.products[i]*10000 / productsSum // relativeMulti
+        );
         Nft storage nft = idToNft[tokenId];
 
         if (mode == Mode.BURNING) {
@@ -339,16 +341,19 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       uint productsSum;
       uint[] memory products = new uint[](nftTotalSupply);
       uint[] memory xps      = new uint[](nftTotalSupply);
+      uint xpDelta           = maxXp - minXp;
+      if (xpDelta == 0)      { xpDelta = 1; } // xpDelta min is 1
 
       for (uint i = 0; i < nftTotalSupply; ) {
         uint tokenId = tokenByIndex(i);
         Nft   memory nft   = idToNft[tokenId];
-        Multi memory multi = _calcMulti(mode, nft, nftTotalSupply, dyadTotalSupply);
-
+        Multi memory multi;                   // defaults to 0, 0
+        if (nft.deposit > 0) {                // multis are 0 if deposit <= 0
+          multi = _calcMulti(mode, nft, nftTotalSupply, dyadTotalSupply, xpDelta);
+        } 
         if (id == tokenId && mode == Mode.MINTING) { 
           multi.product += _percentageOf(multi.product, 1500); // boost by 15%
         }
-
         products[i]  = multi.product;
         productsSum += multi.product;
         xps[i]       = multi.xp;
@@ -362,30 +367,20 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       Mode mode,
       Nft memory nft,
       uint nftTotalSupply,
-      uint dyadTotalSupply
+      uint dyadTotalSupply, 
+      uint xpDelta 
   ) private view returns (Multi memory) {
-      uint multiProduct; uint xpMulti;     
-
-      if (nft.deposit > 0) {
-        uint xpDelta       = maxXp - minXp;
-        if (xpDelta == 0)  { xpDelta = 1; } // avoid division by 0
-        uint xpScaled      = (nft.xp-minXp)*10000 / xpDelta;
-        uint _deposit;
-        if (nft.deposit > 0) { _deposit = nft.deposit.toUint256(); }
-        uint mintedByNft     = nft.withdrawn + _deposit;
-        uint avgTvl          = dyadTotalSupply   / nftTotalSupply;
-        uint mintedByTvl     = mintedByNft*10000 / avgTvl;
-        if (mode == Mode.BURNING && mintedByTvl > MAX_MINTED_BY_TVL) { 
-          mintedByTvl = MAX_MINTED_BY_TVL;
-        }
-        xpMulti = _xpToMulti(xpScaled/100);
-        if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } 
-        uint depositMulti = (_deposit*10000) / (mintedByNft+1);
-        multiProduct      = xpMulti * (mode == Mode.BURNING 
-                            ? mintedByTvl 
-                            : depositMulti);
+      uint _deposit      = nft.deposit.toUint256();
+      uint mintedByNft   = nft.withdrawn + _deposit;
+      uint mintedByTvl   = mintedByNft*10000 / (dyadTotalSupply / nftTotalSupply); // mintedByNft/avgTVL
+      if (mintedByTvl > MAX_MINTED_BY_TVL && mode == Mode.BURNING) { 
+        mintedByTvl = MAX_MINTED_BY_TVL;
       }
-
+      uint xpMulti      = _xpToMulti(((nft.xp-minXp)*10000 / xpDelta) / 100); // xpScaled/100
+      if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } 
+      uint multiProduct = xpMulti * (mode == Mode.BURNING 
+                                        ? mintedByTvl 
+                                        : (_deposit*10000) / (mintedByNft+1)); // depositMulti
       return Multi(multiProduct, xpMulti);
   }
 
