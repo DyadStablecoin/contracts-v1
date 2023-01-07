@@ -33,7 +33,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   mapping(uint => uint) private _idToBlockOfLastDeposit; // dNFT id => Block deposit was called on
 
   struct Nft {
-    uint withdrawn;      // dyad withdrawn from the pool deposit
+    uint withdrawn;      // dyad withdrawn from the pool 
     int  deposit;        // dyad balance in pool
     uint xp;             // always positive, always inflationary
     bool isLiquidatable; // if true, anyone can liquidate the dNFT
@@ -43,11 +43,11 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   struct Multi  { uint   product ; uint xp; }
   struct Multis { uint[] products; uint productsSum; uint[] xps; }
 
-  uint8[40] XP_TABLE = [51,  51,  51,  51,  52,  53,  53,  54,  55,
-                        57,  58,  60,  63,  66,  69,  74,  79,  85,
-                        92,  99,  108, 118, 128, 139, 150, 160, 171,
-                        181, 191, 200, 207, 214, 220, 225, 230, 233,
-                        236, 239, 241, 242];
+  uint8[40] XP_TO_MULTI = [51,  51,  51,  51,  52,  53,  53,  54,  55,
+                           57,  58,  60,  63,  66,  69,  74,  79,  85,
+                           92,  99,  108, 118, 128, 139, 150, 160, 171,
+                           181, 191, 200, 207, 214, 220, 225, 230, 233,
+                           236, 239, 241, 242];
 
   DYAD public dyad;
   IAggregatorV3 internal oracle;
@@ -204,7 +204,8 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       uint id,
       uint amount
   ) external onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
-      if (_idToBlockOfLastDeposit[id] == block.number) { revert CannotDepositAndWithdrawInSameBlock(); }
+      if (_idToBlockOfLastDeposit[id] == block.number) { 
+        revert CannotDepositAndWithdrawInSameBlock(); } // stops flash loan attacks
       Nft storage nft = idToNft[id];
       if (amount.toInt256() > nft.deposit) { revert ExceedsDepositLimit(amount); }
       uint updatedBalance  = dyad.balanceOf(address(this)) - amount;
@@ -400,6 +401,6 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
     // - xp from 0 to 60 maps to 50, so we do not have to store it in the XP_TABLE
     // - if xp is over 60, we have to subtract 60+1 from it to get the correct index
-    if (xp <= 60) { return 50; } else { return XP_TABLE[xp - 60 - 1]; }
+    if (xp <= 60) { return 50; } else { return XP_TO_MULTI[xp - 60 - 1]; }
   }
 }
