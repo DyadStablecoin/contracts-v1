@@ -292,26 +292,16 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     if (block.number < lastSyncedBlock + BLOCKS_BETWEEN_SYNCS) { 
       revert SyncedTooRecently(); 
     }
-
-    lastSyncedBlock  = block.number;
-    uint newEthPrice = _getLatestEthPrice();
-    Mode mode        = newEthPrice > lastEthPrice ? Mode.MINTING 
-                                                  : Mode.BURNING;
- 
+    lastSyncedBlock    = block.number;
+    uint newEthPrice   = _getLatestEthPrice();
+    Mode mode          = newEthPrice > lastEthPrice ? Mode.MINTING : Mode.BURNING;
     uint ethPriceDelta = newEthPrice*10000 / lastEthPrice; 
-    // get `ethPriceDelta` in basis points
-    mode == Mode.BURNING ? ethPriceDelta  = 10000 - ethPriceDelta 
-                         : ethPriceDelta -= 10000;
-
-    uint dyadDelta = _updateNFTs(ethPriceDelta, mode, id);
-
-    if (dyadDelta > 0) {
-      mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
-                           : dyad.burn(address(this), dyadDelta);
-    }
-
-    lastEthPrice = newEthPrice;
-
+    mode == Mode.BURNING ? ethPriceDelta  = 10000 - ethPriceDelta // in basis points
+                         : ethPriceDelta -= 10000;                // in basis points
+    uint dyadDelta     = _updateNFTs(ethPriceDelta, mode, id);    // can be 0
+    mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
+                         : dyad.burn(address(this), dyadDelta); 
+    lastEthPrice       = newEthPrice;
     emit Synced(id);
     return dyadDelta;
   }
@@ -323,9 +313,9 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   ) private returns (uint) {
       Multis memory multis = _calcMultis(mode, id);
       uint dyadDelta       = _percentageOf(dyad.totalSupply(), ethPriceDelta);
-      uint _minXp          = type(uint256).max; // local min
-      uint _maxXp          = maxXp;             // local max
-      uint productsSum     = multis.productsSum;
+      uint _minXp          = type(uint256).max;  // local min
+      uint _maxXp          = maxXp;              // local max
+      uint productsSum     = multis.productsSum; // saves gas
       if (productsSum == 0) { productsSum = 1; } // to avoid dividing by 0 
       uint totalSupply     = totalSupply();
 
