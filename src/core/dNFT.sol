@@ -339,11 +339,12 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       uint productsSum;
       uint[] memory products = new uint[](nftTotalSupply);
       uint[] memory xps      = new uint[](nftTotalSupply);
+      uint xpDelta           = maxXp - minXp;
 
       for (uint i = 0; i < nftTotalSupply; ) {
         uint tokenId = tokenByIndex(i);
         Nft   memory nft   = idToNft[tokenId];
-        Multi memory multi = _calcMulti(mode, nft, nftTotalSupply, dyadTotalSupply);
+        Multi memory multi = _calcMulti(mode, nft, nftTotalSupply, dyadTotalSupply, xpDelta);
 
         if (id == tokenId && mode == Mode.MINTING) { 
           multi.product += _percentageOf(multi.product, 1500); // boost by 15%
@@ -362,20 +363,21 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       Mode mode,
       Nft memory nft,
       uint nftTotalSupply,
-      uint dyadTotalSupply
+      uint dyadTotalSupply, 
+      uint xpDelta 
   ) private view returns (Multi memory) {
       uint multiProduct; uint xpMulti;     
 
       if (nft.deposit > 0) {
-        uint xpDelta       = maxXp - minXp;
-        if (xpDelta == 0)  { xpDelta = 1; } // avoid division by 0
+        // uint xpDelta       = maxXp - minXp;
+        // if (xpDelta == 0)  { xpDelta = 1; } // avoid division by 0
         uint xpScaled      = (nft.xp-minXp)*10000 / xpDelta;
         uint _deposit;
         if (nft.deposit > 0) { _deposit = nft.deposit.toUint256(); }
         uint mintedByNft     = nft.withdrawn + _deposit;
         uint avgTvl          = dyadTotalSupply   / nftTotalSupply;
         uint mintedByTvl     = mintedByNft*10000 / avgTvl;
-        if (mode == Mode.BURNING && mintedByTvl > MAX_MINTED_BY_TVL) { 
+        if (mintedByTvl > MAX_MINTED_BY_TVL && mode == Mode.BURNING) { 
           mintedByTvl = MAX_MINTED_BY_TVL;
         }
         xpMulti = _xpToMulti(xpScaled/100);

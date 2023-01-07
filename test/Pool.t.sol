@@ -55,6 +55,7 @@ contract PoolTest is Test, Deployment, Parameters, Util {
   }
   function testSync() public {
     dnft.mintNft{value: 5 ether}(address(this));
+    dnft.mintNft{value: 5 ether}(address(this));
     dnft.sync(99999);
     vm.roll(block.number + BLOCKS_BETWEEN_SYNCS);
     dnft.sync(99999);
