@@ -351,8 +351,8 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
           nft.deposit += relativeDyadDelta.toInt256();
         }
 
-        nft.deposit < 0 ? nft.isLiquidatable = true 
-                        : nft.isLiquidatable = false;
+        nft.deposit > 0 ? nft.isLiquidatable = false
+                        : nft.isLiquidatable = true;
 
         // check if this is a new local xp minimum/maximum for this sync call
         if (nft.xp < _minXp) { _minXp = nft.xp; }
