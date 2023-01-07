@@ -368,18 +368,17 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       uint dyadTotalSupply, 
       uint xpDelta 
   ) private view returns (Multi memory) {
-      uint xpScaled      = (nft.xp-minXp)*10000 / xpDelta;
       uint _deposit      = nft.deposit.toUint256();
       uint mintedByNft   = nft.withdrawn + _deposit;
-      uint avgTvl        = dyadTotalSupply   / nftTotalSupply;
-      uint mintedByTvl   = mintedByNft*10000 / avgTvl;
+      uint mintedByTvl   = mintedByNft*10000 / (dyadTotalSupply / nftTotalSupply); // mintedByNft/avgTVL
       if (mintedByTvl > MAX_MINTED_BY_TVL && mode == Mode.BURNING) { 
         mintedByTvl = MAX_MINTED_BY_TVL;
       }
-      uint xpMulti      = _xpToMulti(xpScaled/100);
+      uint xpMulti      = _xpToMulti(((nft.xp-minXp)*10000 / xpDelta) / 100); // xpScaled/100
       if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } 
-      uint depositMulti = (_deposit*10000) / (mintedByNft+1);
-      uint multiProduct = xpMulti * (mode == Mode.BURNING ? mintedByTvl : depositMulti);
+      uint multiProduct = xpMulti * (mode == Mode.BURNING 
+                                        ? mintedByTvl 
+                                        : (_deposit*10000) / (mintedByNft+1)); // depositMulti
       return Multi(multiProduct, xpMulti);
   }
 
