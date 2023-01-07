@@ -134,22 +134,6 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     return id;
   }
 
-  // Mint new nft to `to` with the same xp and withdrawn amount as `nft`
-  function _mintCopy(
-      address to,
-      Nft memory nft
-  ) internal returns (uint) { 
-      uint id = _mintNft(to);
-      Nft storage newNft = idToNft[id];
-      uint minDeposit;
-      if (nft.deposit < 0) { minDeposit = nft.deposit.abs(); }
-      uint amount = _mintDyad(id, minDeposit);
-      newNft.deposit   = amount.toInt256() + nft.deposit;
-      newNft.xp        = nft.xp;
-      newNft.withdrawn = nft.withdrawn;
-      return id;
-  }
-
   // Mint new dNFT to `to`
   function _mintNft(address to) private returns (uint id) {
     if (totalSupply() >= MAX_SUPPLY) { revert ReachedMaxSupply(); }
@@ -191,9 +175,9 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       _idToBlockOfLastDeposit[id] = block.number;
       Nft storage nft = idToNft[id];
       if (amount > nft.withdrawn) { revert ExceedsWithdrawalLimit(amount); }
-      nft.deposit   += amount.toInt256();
-      nft.withdrawn -= amount;
-      bool success = dyad.transferFrom(msg.sender, address(this), amount);
+      nft.deposit    += amount.toInt256();
+      nft.withdrawn  -= amount;
+      bool success    = dyad.transferFrom(msg.sender, address(this), amount);
       if (!success) { revert FailedDyadTransfer(address(this), amount); }
       emit DyadDeposited(msg.sender, id, amount);
       return amount;
@@ -208,16 +192,16 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
         revert CannotDepositAndWithdrawInSameBlock(); } // stops flash loan attacks
       Nft storage nft = idToNft[id];
       if (amount.toInt256() > nft.deposit) { revert ExceedsDepositLimit(amount); }
-      uint collatVault    = address(this).balance/100000000 * _getLatestEthPrice();
+      uint collatVault    = address(this).balance/100000000 * _getLatestEthPrice();      // in USD
       uint totalWithdrawn = dyad.totalSupply() - dyad.balanceOf(address(this)) + amount;
-      uint cr = collatVault*10000 / totalWithdrawn;
-      if (cr < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(cr); }
-      uint newWithdrawn = nft.withdrawn + amount;
-      uint averageTVL   = dyad.balanceOf(address(this)) / totalSupply();
+      uint collatRatio    = collatVault*10000 / totalWithdrawn;                          // in basis points
+      if (collatRatio < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(collatRatio); }
+      uint newWithdrawn   = nft.withdrawn + amount;
+      uint averageTVL     = dyad.balanceOf(address(this)) / totalSupply();
       if (newWithdrawn > averageTVL) { revert ExceedsAverageTVL(); }
-      nft.withdrawn  = newWithdrawn;
-      nft.deposit   -= amount.toInt256();
-      bool success = dyad.transfer(msg.sender, amount);
+      nft.withdrawn       = newWithdrawn;
+      nft.deposit        -= amount.toInt256();
+      bool success        = dyad.transfer(msg.sender, amount);
       if (!success) { revert FailedDyadTransfer(msg.sender, amount); }
       emit DyadWithdrawn(msg.sender, id, amount);
       return amount;
@@ -266,6 +250,22 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       _burn(id); 
       delete idToNft[id];
       return _mintCopy(to, nft);
+  }
+
+  // Mint new nft to `to` with the same xp and withdrawn amount as `nft`
+  function _mintCopy(
+      address to,
+      Nft memory nft
+  ) private returns (uint) { 
+      uint id = _mintNft(to);
+      Nft storage newNft = idToNft[id];
+      uint minDeposit;
+      if (nft.deposit < 0) { minDeposit = nft.deposit.abs(); }
+      int newDeposit   = _mintDyad(id, minDeposit).toInt256();
+      newNft.deposit   = newDeposit + nft.deposit;
+      newNft.xp        = nft.xp;
+      newNft.withdrawn = nft.withdrawn;
+      return id;
   }
 
   // Sync by minting/burning DYAD to keep the peg and update each dNFT.
