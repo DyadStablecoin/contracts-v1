@@ -101,6 +101,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   error FailedEthTransfer      (address to, uint amount);
   error XpOutOfRange           (uint xp);
   error CannotMoveDepositToSelf(uint from, uint to, uint amount);
+  error MinXpHigherThanMaxXp   (uint minXp, uint maxXp);
   error CannotDepositAndWithdrawInSameBlock();
 
   modifier onlyNFTOwner(uint id) {
@@ -148,7 +149,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     uint id = _mintNft(to);
     _mintDyad(id, DEPOSIT_MINIMUM);
     uint xp = idToNft[id].xp;
-    if (xp < minXp) { minXp = xp; } // could be new global xp min
+    if (xp < minXp) { minXp = xp; } // sync could have increased `minXp`
     return id;
   }
 
@@ -297,7 +298,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     Mode mode        = newEthPrice > lastEthPrice ? Mode.MINTING 
                                                   : Mode.BURNING;
  
-    uint ethPriceDelta = newEthPrice*10000/lastEthPrice; 
+    uint ethPriceDelta = newEthPrice*10000 / lastEthPrice; 
     // get `ethPriceDelta` in basis points
     mode == Mode.BURNING ? ethPriceDelta  = 10000 - ethPriceDelta 
                          : ethPriceDelta -= 10000;
@@ -363,6 +364,8 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
         unchecked { ++i; }
       }
+
+      if (_minXp > _maxXp) { revert MinXpHigherThanMaxXp(_minXp, _maxXp); }
 
       // save new min/max xp in storage
       minXp = _minXp;

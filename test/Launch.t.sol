@@ -65,6 +65,7 @@ contract LaunchTest is Test, Parameters, Deployment {
   }
 
   function testFirstSync() public {
+    dnft.mintNft{value: 5 ether}(address(this));
     dnft.sync(99999);
   }
 
@@ -98,6 +99,7 @@ contract LaunchTest is Test, Parameters, Deployment {
     uint currentBlockNumber = block.number;
     uint numberOfSyncCalls  = 0;
 
+    dnft.mintNft{value: 5 ether}(address(this));
     dnft.sync(99999);
     numberOfSyncCalls += 1;
 
