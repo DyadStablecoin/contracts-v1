@@ -333,32 +333,28 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
         uint tokenId           = tokenByIndex(i);
         uint relativeMulti     = multis.products[i]*10000 / productsSum;
         uint relativeDyadDelta = _percentageOf(dyadDelta, relativeMulti);
-
         Nft storage nft = idToNft[tokenId];
 
         if (mode == Mode.BURNING) {
           nft.deposit -= relativeDyadDelta.toInt256();
           if (nft.deposit > 0) {
             uint xpAccrual     = relativeDyadDelta*100 / (multis.xps[i]);
-            if (id == tokenId) { xpAccrual = xpAccrual << 1; }
-            nft.xp            += xpAccrual / (10**18); // normalize by 18 decimals
+            if (id == tokenId) { xpAccrual = xpAccrual << 1; } // boost by *2
+            nft.xp            += xpAccrual / (10**18);         // norm by 18 decimals
           }
         } else {
           nft.deposit += relativeDyadDelta.toInt256();
         }
 
-        nft.deposit > 0 ? nft.isLiquidatable = false
-                        : nft.isLiquidatable = true;
-
-        // check if this is a new local xp minimum/maximum for this sync call
-        if (nft.xp < _minXp) { _minXp = nft.xp; }
-        if (nft.xp > _maxXp) { _maxXp = nft.xp; }
-
+        nft.deposit > 0 ? nft.isLiquidatable = false : nft.isLiquidatable = true;
+        if (nft.xp < _minXp) { _minXp = nft.xp; } // new local min
+        if (nft.xp > _maxXp) { _maxXp = nft.xp; } // new local max
         unchecked { ++i; }
       }
 
       if (_minXp > _maxXp) { revert MinXpHigherThanMaxXp(_minXp, _maxXp); }
-      minXp = _minXp; maxXp = _maxXp; // save new min/max xp in storage
+      minXp = _minXp; // save new min
+      maxXp = _maxXp; // save new max
       return dyadDelta;
   }
 
