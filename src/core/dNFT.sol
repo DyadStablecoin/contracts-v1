@@ -338,7 +338,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
         uint relativeMulti     = multis.products[i]*10000 / multis.productsSum;
         uint relativeDyadDelta = _percentageOf(dyadDelta, relativeMulti);
 
-        Nft memory nft = idToNft[tokenId];
+        Nft storage nft = idToNft[tokenId];
 
         uint xpAccrual;
         if (mode == Mode.BURNING && nft.deposit > 0) {
@@ -355,8 +355,6 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
         nft.deposit < 0 ? nft.isLiquidatable = true 
                         : nft.isLiquidatable = false;
-
-        idToNft[tokenId] = nft;
 
         // check if this is a new local xp minimum/maximum for this sync call
         if (nft.xp < _minXp) { _minXp = nft.xp; }
