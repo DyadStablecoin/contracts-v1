@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "forge-std/console.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
@@ -209,10 +208,9 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
         revert CannotDepositAndWithdrawInSameBlock(); } // stops flash loan attacks
       Nft storage nft = idToNft[id];
       if (amount.toInt256() > nft.deposit) { revert ExceedsDepositLimit(amount); }
-      uint collatVault    = _getLatestEthPrice()*address(this).balance/100000000;
+      uint collatVault    = _getLatestEthPrice()* address(this).balance/100000000;
       uint totalWithdrawn = dyad.totalSupply() - dyad.balanceOf(address(this)) + amount;
       uint cr = collatVault*10000 / totalWithdrawn;
-      console.log("cr", cr);
       if (cr < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(cr); }
       uint newWithdrawn = nft.withdrawn + amount;
       uint averageTVL   = dyad.balanceOf(address(this)) / totalSupply();
