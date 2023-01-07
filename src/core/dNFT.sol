@@ -417,6 +417,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       return Multi(multiProduct, xpMulti);
   }
 
+  // ----------------------- UTILS -----------------------
   function _percentageOf(
     uint x,
     uint basisPoints
