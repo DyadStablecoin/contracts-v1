@@ -321,21 +321,17 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       Mode mode,
       uint id
   ) private returns (uint) {
-      uint dyadDelta = _percentageOf(dyad.totalSupply(), ethPriceDelta);
-
       Multis memory multis = _calcMultis(mode, id);
+      uint dyadDelta       = _percentageOf(dyad.totalSupply(), ethPriceDelta);
+      uint _minXp          = type(uint256).max; // local min
+      uint _maxXp          = maxXp;             // local max
+      uint productsSum     = multis.productsSum;
+      if (productsSum == 0) { productsSum = 1; } // to avoid dividing by 0 
+      uint totalSupply     = totalSupply();
 
-      // local min/max xp for this sync call
-      uint _minXp = type(uint256).max;
-      uint _maxXp = maxXp;
-
-      // so we avoid dividing by 0 
-      if (multis.productsSum == 0) { multis.productsSum = 1; }
-
-      uint totalSupply = totalSupply();
       for (uint i = 0; i < totalSupply; ) {
         uint tokenId           = tokenByIndex(i);
-        uint relativeMulti     = multis.products[i]*10000 / multis.productsSum;
+        uint relativeMulti     = multis.products[i]*10000 / productsSum;
         uint relativeDyadDelta = _percentageOf(dyadDelta, relativeMulti);
 
         Nft storage nft = idToNft[tokenId];
@@ -362,11 +358,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       }
 
       if (_minXp > _maxXp) { revert MinXpHigherThanMaxXp(_minXp, _maxXp); }
-
-      // save new min/max xp in storage
-      minXp = _minXp;
-      maxXp = _maxXp;
-
+      minXp = _minXp; maxXp = _maxXp; // save new min/max xp in storage
       return dyadDelta;
   }
 
