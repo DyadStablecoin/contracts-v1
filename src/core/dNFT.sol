@@ -362,9 +362,8 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       Mode mode,
       uint id
   ) private view returns (Multis memory) {
-      uint nftTotalSupply  = totalSupply();
-      uint dyadTotalSupply = dyad.totalSupply();
-
+      uint nftTotalSupply    = totalSupply();
+      uint dyadTotalSupply   = dyad.totalSupply();
       uint productsSum;
       uint[] memory products = new uint[](nftTotalSupply);
       uint[] memory xps      = new uint[](nftTotalSupply);
@@ -374,14 +373,13 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
         Nft   memory nft   = idToNft[tokenId];
         Multi memory multi = _calcMulti(mode, nft, nftTotalSupply, dyadTotalSupply);
 
-        if (mode == Mode.MINTING && id == tokenId) { 
-          multi.product += _percentageOf(multi.product, 1500); 
+        if (id == tokenId && mode == Mode.MINTING) { 
+          multi.product += _percentageOf(multi.product, 1500); // boost by 15%
         }
 
         products[i]  = multi.product;
         productsSum += multi.product;
         xps[i]       = multi.xp;
-
         unchecked { ++i; }
       }
 
