@@ -16,49 +16,24 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   using SignedMath for int256;
   using Counters   for Counters.Counter;
 
-  // Minimum required to mint a new dNFT
-  uint public immutable DEPOSIT_MINIMUM;
+  uint public immutable DEPOSIT_MINIMUM;           // Min DYAD required to mint a new dNFT
+  uint public immutable MAX_SUPPLY;                // Max number of dNFTs that can exist simultaneously
+  uint public immutable BLOCKS_BETWEEN_SYNCS;      // Min number of blocks required between sync calls
+  uint public immutable MIN_COLLATERIZATION_RATIO; // Min CR required to withdraw DYAD
+  uint public immutable MAX_MINTED_BY_TVL;         // Max % of DYAD that can be minted by TVL 
 
-  // Maximum number of dNFTs that can exist simultaneously
-  uint public immutable MAX_SUPPLY;
+  uint public lastEthPrice;                        // ETH price from the last sync call
+  uint public lastSyncedBlock;                     // Last block sync was called on
+  uint public minXp;                               // Min XP over all dNFTs
+  uint public maxXp;                               // Max XP over all dNFTs
 
-  // Minimum number of blocks required between sync calls
-  uint public immutable BLOCKS_BETWEEN_SYNCS;
+  Counters.Counter public tokenIdCounter;          // Number of dNFTs minted so far
 
-  // Minimum collaterization ratio required, for DYAD to be withdrawn
-  uint public immutable MIN_COLLATERIZATION_RATIO; 
-
-  // Maximum % of DYAD that can be minted by TVL 
-  uint public immutable MAX_MINTED_BY_TVL; 
-
-  // ETH price from the last sync call
-  uint public lastEthPrice;
-
-  // Number of dNFTs minted so far
-  Counters.Counter public tokenIdCounter;
-
-  // Last block, sync was called on
-  uint public lastSyncedBlock;
-
-  // Min/Max XP over all dNFTs
-  uint public minXp; uint public maxXp;
-
-  uint8[40] XP_TABLE = [51,  51,  51,  51,  52,  53,  53,  54,  55,
-                        57,  58,  60,  63,  66,  69,  74,  79,  85,
-                        92,  99,  108, 118, 128, 139, 150, 160, 171,
-                        181, 191, 200, 207, 214, 220, 225, 230, 233,
-                        236, 239, 241, 242];
-
-  // dNFT id => dNFT
-  mapping(uint => Nft) public idToNft;
-
-  // dNFT id => Block that deposit was called on
-  // Needed to avoid deposit + withdraw in the same block, which enables
-  // different flash loan attacks.
-  mapping(uint => uint) private _idToBlockOfLastDeposit;
+  mapping(uint => Nft)  public idToNft;                  // dNFT id => dNFT
+  mapping(uint => uint) private _idToBlockOfLastDeposit; // dNFT id => Block deposit was called on
 
   struct Nft {
-    uint withdrawn;      // dyad withdrawn from the pool deposit
+    uint withdrawn;      // dyad withdrawn from the pool 
     int  deposit;        // dyad balance in pool
     uint xp;             // always positive, always inflationary
     bool isLiquidatable; // if true, anyone can liquidate the dNFT
@@ -67,6 +42,12 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   // Convenient way to store output of internal `calcMulti` functions
   struct Multi  { uint   product ; uint xp; }
   struct Multis { uint[] products; uint productsSum; uint[] xps; }
+
+  uint8[40] XP_TO_MULTI = [51,  51,  51,  51,  52,  53,  53,  54,  55,
+                           57,  58,  60,  63,  66,  69,  74,  79,  85,
+                           92,  99,  108, 118, 128, 139, 150, 160, 171,
+                           181, 191, 200, 207, 214, 220, 225, 230, 233,
+                           236, 239, 241, 242];
 
   DYAD public dyad;
   IAggregatorV3 internal oracle;
@@ -223,7 +204,8 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       uint id,
       uint amount
   ) external onlyNFTOwner(id) amountNotZero(amount) returns (uint) {
-      if (_idToBlockOfLastDeposit[id] == block.number) { revert CannotDepositAndWithdrawInSameBlock(); }
+      if (_idToBlockOfLastDeposit[id] == block.number) { 
+        revert CannotDepositAndWithdrawInSameBlock(); } // stops flash loan attacks
       Nft storage nft = idToNft[id];
       if (amount.toInt256() > nft.deposit) { revert ExceedsDepositLimit(amount); }
       uint updatedBalance  = dyad.balanceOf(address(this)) - amount;
@@ -419,6 +401,6 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
     // - xp from 0 to 60 maps to 50, so we do not have to store it in the XP_TABLE
     // - if xp is over 60, we have to subtract 60+1 from it to get the correct index
-    if (xp <= 60) { return 50; } else { return XP_TABLE[xp - 60 - 1]; }
+    if (xp <= 60) { return 50; } else { return XP_TO_MULTI[xp - 60 - 1]; }
   }
 }
