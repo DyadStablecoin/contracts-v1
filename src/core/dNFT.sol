@@ -209,10 +209,9 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
         revert CannotDepositAndWithdrawInSameBlock(); } // stops flash loan attacks
       Nft storage nft = idToNft[id];
       if (amount.toInt256() > nft.deposit) { revert ExceedsDepositLimit(amount); }
-      uint updatedBalance  = _getLatestEthPrice()*address(this).balance/100000000;
-      uint totalWithdrawn  = dyad.totalSupply() - dyad.balanceOf(address(this)) + amount;
-
-      uint cr = updatedBalance*10000 / totalWithdrawn;
+      uint collatVault    = _getLatestEthPrice()*address(this).balance/100000000;
+      uint totalWithdrawn = dyad.totalSupply() - dyad.balanceOf(address(this)) + amount;
+      uint cr = collatVault*10000 / totalWithdrawn;
       console.log("cr", cr);
       if (cr < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(cr); }
       uint newWithdrawn = nft.withdrawn + amount;
