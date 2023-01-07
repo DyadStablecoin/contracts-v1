@@ -149,9 +149,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     uint id = _mintNft(to);
     _mintDyad(id, DEPOSIT_MINIMUM);
     uint xp = idToNft[id].xp;
-    // Could be a new gloabal xp min. Can happen if not all dNFTs are minted out and
-    // sync is called, which could increase the global xp min.
-    if (xp < minXp) { minXp = xp; } 
+    if (xp < minXp) { minXp = xp; } // sync could have increased `minXp`
     return id;
   }
 
