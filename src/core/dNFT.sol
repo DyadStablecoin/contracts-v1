@@ -292,26 +292,16 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     if (block.number < lastSyncedBlock + BLOCKS_BETWEEN_SYNCS) { 
       revert SyncedTooRecently(); 
     }
-
-    lastSyncedBlock  = block.number;
-    uint newEthPrice = _getLatestEthPrice();
-    Mode mode        = newEthPrice > lastEthPrice ? Mode.MINTING 
-                                                  : Mode.BURNING;
- 
+    lastSyncedBlock    = block.number;
+    uint newEthPrice   = _getLatestEthPrice();
+    Mode mode          = newEthPrice > lastEthPrice ? Mode.MINTING : Mode.BURNING;
     uint ethPriceDelta = newEthPrice*10000 / lastEthPrice; 
-    // get `ethPriceDelta` in basis points
-    mode == Mode.BURNING ? ethPriceDelta  = 10000 - ethPriceDelta 
-                         : ethPriceDelta -= 10000;
-
-    uint dyadDelta = _updateNFTs(ethPriceDelta, mode, id);
-
-    if (dyadDelta > 0) {
-      mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
-                           : dyad.burn(address(this), dyadDelta);
-    }
-
-    lastEthPrice = newEthPrice;
-
+    mode == Mode.BURNING ? ethPriceDelta  = 10000 - ethPriceDelta // in basis points
+                         : ethPriceDelta -= 10000;                // in basis points
+    uint dyadDelta     = _updateNFTs(ethPriceDelta, mode, id);    // can be 0
+    mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
+                         : dyad.burn(address(this), dyadDelta); 
+    lastEthPrice       = newEthPrice;
     emit Synced(id);
     return dyadDelta;
   }
@@ -321,56 +311,40 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       Mode mode,
       uint id
   ) private returns (uint) {
-      uint dyadDelta = _percentageOf(dyad.totalSupply(), ethPriceDelta);
-
       Multis memory multis = _calcMultis(mode, id);
+      uint dyadDelta       = _percentageOf(dyad.totalSupply(), ethPriceDelta);
+      uint _minXp          = type(uint256).max;  // local min
+      uint _maxXp          = maxXp;              // local max
+      uint productsSum     = multis.productsSum; // saves gas
+      if (productsSum == 0) { productsSum = 1; } // to avoid dividing by 0 
+      uint totalSupply     = totalSupply();
 
-      // local min/max xp for this sync call
-      uint _minXp = type(uint256).max;
-      uint _maxXp = maxXp;
-
-      // so we avoid dividing by 0 
-      if (multis.productsSum == 0) { multis.productsSum = 1; }
-
-      uint totalSupply = totalSupply();
       for (uint i = 0; i < totalSupply; ) {
         uint tokenId           = tokenByIndex(i);
-        uint relativeMulti     = multis.products[i]*10000 / multis.productsSum;
+        uint relativeMulti     = multis.products[i]*10000 / productsSum;
         uint relativeDyadDelta = _percentageOf(dyadDelta, relativeMulti);
-
-        Nft memory nft = idToNft[tokenId];
-
-        uint xpAccrual;
-        if (mode == Mode.BURNING && nft.deposit > 0) {
-          xpAccrual = relativeDyadDelta*100 / (multis.xps[i]);
-          if (id == tokenId) { xpAccrual *= 2; }
-        }
+        Nft storage nft = idToNft[tokenId];
 
         if (mode == Mode.BURNING) {
-          nft.deposit -= relativeDyadDelta.toInt256();
-          nft.xp      += xpAccrual/(10**18); // normalize by 18 decimals
+          if (nft.deposit > 0) {
+            uint xpAccrual     = relativeDyadDelta*100 / (multis.xps[i]);
+            if (id == tokenId) { xpAccrual = xpAccrual << 1; } // boost by *2
+            nft.xp            += xpAccrual / (10**18);         // norm by 18 decimals
+          }
+          nft.deposit         -= relativeDyadDelta.toInt256();
         } else {
-          nft.deposit += relativeDyadDelta.toInt256();
+          nft.deposit         += relativeDyadDelta.toInt256();
         }
 
-        nft.deposit < 0 ? nft.isLiquidatable = true 
-                        : nft.isLiquidatable = false;
-
-        idToNft[tokenId] = nft;
-
-        // check if this is a new local xp minimum/maximum for this sync call
-        if (nft.xp < _minXp) { _minXp = nft.xp; }
-        if (nft.xp > _maxXp) { _maxXp = nft.xp; }
-
+        nft.deposit > 0 ? nft.isLiquidatable = false : nft.isLiquidatable = true;
+        if (nft.xp < _minXp) { _minXp = nft.xp; } // new local min
+        if (nft.xp > _maxXp) { _maxXp = nft.xp; } // new local max
         unchecked { ++i; }
       }
 
       if (_minXp > _maxXp) { revert MinXpHigherThanMaxXp(_minXp, _maxXp); }
-
-      // save new min/max xp in storage
-      minXp = _minXp;
-      maxXp = _maxXp;
-
+      minXp = _minXp; // save new min
+      maxXp = _maxXp; // save new max
       return dyadDelta;
   }
 
@@ -378,9 +352,8 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       Mode mode,
       uint id
   ) private view returns (Multis memory) {
-      uint nftTotalSupply  = totalSupply();
-      uint dyadTotalSupply = dyad.totalSupply();
-
+      uint nftTotalSupply    = totalSupply();
+      uint dyadTotalSupply   = dyad.totalSupply();
       uint productsSum;
       uint[] memory products = new uint[](nftTotalSupply);
       uint[] memory xps      = new uint[](nftTotalSupply);
@@ -390,14 +363,13 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
         Nft   memory nft   = idToNft[tokenId];
         Multi memory multi = _calcMulti(mode, nft, nftTotalSupply, dyadTotalSupply);
 
-        if (mode == Mode.MINTING && id == tokenId) { 
-          multi.product += _percentageOf(multi.product, 1500); 
+        if (id == tokenId && mode == Mode.MINTING) { 
+          multi.product += _percentageOf(multi.product, 1500); // boost by 15%
         }
 
         products[i]  = multi.product;
         productsSum += multi.product;
         xps[i]       = multi.xp;
-
         unchecked { ++i; }
       }
 
@@ -435,6 +407,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       return Multi(multiProduct, xpMulti);
   }
 
+  // ----------------------- UTILS -----------------------
   function _percentageOf(
     uint x,
     uint basisPoints
