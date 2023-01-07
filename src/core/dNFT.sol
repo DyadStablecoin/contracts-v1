@@ -336,14 +336,14 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
         Nft storage nft = idToNft[tokenId];
 
         if (mode == Mode.BURNING) {
-          nft.deposit -= relativeDyadDelta.toInt256();
           if (nft.deposit > 0) {
             uint xpAccrual     = relativeDyadDelta*100 / (multis.xps[i]);
             if (id == tokenId) { xpAccrual = xpAccrual << 1; } // boost by *2
             nft.xp            += xpAccrual / (10**18);         // norm by 18 decimals
           }
+          nft.deposit         -= relativeDyadDelta.toInt256();
         } else {
-          nft.deposit += relativeDyadDelta.toInt256();
+          nft.deposit         += relativeDyadDelta.toInt256();
         }
 
         nft.deposit > 0 ? nft.isLiquidatable = false : nft.isLiquidatable = true;
