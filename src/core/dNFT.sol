@@ -387,7 +387,9 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
   // maps xp to a multiplier
   function _xpToMulti(uint xp) private pure returns (uint) {
-    if (xp < 61) { return 50; }                // all xps <= 60 map to 50
-    return uint(uint8(XP_TO_MULTI[xp - 61]));  // offset the first 61 values
+    unchecked {
+      if (xp <= 60) { return 50; }               // all xps <= 60 map to 50
+      return uint(uint8(XP_TO_MULTI[xp - 61]));  // offset the first 61 values
+    }
   }
 }
