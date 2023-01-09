@@ -107,7 +107,10 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     minXp                     = _maxSupply;
     maxXp                     = _maxSupply << 1; // *2
 
-    for (uint i = 0; i < _insiders.length; i++) { _mintNft(_insiders[i], i); }
+    for (uint id = 0; id < _insiders.length; ) { 
+      _mintNft(_insiders[id], id); 
+      unchecked { ++id; }
+    }
   }
 
   // ETH price in USD
