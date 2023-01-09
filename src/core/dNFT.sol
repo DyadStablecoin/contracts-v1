@@ -381,7 +381,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       return Multi(multiProduct, xpMulti);
   }
 
-  // ----------------------- UTILS -----------------------
+  // ----------------------- PURE -----------------------
   function _percentageOf(
     uint x,
     uint basisPoints
@@ -389,11 +389,9 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
   // maps xp to a multiplier
   function _xpToMulti(uint xp) private pure returns (uint) {
-    if (xp < 0 || xp > 100) { revert XpOutOfRange(xp); }
-
-    // - xp from 0 to 60 maps to 50, so we do not have to store it in the XP_TABLE
-    // - if xp is over 60, we have to subtract 60+1 from it to get the correct index
-    if (xp <= 60) { return 50; } else { return uint(uint8(XP_TO_MULTI[xp - 60 - 1])); 
-    }
+    if (xp <   0) { revert XpOutOfRange(xp); }  // xp must be >= 0
+    if (xp <= 60) { return 50; }                // all xps <= 60 map to 50
+    if (xp > 100) { revert XpOutOfRange(xp); }  // xp must be <= 100
+    return uint(uint8(XP_TO_MULTI[xp - 61]));   // offset the first 61 values
   }
 }
