@@ -41,7 +41,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
   // Convenient way to store output of internal `calcMulti` functions
   struct Multi  { uint   product ; uint xp; }
-  struct Multis { uint[] products; uint productsSum; uint[] xps; }
+  struct Multis { uint[] products; uint productsSum; uint[] xps; uint[] tokenIds; }
 
   bytes private constant XP_TO_MULTI = hex"333333333435353637393a3c3f42454a4f555c636c76808b96a0abb5bfc8cfd6dce1e6e9eceff1f2";
 
@@ -265,7 +265,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
   // Sync by minting/burning DYAD to keep the peg and update each dNFT.
   // dNFT with `id` gets a boost.
-  function sync(uint id) public returns (uint) {
+  function sync(uint id) public {
     if (block.number < lastSyncedBlock + BLOCKS_BETWEEN_SYNCS) { 
       revert SyncedTooRecently(); 
     }
@@ -273,67 +273,73 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     uint newEthPrice   = _getLatestEthPrice();
     Mode mode          = newEthPrice > lastEthPrice ? Mode.MINTING : Mode.BURNING;
     uint ethPriceDelta = newEthPrice*10000 / lastEthPrice; 
-    mode == Mode.BURNING ? ethPriceDelta  = 10000 - ethPriceDelta // in bps
-                         : ethPriceDelta -= 10000;                // in bps
-    uint dyadDelta     = _updateNFTs(ethPriceDelta, mode, id);    // can be 0
+    mode == Mode.MINTING ? ethPriceDelta -= 10000                  // in bps
+                         : ethPriceDelta  = 10000 - ethPriceDelta; // in bps
+    uint dyadDelta     = _updateNFTs(ethPriceDelta, mode, id);     // can be 0
     mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
                          : dyad.burn(address(this), dyadDelta); 
     lastEthPrice       = newEthPrice;
     emit Synced(id);
-    return dyadDelta;
   }
 
   function _updateNFTs(
       uint ethPriceDelta,
       Mode mode,
       uint id
-  ) private returns (uint) {
-      Multis memory multis = _calcMultis(mode, id);
-      uint dyadDelta       = dyad.totalSupply()*ethPriceDelta / 10000; // percentagOf in bps
+  ) private returns (uint dyadDelta) {
+      uint nftTotalSupply  = totalSupply();
+      uint dyadTotalSupply = dyad.totalSupply();
+      Multis memory multis = _calcMultis(mode, id, nftTotalSupply, dyadTotalSupply);
+      dyadDelta            = dyadTotalSupply*ethPriceDelta / 10000; // percentagOf in bps
       uint _minXp          = type(uint256).max;  // local min
       uint _maxXp          = maxXp;              // local max
       uint productsSum     = multis.productsSum; // saves gas
       if (productsSum == 0) { productsSum = 1; } // to avoid dividing by 0 
-      uint nftTotalSupply  = totalSupply();
 
       for (uint i = 0; i < nftTotalSupply; ) {
-        uint tokenId           = tokenByIndex(i);
+        uint tokenId           = multis.tokenIds[i];
         uint relativeDyadDelta = dyadDelta *                // percentagOf in bps
           (multis.products[i]*10000 / productsSum) / 10000; // relativeMulti
         Nft storage nft = idToNft[tokenId];
+        int  _deposit   = nft.deposit;                      // save gas
+        uint _xp        = nft.xp;                           // save gas
 
         if (mode == Mode.BURNING) {
-          if (nft.deposit > 0) {
+          if (_deposit >= 1) {                              // if deposit > 0
             uint xpAccrual     = relativeDyadDelta*100 / (multis.xps[i]);
             if (id == tokenId) { xpAccrual = xpAccrual << 1; } // boost by *2
-            nft.xp            += xpAccrual / (10**18);         // norm by 18 decimals
+            _xp            += xpAccrual / (10**18);         // norm by 18 decimals
           }
-          nft.deposit         -= relativeDyadDelta.toInt256();
+          _deposit         -= relativeDyadDelta.toInt256();
         } else {
-          nft.deposit         += relativeDyadDelta.toInt256();
+          _deposit         += relativeDyadDelta.toInt256();
         }
 
-        nft.deposit >= 0 ? nft.isLiquidatable = false : nft.isLiquidatable = true;
-        if (nft.xp < _minXp) { _minXp = nft.xp; } // new local min
-        if (nft.xp > _maxXp) { _maxXp = nft.xp; } // new local max
+        _deposit >= 0 ? nft.isLiquidatable = false : nft.isLiquidatable = true;
+
+        if (_xp < _minXp) { _minXp = _xp; } // new local min
+        if (_xp > _maxXp) { _maxXp = _xp; } // new local max
+
+        nft.deposit = _deposit;
+        nft.xp      = _xp;
         unchecked { ++i; }
       }
 
       if (_minXp > _maxXp) { revert MinXpHigherThanMaxXp(_minXp, _maxXp); }
       minXp = _minXp; // save new min
       maxXp = _maxXp; // save new max
-      return dyadDelta;
   }
 
   function _calcMultis(
       Mode mode,
-      uint id
+      uint id, 
+      uint nftTotalSupply, 
+      uint dyadTotalSupply
   ) private view returns (Multis memory) {
-      uint nftTotalSupply    = totalSupply();
-      uint dyadTotalSupply   = dyad.totalSupply();
       uint productsSum;
       uint[] memory products = new uint[](nftTotalSupply);
       uint[] memory xps      = new uint[](nftTotalSupply);
+      uint[] memory tokenIds = new uint[](nftTotalSupply);
       uint xpDelta           = maxXp - minXp;
       if (xpDelta == 0)      { xpDelta = 1; } // xpDelta min is 1
 
@@ -347,13 +353,14 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
         if (id == tokenId && mode == Mode.MINTING) { 
           multi.product += multi.product*1500 / 10000; // boost by 15%
         }
+        tokenIds[i]  = tokenId;
         products[i]  = multi.product;
         productsSum += multi.product;
         xps[i]       = multi.xp;
         unchecked { ++i; }
       }
 
-      return Multis(products, productsSum, xps);
+      return Multis(products, productsSum, xps, tokenIds);
   }
 
   function _calcMulti(
@@ -371,10 +378,10 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       }
       uint xpScaled = ((nft.xp-minXp)*10000 / xpDelta) / 100; 
       uint xpMulti = 50; // if 0 <= x <= 60, xp multi is 50
-      unchecked {        // xpScaled is >= 61
-      if (xpScaled >= 61) { xpMulti = uint(uint8(XP_TO_MULTI[xpScaled - 61])); } 
+      unchecked {        
+      if (xpScaled >= 61) { xpMulti = uint(uint8(XP_TO_MULTI[xpScaled - 61])); } // xpScaled is >= 61
+      if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; }                       // xpMulti  is <= 242
       }
-      if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } 
       uint multiProduct = xpMulti * (mode == Mode.BURNING 
                                         ? mintedByTvl 
                                         : (_deposit*10000) / (mintedByNft+1)); // depositMulti
