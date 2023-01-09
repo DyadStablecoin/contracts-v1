@@ -298,7 +298,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
       for (uint i = 0; i < nftTotalSupply; ) {
         uint tokenId           = tokenByIndex(i);
-        uint relativeDyadDelta = dyadDelta *                // in bps
+        uint relativeDyadDelta = dyadDelta *                // percentagOf in bps
           (multis.products[i]*10000 / productsSum) / 10000; // relativeMulti
         Nft storage nft = idToNft[tokenId];
 
