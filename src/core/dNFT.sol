@@ -43,11 +43,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   struct Multi  { uint   product ; uint xp; }
   struct Multis { uint[] products; uint productsSum; uint[] xps; }
 
-  uint8[40] XP_TO_MULTI = [51,  51,  51,  51,  52,  53,  53,  54,  55,
-                           57,  58,  60,  63,  66,  69,  74,  79,  85,
-                           92,  99,  108, 118, 128, 139, 150, 160, 171,
-                           181, 191, 200, 207, 214, 220, 225, 230, 233,
-                           236, 239, 241, 242];
+  bytes private constant XP_TO_MULTI = hex"333333333435353637393a3c3f42454a4f555c636c76808b96a0abb5bfc8cfd6dce1e6e9eceff1f2";
 
   DYAD public dyad;
   IAggregatorV3 internal oracle;
@@ -80,7 +76,6 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   error AddressZero            (address addr);
   error FailedDyadTransfer     (address to, uint amount);
   error FailedEthTransfer      (address to, uint amount);
-  error XpOutOfRange           (uint xp);
   error CannotMoveDepositToSelf(uint from, uint to, uint amount);
   error MinXpHigherThanMaxXp   (uint minXp, uint maxXp);
   error CannotDepositAndWithdrawInSameBlock();
@@ -194,7 +189,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       if (amount.toInt256() > nft.deposit) { revert ExceedsDepositLimit(amount); }
       uint collatVault    = address(this).balance/100000000 * _getLatestEthPrice();      // in USD
       uint totalWithdrawn = dyad.totalSupply() - dyad.balanceOf(address(this)) + amount;
-      uint collatRatio    = collatVault*10000 / totalWithdrawn;                          // in basis points
+      uint collatRatio    = collatVault*10000 / totalWithdrawn;                          // in bps
       if (collatRatio < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(collatRatio); }
       uint newWithdrawn   = nft.withdrawn + amount;
       uint averageTVL     = dyad.balanceOf(address(this)) / totalSupply();
@@ -278,8 +273,8 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     uint newEthPrice   = _getLatestEthPrice();
     Mode mode          = newEthPrice > lastEthPrice ? Mode.MINTING : Mode.BURNING;
     uint ethPriceDelta = newEthPrice*10000 / lastEthPrice; 
-    mode == Mode.BURNING ? ethPriceDelta  = 10000 - ethPriceDelta // in basis points
-                         : ethPriceDelta -= 10000;                // in basis points
+    mode == Mode.BURNING ? ethPriceDelta  = 10000 - ethPriceDelta // in bps
+                         : ethPriceDelta -= 10000;                // in bps
     uint dyadDelta     = _updateNFTs(ethPriceDelta, mode, id);    // can be 0
     mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
                          : dyad.burn(address(this), dyadDelta); 
@@ -294,7 +289,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       uint id
   ) private returns (uint) {
       Multis memory multis = _calcMultis(mode, id);
-      uint dyadDelta       = _percentageOf(dyad.totalSupply(), ethPriceDelta);
+      uint dyadDelta       = dyad.totalSupply()*ethPriceDelta / 10000; // percentagOf in bps
       uint _minXp          = type(uint256).max;  // local min
       uint _maxXp          = maxXp;              // local max
       uint productsSum     = multis.productsSum; // saves gas
@@ -303,10 +298,8 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
       for (uint i = 0; i < nftTotalSupply; ) {
         uint tokenId           = tokenByIndex(i);
-        uint relativeDyadDelta = _percentageOf(
-          dyadDelta,
-          multis.products[i]*10000 / productsSum // relativeMulti
-        );
+        uint relativeDyadDelta = dyadDelta *                // percentagOf in bps
+          (multis.products[i]*10000 / productsSum) / 10000; // relativeMulti
         Nft storage nft = idToNft[tokenId];
 
         if (mode == Mode.BURNING) {
@@ -352,7 +345,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
           multi = _calcMulti(mode, nft, nftTotalSupply, dyadTotalSupply, xpDelta);
         } 
         if (id == tokenId && mode == Mode.MINTING) { 
-          multi.product += _percentageOf(multi.product, 1500); // boost by 15%
+          multi.product += multi.product*1500 / 10000; // boost by 15%
         }
         products[i]  = multi.product;
         productsSum += multi.product;
@@ -376,26 +369,15 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       if (mintedByTvl > MAX_MINTED_BY_TVL && mode == Mode.BURNING) { 
         mintedByTvl = MAX_MINTED_BY_TVL;
       }
-      uint xpMulti      = _xpToMulti(((nft.xp-minXp)*10000 / xpDelta) / 100); // xpScaled/100
+      uint xpScaled = ((nft.xp-minXp)*10000 / xpDelta) / 100; 
+      uint xpMulti = 50; // if 0 <= x <= 60, xp multi is 50
+      unchecked {        // xpScaled is >= 61
+      if (xpScaled >= 61) { xpMulti = uint(uint8(XP_TO_MULTI[xpScaled - 61])); } 
+      }
       if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } 
       uint multiProduct = xpMulti * (mode == Mode.BURNING 
                                         ? mintedByTvl 
                                         : (_deposit*10000) / (mintedByNft+1)); // depositMulti
       return Multi(multiProduct, xpMulti);
-  }
-
-  // ----------------------- UTILS -----------------------
-  function _percentageOf(
-    uint x,
-    uint basisPoints
-  ) private pure returns (uint) { return x*basisPoints/10000; }
-
-  // maps xp to a multiplier
-  function _xpToMulti(uint xp) private view returns (uint) {
-    if (xp < 0 || xp > 100) { revert XpOutOfRange(xp); }
-
-    // - xp from 0 to 60 maps to 50, so we do not have to store it in the XP_TABLE
-    // - if xp is over 60, we have to subtract 60+1 from it to get the correct index
-    if (xp <= 60) { return 50; } else { return XP_TO_MULTI[xp - 60 - 1]; }
   }
 }
