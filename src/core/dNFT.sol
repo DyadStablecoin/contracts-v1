@@ -125,7 +125,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     return id;
   }
 
-  // Mint new dNFT to `to`
+  // Mint new dNFT to `to` with `id` id
   function _mintNft(address to, uint id) private returns (uint) {
     if (id >= MAX_SUPPLY) { revert ReachedMaxSupply(); }
     _mint(to, id); 
@@ -241,7 +241,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       return _mintCopy(to, nft, id);
   }
 
-  // Mint new nft to `to` with the same xp and withdrawn amount as `nft`
+  // Mint nft with `id` to `to` with the same xp and withdrawn amount as `nft`
   function _mintCopy(
       address to,
       Nft memory nft, 
