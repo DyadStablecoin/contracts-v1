@@ -371,7 +371,9 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       if (mintedByTvl > MAX_MINTED_BY_TVL && mode == Mode.BURNING) { 
         mintedByTvl = MAX_MINTED_BY_TVL;
       }
-      uint xpMulti      = _xpToMulti(((nft.xp-minXp)*10000 / xpDelta) / 100); // xpScaled/100
+      uint xp = ((nft.xp-minXp)*10000 / xpDelta) / 100;
+      uint xpMulti = 50; // if 0 <= x <= 60, xp multi is 50
+      if (xp >= 61) { xpMulti = uint(uint8(XP_TO_MULTI[xp - 61])); } 
       if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } 
       uint multiProduct = xpMulti * (mode == Mode.BURNING 
                                         ? mintedByTvl 
@@ -384,12 +386,4 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     uint x,
     uint basisPoints
   ) private pure returns (uint) { return x*basisPoints/10000; }
-
-  // maps xp to a multiplier
-  function _xpToMulti(uint xp) private pure returns (uint) {
-    unchecked {
-      if (xp <= 60) { return 50; }               // all xps <= 60 map to 50
-      return uint(uint8(XP_TO_MULTI[xp - 61]));  // offset the first 61 values
-    }
-  }
 }
