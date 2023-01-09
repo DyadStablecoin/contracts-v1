@@ -273,9 +273,9 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     uint newEthPrice   = _getLatestEthPrice();
     Mode mode          = newEthPrice > lastEthPrice ? Mode.MINTING : Mode.BURNING;
     uint ethPriceDelta = newEthPrice*10000 / lastEthPrice; 
-    mode == Mode.BURNING ? ethPriceDelta  = 10000 - ethPriceDelta // in bps
-                         : ethPriceDelta -= 10000;                // in bps
-    uint dyadDelta     = _updateNFTs(ethPriceDelta, mode, id);    // can be 0
+    mode == Mode.MINTING ? ethPriceDelta -= 10000                  // in bps
+                         : ethPriceDelta  = 10000 - ethPriceDelta; // in bps
+    uint dyadDelta     = _updateNFTs(ethPriceDelta, mode, id);     // can be 0
     mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
                          : dyad.burn(address(this), dyadDelta); 
     lastEthPrice       = newEthPrice;
