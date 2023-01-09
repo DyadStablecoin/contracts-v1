@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 
-import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
+import {IPriceFeed} from "../interfaces/IPriceFeed.sol";
 import {DYAD} from "./Dyad.sol";
 
 contract dNFT is ERC721Enumerable, ReentrancyGuard {
@@ -46,7 +46,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   bytes private constant XP_TO_MULTI = hex"333333333435353637393a3c3f42454a4f555c636c76808b96a0abb5bfc8cfd6dce1e6e9eceff1f2";
 
   DYAD public dyad;
-  IAggregatorV3 internal oracle;
+  IPriceFeed internal oracle;
 
   enum Mode { 
     BURNING, // Price of ETH went down
@@ -101,7 +101,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     address[] memory _insiders
   ) ERC721("DYAD NFT", "dNFT") {
     dyad                      = DYAD(_dyad);
-    oracle                    = IAggregatorV3(_oracle);
+    oracle                    = IPriceFeed(_oracle);
     lastEthPrice              = _getLatestEthPrice();
     DEPOSIT_MINIMUM           = _depositMinimum;
     MAX_SUPPLY                = _maxSupply;
@@ -115,9 +115,8 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   }
 
   // ETH price in USD
-  function _getLatestEthPrice() internal view returns (uint) {
-    ( , int newEthPrice, , , ) = oracle.latestRoundData();
-    return newEthPrice.toUint256();
+  function _getLatestEthPrice() internal returns (uint) {
+    return oracle.fetchPrice() / 1e10; //account for difference in expected sig digs
   }
 
   // Mint new dNFT to `to` with a deposit of atleast `DEPOSIT_MINIMUM`
