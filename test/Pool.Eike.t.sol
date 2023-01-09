@@ -126,6 +126,7 @@ contract PoolTest is Test, Parameters, Deployment {
     // there should be less dyad now after the sync
     assertTrue(totalSupplyBefore > dyad.totalSupply());
 
+    // dyadDelta
     return totalSupplyBefore - dyad.totalSupply();
   }
 
@@ -189,6 +190,8 @@ contract PoolTest is Test, Parameters, Deployment {
 
     // there should be more dyad now after the sync
     assertTrue(totalSupplyBefore < dyad.totalSupply());
+
+    // dyadDelta
     return dyad.totalSupply() - totalSupplyBefore;
   }
 
