@@ -371,9 +371,9 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       if (mintedByTvl > MAX_MINTED_BY_TVL && mode == Mode.BURNING) { 
         mintedByTvl = MAX_MINTED_BY_TVL;
       }
-      uint xp = ((nft.xp-minXp)*10000 / xpDelta) / 100;
+      uint xpScaled = ((nft.xp-minXp)*10000 / xpDelta) / 100; 
       uint xpMulti = 50; // if 0 <= x <= 60, xp multi is 50
-      if (xp >= 61) { xpMulti = uint(uint8(XP_TO_MULTI[xp - 61])); } 
+      if (xpScaled >= 61) { xpMulti = uint(uint8(XP_TO_MULTI[xpScaled - 61])); } 
       if (mode == Mode.BURNING) { xpMulti = 300-xpMulti; } 
       uint multiProduct = xpMulti * (mode == Mode.BURNING 
                                         ? mintedByTvl 
