@@ -44,7 +44,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   struct Multi  { uint   product ; uint xp; }
   struct Multis { uint[] products; uint productsSum; uint[] xps; }
 
- bytes public constant XP_TO_MULTI = hex"333333333435353637393a3c3f42454a4f555c636c76808b96a0abb5bfc8cfd6dce1e6e9eceff1f2";
+ bytes private constant XP_TO_MULTI = hex"333333333435353637393a3c3f42454a4f555c636c76808b96a0abb5bfc8cfd6dce1e6e9eceff1f2";
 
   DYAD public dyad;
   IAggregatorV3 internal oracle;
