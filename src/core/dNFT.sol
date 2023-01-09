@@ -41,7 +41,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
   // Convenient way to store output of internal `calcMulti` functions
   struct Multi  { uint   product ; uint xp; }
-  struct Multis { uint[] products; uint productsSum; uint[] xps; }
+  struct Multis { uint[] products; uint productsSum; uint[] xps; uint[] tokenIds; }
 
   bytes private constant XP_TO_MULTI = hex"333333333435353637393a3c3f42454a4f555c636c76808b96a0abb5bfc8cfd6dce1e6e9eceff1f2";
 
@@ -297,7 +297,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       if (productsSum == 0) { productsSum = 1; } // to avoid dividing by 0 
 
       for (uint i = 0; i < nftTotalSupply; ) {
-        uint tokenId           = tokenByIndex(i);
+        uint tokenId           = multis.tokenIds[i];
         uint relativeDyadDelta = dyadDelta *                // percentagOf in bps
           (multis.products[i]*10000 / productsSum) / 10000; // relativeMulti
         Nft storage nft = idToNft[tokenId];
@@ -339,6 +339,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       uint productsSum;
       uint[] memory products = new uint[](nftTotalSupply);
       uint[] memory xps      = new uint[](nftTotalSupply);
+      uint[] memory tokenIds = new uint[](nftTotalSupply);
       uint xpDelta           = maxXp - minXp;
       if (xpDelta == 0)      { xpDelta = 1; } // xpDelta min is 1
 
@@ -352,13 +353,14 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
         if (id == tokenId && mode == Mode.MINTING) { 
           multi.product += multi.product*1500 / 10000; // boost by 15%
         }
+        tokenIds[i] = tokenId;
         products[i]  = multi.product;
         productsSum += multi.product;
         xps[i]       = multi.xp;
         unchecked { ++i; }
       }
 
-      return Multis(products, productsSum, xps);
+      return Multis(products, productsSum, xps, tokenIds);
   }
 
   function _calcMulti(
