@@ -287,10 +287,11 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       uint ethPriceDelta,
       Mode mode,
       uint id
-  ) private returns (uint) {
+  ) private returns (uint dyadDelta) {
       uint nftTotalSupply  = totalSupply();
-      Multis memory multis = _calcMultis(mode, id, nftTotalSupply);
-      uint dyadDelta       = dyad.totalSupply()*ethPriceDelta / 10000; // percentagOf in bps
+      uint dyadTotalSupply = dyad.totalSupply();
+      Multis memory multis = _calcMultis(mode, id, nftTotalSupply, dyadTotalSupply);
+      dyadDelta            = dyadTotalSupply*ethPriceDelta / 10000; // percentagOf in bps
       uint _minXp          = type(uint256).max;  // local min
       uint _maxXp          = maxXp;              // local max
       uint productsSum     = multis.productsSum; // saves gas
@@ -328,15 +329,14 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       if (_minXp > _maxXp) { revert MinXpHigherThanMaxXp(_minXp, _maxXp); }
       minXp = _minXp; // save new min
       maxXp = _maxXp; // save new max
-      return dyadDelta;
   }
 
   function _calcMultis(
       Mode mode,
       uint id, 
-      uint nftTotalSupply
+      uint nftTotalSupply, 
+      uint dyadTotalSupply
   ) private view returns (Multis memory) {
-      uint dyadTotalSupply   = dyad.totalSupply();
       uint productsSum;
       uint[] memory products = new uint[](nftTotalSupply);
       uint[] memory xps      = new uint[](nftTotalSupply);
