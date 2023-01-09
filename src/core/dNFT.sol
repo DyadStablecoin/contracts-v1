@@ -76,7 +76,6 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   error AddressZero            (address addr);
   error FailedDyadTransfer     (address to, uint amount);
   error FailedEthTransfer      (address to, uint amount);
-  error XpOutOfRange           (uint xp);
   error CannotMoveDepositToSelf(uint from, uint to, uint amount);
   error MinXpHigherThanMaxXp   (uint minXp, uint maxXp);
   error CannotDepositAndWithdrawInSameBlock();
@@ -388,8 +387,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
   // maps xp to a multiplier
   function _xpToMulti(uint xp) private pure returns (uint) {
-    if (xp <= 60) { return 50; }                // all xps <= 60 map to 50
-    if (xp > 100) { revert XpOutOfRange(xp); }  // xp must be <= 100
-    return uint(uint8(XP_TO_MULTI[xp - 61]));   // offset the first 61 values
+    if (xp < 61) { return 50; }                // all xps <= 60 map to 50
+    return uint(uint8(XP_TO_MULTI[xp - 61]));  // offset the first 61 values
   }
 }
