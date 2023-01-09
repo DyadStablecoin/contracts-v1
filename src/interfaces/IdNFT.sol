@@ -141,9 +141,8 @@ interface IdNFT {
    * @dev Emits:
    *      - Synced
    * @param id Id of the dNFT that gets a boost
-   * @return id The amount of DYAD minted/burned
    */
-  function sync(uint id) external returns (uint);
+  function sync(uint id) external;
 
   // get min/max XP
   function maxXp() external view returns (uint);

@@ -265,7 +265,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
   // Sync by minting/burning DYAD to keep the peg and update each dNFT.
   // dNFT with `id` gets a boost.
-  function sync(uint id) public returns (uint) {
+  function sync(uint id) public {
     if (block.number < lastSyncedBlock + BLOCKS_BETWEEN_SYNCS) { 
       revert SyncedTooRecently(); 
     }
@@ -280,7 +280,6 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
                          : dyad.burn(address(this), dyadDelta); 
     lastEthPrice       = newEthPrice;
     emit Synced(id);
-    return dyadDelta;
   }
 
   function _updateNFTs(
