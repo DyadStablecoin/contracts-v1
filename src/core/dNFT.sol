@@ -353,7 +353,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
         if (id == tokenId && mode == Mode.MINTING) { 
           multi.product += multi.product*1500 / 10000; // boost by 15%
         }
-        tokenIds[i] = tokenId;
+        tokenIds[i]  = tokenId;
         products[i]  = multi.product;
         productsSum += multi.product;
         xps[i]       = multi.xp;
