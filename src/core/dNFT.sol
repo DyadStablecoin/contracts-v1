@@ -189,7 +189,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       if (amount.toInt256() > nft.deposit) { revert ExceedsDepositLimit(amount); }
       uint collatVault    = address(this).balance/100000000 * _getLatestEthPrice();      // in USD
       uint totalWithdrawn = dyad.totalSupply() - dyad.balanceOf(address(this)) + amount;
-      uint collatRatio    = collatVault*10000 / totalWithdrawn;                          // in basis points
+      uint collatRatio    = collatVault*10000 / totalWithdrawn;                          // in bps
       if (collatRatio < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(collatRatio); }
       uint newWithdrawn   = nft.withdrawn + amount;
       uint averageTVL     = dyad.balanceOf(address(this)) / totalSupply();
@@ -273,8 +273,8 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     uint newEthPrice   = _getLatestEthPrice();
     Mode mode          = newEthPrice > lastEthPrice ? Mode.MINTING : Mode.BURNING;
     uint ethPriceDelta = newEthPrice*10000 / lastEthPrice; 
-    mode == Mode.BURNING ? ethPriceDelta  = 10000 - ethPriceDelta // in basis points
-                         : ethPriceDelta -= 10000;                // in basis points
+    mode == Mode.BURNING ? ethPriceDelta  = 10000 - ethPriceDelta // in bps
+                         : ethPriceDelta -= 10000;                // in bps
     uint dyadDelta     = _updateNFTs(ethPriceDelta, mode, id);    // can be 0
     mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
                          : dyad.burn(address(this), dyadDelta); 
@@ -289,7 +289,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       uint id
   ) private returns (uint) {
       Multis memory multis = _calcMultis(mode, id);
-      uint dyadDelta       = dyad.totalSupply()*ethPriceDelta / 10000; // in basis points
+      uint dyadDelta       = dyad.totalSupply()*ethPriceDelta / 10000; // percentagOf in bps
       uint _minXp          = type(uint256).max;  // local min
       uint _maxXp          = maxXp;              // local max
       uint productsSum     = multis.productsSum; // saves gas
@@ -298,7 +298,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
       for (uint i = 0; i < nftTotalSupply; ) {
         uint tokenId           = tokenByIndex(i);
-        uint relativeDyadDelta = dyadDelta *                // in basis points
+        uint relativeDyadDelta = dyadDelta *                // in bps
           (multis.products[i]*10000 / productsSum) / 10000; // relativeMulti
         Nft storage nft = idToNft[tokenId];
 
