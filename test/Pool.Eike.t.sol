@@ -115,7 +115,7 @@ contract PoolTest is Test, Parameters, Deployment {
     }
   }
 
-  function triggerBurn() public {
+  function triggerBurn() public returns (uint) {
     // change new oracle price to something lower so we trigger the burn
     vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(950 * 10**8)));
     uint totalSupplyBefore = dyad.totalSupply();
@@ -125,11 +125,13 @@ contract PoolTest is Test, Parameters, Deployment {
 
     // there should be less dyad now after the sync
     assertTrue(totalSupplyBefore > dyad.totalSupply());
+
+    return totalSupplyBefore - dyad.totalSupply();
   }
 
   function testSyncBurn() public {
-    triggerBurn();
-    // assertEq(4800, dyadDelta/(10**18));
+    uint dyadDelta = triggerBurn();
+    assertEq(4800, dyadDelta / (10**18));
 
     // check deposits after newly burned dyad. SOME ROUNDING ERRORS!
     assertDeposits([-135, 4364, 1804, 3999, 1723, 6249]);
@@ -177,22 +179,22 @@ contract PoolTest is Test, Parameters, Deployment {
     dnft.liquidate{value: 1 ether}(1, address(this));
   }
 
-  function triggerMint() public {
+  function triggerMint() public returns (uint) {
     // change new oracle price to something higher so we trigger the mint
     vm.store(address(oracle), bytes32(uint(0)), bytes32(uint(1100 * 10**8)));
     uint totalSupplyBefore = dyad.totalSupply();
 
-     dnft.sync(99999);
+    dnft.sync(99999);
     moveToNextBlock();
 
     // there should be more dyad now after the sync
     assertTrue(totalSupplyBefore < dyad.totalSupply());
-    // return dyadDelta;
+    return dyad.totalSupply() - totalSupplyBefore;
   }
 
   function testSyncMint() public {
-     triggerMint();
-    // assertEq(9600, dyadDelta/(10**18));
+    uint dyadDelta = triggerMint();
+    assertEq(9600, dyadDelta/(10**18));
 
     // check deposits after newly minted dyad. SOME ROUNDING ERRORS!
     // why do we cast the first argument? Good question. This forces
