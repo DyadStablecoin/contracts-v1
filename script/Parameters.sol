@@ -5,6 +5,7 @@ contract Parameters {
   uint MAX_SUPPLY = 500; 
   uint MIN_COLLATERIZATION_RATIO = 15000; 
   uint BLOCKS_BETWEEN_SYNCS = 1;
+  uint MAX_MINTED_BY_TVL = 50000; // 500%
 
   // mainnet
   address ORACLE_MAINNET = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
@@ -22,6 +23,8 @@ contract Parameters {
     0xe779Fb090AF9dfBB3b4C18Ed571ad6390Df52ae2, // dma.eth
     0x9F919a292e62594f2D8db13F6A4ADB1691D6c60d, // kores
     0x1b8afB86A36134691Ef9AFba90F143d9b5e8aBbB, // e_z.eth
-    0xe9fC93E678F2Bde7A0a3bA3d39F505Ef63a68C97  // ehjc
+    0xe9fC93E678F2Bde7A0a3bA3d39F505Ef63a68C97, // ehjc
+    0x78965cecb4696165B374FeA43Bac3029006Dec2c, // 0xMurathan
+    0xE264df996EF2934b8134AA1A03354F1FCd547939  // Ziad
   ];
 }

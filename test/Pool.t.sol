@@ -6,7 +6,7 @@ import "forge-std/console.sol";
 import "../src/core/Dyad.sol";
 import "ds-test/test.sol";
 import {IdNFT} from "../src/interfaces/IdNFT.sol";
-import {dNFT, Nft} from "../src/core/dNFT.sol";
+import {dNFT} from "../src/core/dNFT.sol";
 import {OracleMock} from "./Oracle.t.sol";
 import {Deployment} from "../script/Deployment.sol";
 import {Parameters} from "../script/Parameters.sol";
@@ -25,12 +25,15 @@ contract PoolTest is Test, Deployment, Parameters, Util {
 
     address _dnft;
     address _dyad;
-    (_dnft,_dyad) = deploy(address(oracle),
-                                 DEPOSIT_MINIMUM_MAINNET,
-                                 BLOCKS_BETWEEN_SYNCS, 
-                                 MIN_COLLATERIZATION_RATIO, 
-                                 MAX_SUPPLY,
-                                 new address[](0));
+    (_dnft,_dyad) = deploy(
+      DEPOSIT_MINIMUM_MAINNET,
+      MAX_SUPPLY,
+      BLOCKS_BETWEEN_SYNCS, 
+      MIN_COLLATERIZATION_RATIO, 
+      MAX_MINTED_BY_TVL,
+      address(oracle),
+      new address[](0)
+    );
     dnft = IdNFT(_dnft);
     dyad = DYAD(_dyad);
   }
@@ -51,6 +54,8 @@ contract PoolTest is Test, Deployment, Parameters, Util {
     dnft.sync(99999);
   }
   function testSync() public {
+    dnft.mintNft{value: 5 ether}(address(this));
+    dnft.mintNft{value: 5 ether}(address(this));
     dnft.sync(99999);
     vm.roll(block.number + BLOCKS_BETWEEN_SYNCS);
     dnft.sync(99999);

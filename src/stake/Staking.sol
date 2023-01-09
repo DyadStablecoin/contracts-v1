@@ -12,7 +12,7 @@ pragma solidity ^0.8.13;
 //   uint    withdrawalLimit; 
 // }
 
-// contract Staking {
+contract Staking {
 //   IdNFT public dnft;
 //   DYAD public dyad;
 
@@ -72,4 +72,4 @@ pragma solidity ^0.8.13;
 //     dyad.transfer(_position.feeRecipient, fee);
 //     dyad.transfer(msg.sender, amount - fee);
 //   }
-// }
+}

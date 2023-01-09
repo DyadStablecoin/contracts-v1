@@ -27,12 +27,15 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
 
     address _dnft;
     address _dyad;
-    (_dnft,_dyad) = deploy(address(oracle),
-                                 DEPOSIT_MINIMUM_MAINNET,
-                                 BLOCKS_BETWEEN_SYNCS, 
-                                 MIN_COLLATERIZATION_RATIO, 
-                                 MAX_SUPPLY,
-                                 new address[](0));
+    (_dnft,_dyad) = deploy(
+      DEPOSIT_MINIMUM_MAINNET,
+      MAX_SUPPLY,
+      BLOCKS_BETWEEN_SYNCS, 
+      MIN_COLLATERIZATION_RATIO, 
+      MAX_MINTED_BY_TVL,
+      address(oracle),
+      new address[](0)
+    );
     dnft = IdNFT(_dnft);
     dyad = DYAD(_dyad);
   }
@@ -118,6 +121,11 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
     assertEq(dnft.idToNft(0).withdrawn, AMOUNT_TO_WITHDRAW);
     assertEq(dnft.idToNft(0).deposit, int(ORACLE_PRICE*60000000000-AMOUNT_TO_WITHDRAW));
   }
+  function testFailBurnNotdNftContract() public {
+    uint tokenId = dnft.mintNft{value: 5 ether}(address(this));
+    dnft.withdraw(tokenId, 7000000);
+    dyad.burn(msg.sender, 50);
+  }
   function testFailWithdrawDyadNotNftOwner() public {
     dnft.mintNft{value: 5 ether}(address(this));
     vm.prank(address(0));
@@ -139,16 +147,18 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
   function testUnblockCollaterizationRatioLock() public {
     dnft.mintNft{value: 5 ether}(address(this));
     dnft.mintDyad{value: 1 ether}(0);
-    uint AMOUNT = 2880000000000000000000;
-    // this pushes the CR under 150% 
+    uint AMOUNT = 4600000000000000000000;
+    // this pushes the CR nearly to 150% 
     dnft.withdraw(0, AMOUNT);
     dyad.approve(address(dnft), AMOUNT);
     // CR is under 150% so withdraw should fail
     vm.expectRevert();
-    dnft.withdraw(0, 2 ether);
+    dnft.withdraw(0, AMOUNT);
     // this returns the CR to over 150%, which enables withdrawls again
     dnft.deposit(0, AMOUNT);
-    dnft.withdraw(0, 2 ether);
+    // we can not deposit+withdraw in same block
+    vm.roll(block.number + 1);
+    dnft.withdraw(0, AMOUNT);
   }
 
   // --------------------- DYAD Deposit ---------------------
@@ -162,6 +172,16 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
     dnft.deposit (0, AMOUNT_TO_DEPOSIT);
     assertEq(dnft.idToNft(0).withdrawn, 0);
     assertEq(dnft.idToNft(0).deposit, int(ORACLE_PRICE*50000000000));
+  }
+  function testFailDepositAndWithdrawInSameBlock() public {
+    uint AMOUNT_TO_DEPOSIT = 7000000;
+    dnft.mintNft{value: 5 ether}(address(this));
+    // withdraw dyad -> so we have something to deposit
+    dnft.withdraw(0, AMOUNT_TO_DEPOSIT);
+    // we need to approve the dnft contract to spend our dyad
+    dyad.approve(address(dnft), AMOUNT_TO_DEPOSIT);
+    dnft.deposit (0, AMOUNT_TO_DEPOSIT);
+    dnft.withdraw(0, 1);
   }
   function testFailDepositDyadNotNftOwner() public {
     dnft.mintNft{value: 5 ether}(address(this));
@@ -187,7 +207,22 @@ contract dNFTTest is Test, Deployment, Parameters, Util {
   }
   function testRedeemDyad() public {
     mintAndTransfer(REDEEM_AMOUNT);
+
+    uint totalSupplyBefore = dyad.totalSupply();
+    uint withdrawlsBefore  = dnft.idToNft(0).withdrawn;
+    uint dyadBalanceBefore = dyad.balanceOf(address(this));
+
     dnft.redeem(0, REDEEM_AMOUNT);
+
+    uint totalSupplyAfter = dyad.totalSupply();
+    uint withdrawlsAfter  = dnft.idToNft(0).withdrawn;
+    uint dyadBalanceAfter = dyad.balanceOf(address(this));
+
+    assertTrue(totalSupplyBefore > totalSupplyAfter);
+    assertEq(withdrawlsAfter, 0);
+    assertTrue(withdrawlsBefore > withdrawlsAfter);
+    assertEq(dyadBalanceAfter, 0);
+    assertTrue(dyadBalanceBefore > dyadBalanceAfter);
   }
   function testRedeemDyadSenderDyadBalance() public {
     mintAndTransfer(REDEEM_AMOUNT);

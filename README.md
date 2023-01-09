@@ -12,7 +12,7 @@ This repo contains the smart contracts for the dyad protocol.
 ## Test
 
 ```
-forge test --fork-url {FORK_URL}
+forge test --fork-url {MAINNET_RPC}
 ```
 
 ## Deploy

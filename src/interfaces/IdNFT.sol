@@ -27,6 +27,9 @@ interface IdNFT {
    * @dev Will revert:
    *      - If `msg.value` worth of DYAD < `DEPOSIT_MINIMUM`
    *      - If total supply of dNFTs is >= `MAX_SUPPLY`
+   * @dev Emits:
+   *      - NftMinted
+   *      - DyadMinted
    * @param to The address to mint the dNFT to
    * @return id Id of the new dNFT
    */
@@ -39,6 +42,8 @@ interface IdNFT {
    * @dev Will revert:
    *      - If dNFT is not owned by `msg.sender`
    *      - If `amount` minted is 0
+   * @dev Emits:
+   *      - DyadMinted
    * @param id Id of the dNFT
    * @return amount Amount minted
    */
@@ -51,10 +56,13 @@ interface IdNFT {
    * @dev Will revert:
    *      - If dNFT is not owned by `msg.sender`
    *      - If `amount` is 0
+   *      - If deposit call for `id` happened in the same block
    *      - If `amount` is > than dNFT deposit
    *      - If CR is < `MIN_COLLATERIZATION_RATIO` after withdrawl
    *      - If new withdrawl amount of dNFT > average tvl
    *      - If dyad transfer fails
+   * @dev Emits:
+   *      - DyadWithdrawn
    * @param id Id of the dNFT
    * @param amount Amount of DYAD to withdraw
    * @return amount Amount withdrawn
@@ -71,6 +79,8 @@ interface IdNFT {
    *      - If `amount` is 0
    *      - If `amount` is > than dNFT withdrawls
    *      - If dyad transfer fails
+   * @dev Emits:
+   *      - DyadDeposited
    * @param id Id of the dNFT
    * @param amount Amount of DYAD to withdraw
    * @return amount Amount deposited
@@ -83,6 +93,8 @@ interface IdNFT {
    *      - If dNFT is not owned by `msg.sender`
    *      - If `amount` is 0
    *      - If `amount` is > than dNFT withdrawls
+   * @dev Emits:
+   *      - DyadRedeemed
    * @param id Id of the dNFT
    * @param amount Amount of DYAD to redeem
    * @return amount Amount of ETH redeemed
@@ -96,6 +108,8 @@ interface IdNFT {
    *      - If `amount` is 0
    *      - If `from` == `to`
    *      - If `amount` is > than `from` dNFT deposit
+   * @dev Emits:
+   *      - DyadMoved
    * @param from Id of the dNFT to move the deposit from
    * @param to Id of the dNFT to move the deposit to
    * @param amount Amount of DYAD to move
@@ -112,6 +126,8 @@ interface IdNFT {
    *      - If `to` address is 0
    *      - If dNFT is not liquidatable
    *      - If `msg.value` worth of DYAD does not cover deposit of the burned dNFT
+   * @dev Emits:
+   *      - NftLiquidated
    * @param id Id of the dNFT to move the deposit from
    * @param to Id of the dNFT to move the deposit to
    * @return id Id of the newly minted dNFT
@@ -122,6 +138,8 @@ interface IdNFT {
    * @notice Sync by minting/burning DYAD to keep the peg and update each dNFT.
    * @dev Will revert:
    *      - If sync was called too soon after the last sync call
+   * @dev Emits:
+   *      - Synced
    * @param id Id of the dNFT that gets a boost
    * @return id The amount of DYAD minted/burned
    */

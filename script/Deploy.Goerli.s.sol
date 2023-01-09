@@ -9,11 +9,12 @@ import {Parameters} from "./Parameters.sol";
 contract DeployGoerli is Script, Parameters {
   function run() public {
       new Deployment().deploy(
-        ORACLE_GOERLI,
         DEPOSIT_MINIMUM_GOERLI,
+        MAX_SUPPLY,
         BLOCKS_BETWEEN_SYNCS,
         MIN_COLLATERIZATION_RATIO,
-        MAX_SUPPLY,
+        MAX_MINTED_BY_TVL, 
+        ORACLE_GOERLI,
         INSIDERS
       );
   }
