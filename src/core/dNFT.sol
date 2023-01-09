@@ -288,34 +288,40 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       Mode mode,
       uint id
   ) private returns (uint) {
-      Multis memory multis = _calcMultis(mode, id);
+      uint nftTotalSupply  = totalSupply();
+      Multis memory multis = _calcMultis(mode, id, nftTotalSupply);
       uint dyadDelta       = dyad.totalSupply()*ethPriceDelta / 10000; // percentagOf in bps
       uint _minXp          = type(uint256).max;  // local min
       uint _maxXp          = maxXp;              // local max
       uint productsSum     = multis.productsSum; // saves gas
       if (productsSum == 0) { productsSum = 1; } // to avoid dividing by 0 
-      uint nftTotalSupply  = totalSupply();
 
       for (uint i = 0; i < nftTotalSupply; ) {
         uint tokenId           = tokenByIndex(i);
         uint relativeDyadDelta = dyadDelta *                // percentagOf in bps
           (multis.products[i]*10000 / productsSum) / 10000; // relativeMulti
         Nft storage nft = idToNft[tokenId];
+        int  _deposit   = nft.deposit;                      // save gas
+        uint _xp        = nft.xp;                           // save gas
 
         if (mode == Mode.BURNING) {
-          if (nft.deposit > 0) {
+          if (_deposit >= 1) {                              // if deposit > 0
             uint xpAccrual     = relativeDyadDelta*100 / (multis.xps[i]);
             if (id == tokenId) { xpAccrual = xpAccrual << 1; } // boost by *2
-            nft.xp            += xpAccrual / (10**18);         // norm by 18 decimals
+            _xp            += xpAccrual / (10**18);         // norm by 18 decimals
           }
-          nft.deposit         -= relativeDyadDelta.toInt256();
+          _deposit         -= relativeDyadDelta.toInt256();
         } else {
-          nft.deposit         += relativeDyadDelta.toInt256();
+          _deposit         += relativeDyadDelta.toInt256();
         }
 
-        nft.deposit >= 0 ? nft.isLiquidatable = false : nft.isLiquidatable = true;
-        if (nft.xp < _minXp) { _minXp = nft.xp; } // new local min
-        if (nft.xp > _maxXp) { _maxXp = nft.xp; } // new local max
+        _deposit >= 0 ? nft.isLiquidatable = false : nft.isLiquidatable = true;
+
+        if (_xp < _minXp) { _minXp = _xp; } // new local min
+        if (_xp > _maxXp) { _maxXp = _xp; } // new local max
+
+        nft.deposit = _deposit;
+        nft.xp      = _xp;
         unchecked { ++i; }
       }
 
@@ -327,9 +333,9 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
   function _calcMultis(
       Mode mode,
-      uint id
+      uint id, 
+      uint nftTotalSupply
   ) private view returns (Multis memory) {
-      uint nftTotalSupply    = totalSupply();
       uint dyadTotalSupply   = dyad.totalSupply();
       uint productsSum;
       uint[] memory products = new uint[](nftTotalSupply);
