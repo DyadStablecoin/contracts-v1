@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "forge-std/Test.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
@@ -44,7 +43,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   struct Multi  { uint   product ; uint xp; }
   struct Multis { uint[] products; uint productsSum; uint[] xps; }
 
- bytes private constant XP_TO_MULTI = hex"333333333435353637393a3c3f42454a4f555c636c76808b96a0abb5bfc8cfd6dce1e6e9eceff1f2";
+  bytes private constant XP_TO_MULTI = hex"333333333435353637393a3c3f42454a4f555c636c76808b96a0abb5bfc8cfd6dce1e6e9eceff1f2";
 
   DYAD public dyad;
   IAggregatorV3 internal oracle;
@@ -389,7 +388,6 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
   // maps xp to a multiplier
   function _xpToMulti(uint xp) private pure returns (uint) {
-    if (xp <   0) { revert XpOutOfRange(xp); }  // xp must be >= 0
     if (xp <= 60) { return 50; }                // all xps <= 60 map to 50
     if (xp > 100) { revert XpOutOfRange(xp); }  // xp must be <= 100
     return uint(uint8(XP_TO_MULTI[xp - 61]));   // offset the first 61 values
