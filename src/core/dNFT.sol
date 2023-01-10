@@ -126,7 +126,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     return id;
   }
 
-  // Mint new dNFT to `to` with `id` id and add Xp if `addXp`
+  // Mint new dNFT to `to` with `id` id and add Xp if `addXp` is true
   function _mintNft(
     address to,
     uint id,
