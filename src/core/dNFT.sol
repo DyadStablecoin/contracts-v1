@@ -113,15 +113,9 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     }
   }
 
-  // ETH price in USD
-  function _getLatestEthPrice() internal view returns (uint) {
-    ( , int newEthPrice, , , ) = oracle.latestRoundData();
-    return newEthPrice.toUint256();
-  }
-
   // Mint new dNFT to `to` with a deposit of atleast `DEPOSIT_MINIMUM`
   function mintNft(address to) external addressNotZero(to) payable returns (uint) {
-    uint id = _mintNft(to, totalSupply()); // add starter xp
+    uint id = _mintNft(to, totalSupply()); 
     _mintDyad(id, DEPOSIT_MINIMUM);
     return id;
   }
@@ -392,5 +386,11 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
                                         ? mintedByTvl 
                                         : (_deposit*10000) / (mintedByNft+1)); // depositMulti
       return Multi(multiProduct, xpMulti);
+  }
+
+  // ETH price in USD
+  function _getLatestEthPrice() internal view returns (uint) {
+    ( , int newEthPrice, , , ) = oracle.latestRoundData();
+    return newEthPrice.toUint256();
   }
 }
