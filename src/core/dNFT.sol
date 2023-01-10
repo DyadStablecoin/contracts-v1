@@ -116,19 +116,9 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   // Mint new dNFT to `to` with a deposit of atleast `DEPOSIT_MINIMUM`
   function mintNft(address to) external addressNotZero(to) payable returns (uint) {
     uint id = totalSupply();
-    _mintNftWithXp(to, totalSupply()); 
+    _mintNftWithXp(to, id); 
     _mintDyad(id, DEPOSIT_MINIMUM);
     return id;
-  }
-
-  // Call `mintNft` and add xp to the newly minted dNFT
-  function _mintNftWithXp(address to, uint id) private {
-    _mintNft(to, id);
-    unchecked {                     
-    uint xp = (MAX_SUPPLY<<1) - id; // id is always between 0 and MAX_SUPPLY-1
-    idToNft[id].xp = xp;            // break xp symmetry 
-    if (xp < minXp) { minXp = xp; } // sync could have increased `minXp`
-    }
   }
 
   // Mint new dNFT to `to` with `id` id and add Xp if `addXp` is true
@@ -140,6 +130,16 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     _mint(to, id); 
     emit NftMinted(to, id);
     return id;
+  }
+
+  // Call `mintNft` and add xp to the newly minted dNFT
+  function _mintNftWithXp(address to, uint id) private {
+    _mintNft(to, id);
+    unchecked {                     
+    uint xp = (MAX_SUPPLY<<1) - id; // id is always between 0 and MAX_SUPPLY-1
+    idToNft[id].xp = xp;            // break xp symmetry 
+    if (xp < minXp) { minXp = xp; } // sync could have increased `minXp`
+    }
   }
 
   // Mint and deposit DYAD into dNFT
