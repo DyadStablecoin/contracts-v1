@@ -122,11 +122,6 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   // Mint new dNFT to `to` with a deposit of atleast `DEPOSIT_MINIMUM`
   function mintNft(address to) external addressNotZero(to) payable returns (uint) {
     uint id = _mintNft(to, totalSupply());
-    unchecked {                     // break xp symmetry;
-    uint xp = (MAX_SUPPLY<<1) - id; // id is always between 0 and MAX_SUPPLY-1
-    idToNft[id].xp = xp;             
-    if (xp < minXp) { minXp = xp; } // sync could have increased `minXp`
-    }
     _mintDyad(id, DEPOSIT_MINIMUM);
     return id;
   }
@@ -134,6 +129,11 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   // Mint new dNFT to `to` with `id` id
   function _mintNft(address to, uint id) private returns (uint) {
     if (id >= MAX_SUPPLY) { revert ReachedMaxSupply(); }
+    unchecked {                     // break xp symmetry;
+    uint xp = (MAX_SUPPLY<<1) - id; // id is always between 0 and MAX_SUPPLY-1
+    idToNft[id].xp = xp;             
+    if (xp < minXp) { minXp = xp; } // sync could have increased `minXp`
+    }
     _mint(to, id); 
     emit NftMinted(to, id);
     return id;
