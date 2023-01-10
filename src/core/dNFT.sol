@@ -282,22 +282,22 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     uint ethPriceDelta = newEthPrice*10000 / lastEthPrice; 
     mode == Mode.MINTING ? ethPriceDelta -= 10000                  // in bps
                          : ethPriceDelta  = 10000 - ethPriceDelta; // in bps
-    uint dyadDelta     = _updateNFTs(ethPriceDelta, mode, id);     // can be 0
+    uint dyadDelta     = dyad.totalSupply()*ethPriceDelta / 10000; // percentagOf in bps
+    emit Synced(id);
+    if (dyadDelta == 0) { return; }
+    _updateNFTs(dyadDelta, mode, id);     
     mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
                          : dyad.burn(address(this), dyadDelta); 
     lastEthPrice       = newEthPrice;
-    emit Synced(id);
   }
 
   function _updateNFTs(
-      uint ethPriceDelta,
+      uint dyadDelta,
       Mode mode,
       uint id
-  ) private returns (uint dyadDelta) {
+  ) private {
       uint nftTotalSupply  = totalSupply();
       uint dyadTotalSupply = dyad.totalSupply();
-      dyadDelta            = dyadTotalSupply*ethPriceDelta / 10000; // percentagOf in bps
-      if (dyadDelta == 0)  { return 0; }
       Multis memory multis = _calcMultis(mode, id, nftTotalSupply, dyadTotalSupply);
       uint _minXp          = type(uint256).max;  // local min
       uint _maxXp          = maxXp;              // local max
