@@ -10,6 +10,7 @@ import {dNFT} from "../src/core/dNFT.sol";
 import {OracleMock} from "./Oracle.t.sol";
 import {Parameters} from "../script/Parameters.sol";
 import {Deployment} from "../script/Deployment.sol";
+import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 uint constant DEPOSIT_MINIMUM = 5000000000000000000000;
 
@@ -22,7 +23,7 @@ interface CheatCodes {
 // https://docs.google.com/spreadsheets/d/1pegDYo8hrOQZ7yZY428F_aQ_mCvK0d701mygZy-P04o/edit#gid=0
 // There are many hard coded values here that are based on the equations in the 
 // google sheet.
-contract PoolTest is Test, Parameters, Deployment {
+contract PoolTest is Test, Parameters, Deployment, ERC721Holder {
   using stdStorage for StdStorage;
 
   DYAD public dyad;

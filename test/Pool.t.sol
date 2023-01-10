@@ -11,10 +11,11 @@ import {OracleMock} from "./Oracle.t.sol";
 import {Deployment} from "../script/Deployment.sol";
 import {Parameters} from "../script/Parameters.sol";
 import {Util} from "./util/Util.sol";
+import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 uint constant ORACLE_PRICE = 120000000000; // $1.2k
 
-contract PoolTest is Test, Deployment, Parameters, Util {
+contract PoolTest is Test, Deployment, Parameters, Util, ERC721Holder {
   IdNFT public dnft;
   DYAD public dyad;
   OracleMock public oracle;
