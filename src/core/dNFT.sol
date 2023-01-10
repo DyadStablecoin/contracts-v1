@@ -243,8 +243,9 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       address owner  = ownerOf(id);
       _burn(id); 
       delete idToNft[id];
+      _mintCopy(to, nft, id);
       emit NftLiquidated(owner, to,  id); 
-      return _mintCopy(to, nft, id);
+      return id;
   }
 
   // Mint nft with `id` to `to` with the same xp and withdrawn amount as `nft`
