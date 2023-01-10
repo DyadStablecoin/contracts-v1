@@ -240,9 +240,10 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   ) external addressNotZero(to) payable returns (uint) {
       Nft memory nft = idToNft[id];
       if (!nft.isLiquidatable) { revert NotLiquidatable(id); }
-      emit NftLiquidated(ownerOf(id), to,  id); 
+      address owner  = ownerOf(id);
       _burn(id); 
       delete idToNft[id];
+      emit NftLiquidated(owner, to,  id); 
       return _mintCopy(to, nft, id);
   }
 
