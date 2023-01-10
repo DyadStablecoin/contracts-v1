@@ -108,7 +108,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     maxXp                     = _maxSupply << 1; // *2
 
     for (uint id = 0; id < _insiders.length; ) { 
-      _mintNft(_insiders[id], id); 
+      _mintNft(_insiders[id], id, true); 
       unchecked { ++id; }
     }
   }
@@ -121,18 +121,24 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
   // Mint new dNFT to `to` with a deposit of atleast `DEPOSIT_MINIMUM`
   function mintNft(address to) external addressNotZero(to) payable returns (uint) {
-    uint id = _mintNft(to, totalSupply());
+    uint id = _mintNft(to, totalSupply(), true);
     _mintDyad(id, DEPOSIT_MINIMUM);
     return id;
   }
 
-  // Mint new dNFT to `to` with `id` id
-  function _mintNft(address to, uint id) private returns (uint) {
+  // Mint new dNFT to `to` with `id` id and add Xp if `addXp`
+  function _mintNft(
+    address to,
+    uint id,
+    bool addXp
+  ) private returns (uint) {
     if (id >= MAX_SUPPLY) { revert ReachedMaxSupply(); }
-    unchecked {                     // break xp symmetry;
-    uint xp = (MAX_SUPPLY<<1) - id; // id is always between 0 and MAX_SUPPLY-1
-    idToNft[id].xp = xp;             
-    if (xp < minXp) { minXp = xp; } // sync could have increased `minXp`
+    if (addXp) {
+      unchecked {                     // break xp symmetry;
+      uint xp = (MAX_SUPPLY<<1) - id; // id is always between 0 and MAX_SUPPLY-1
+      idToNft[id].xp = xp;             
+      if (xp < minXp) { minXp = xp; } // sync could have increased `minXp`
+      }
     }
     _mint(to, id); 
     emit NftMinted(to, id);
@@ -254,7 +260,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       Nft memory nft, 
       uint id
   ) private returns (uint) { 
-      _mintNft(to, id);
+      _mintNft(to, id, false);
       Nft storage newNft = idToNft[id];
       uint minDeposit;
       if (nft.deposit < 0) { minDeposit = nft.deposit.abs(); }
