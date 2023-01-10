@@ -46,7 +46,7 @@ contract LaunchTest is Test, Parameters, Deployment {
       MIN_COLLATERIZATION_RATIO, 
       MAX_MINTED_BY_TVL, 
       CHAINLINK_ORACLE_ADDRESS,
-      new address[](0)
+      INSIDERS
     );
     dnft = IdNFT(_dnft);
     dyad = DYAD(_dyad);
@@ -61,7 +61,12 @@ contract LaunchTest is Test, Parameters, Deployment {
 
   function testInsiderAllocation() public {
     // we have `NUMBER_OF_INSIDER_NFTS` insiders that we allocate for
-    assertEq(dnft.totalSupply(), NUMBER_OF_INSIDER_NFTS);
+    assertEq(dnft.totalSupply(), INSIDERS.length);
+  }
+
+  function testXpOfInsiderNft() public {
+    assertEq(dnft.idToNft(0).xp, MAX_SUPPLY*2);
+    assertEq(dnft.idToNft(1).xp, MAX_SUPPLY*2-1);
   }
 
   function testFirstSync() public {

@@ -45,7 +45,9 @@ contract PoolTest is Test, Deployment, Parameters, Util {
     for (uint i = 0; i < MAX_SUPPLY; i++) {
       dnft.mintNft{value: 5 ether}(address(this));
     }
+    uint gas = gasleft();
     dnft.sync(99999);
+    console.log("gas used", gas - gasleft());
   }
 
   function testFailSyncTooSoon() public {

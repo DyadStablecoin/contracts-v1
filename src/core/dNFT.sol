@@ -3,7 +3,6 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/utils/math/SignedMath.sol";
 
@@ -14,7 +13,6 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   using SafeCast   for int256;
   using SafeCast   for uint256;
   using SignedMath for int256;
-  using Counters   for Counters.Counter;
 
   uint public immutable DEPOSIT_MINIMUM;           // Min DYAD required to mint a new dNFT
   uint public immutable MAX_SUPPLY;                // Max number of dNFTs that can exist simultaneously
@@ -26,8 +24,6 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   uint public lastSyncedBlock;                     // Last block sync was called on
   uint public minXp;                               // Min XP over all dNFTs
   uint public maxXp;                               // Max XP over all dNFTs
-
-  Counters.Counter public tokenIdCounter;          // Number of dNFTs minted so far
 
   mapping(uint => Nft)  public idToNft;                  // dNFT id => dNFT
   mapping(uint => uint) private _idToBlockOfLastDeposit; // dNFT id => Block deposit was called on
@@ -41,7 +37,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
   // Convenient way to store output of internal `calcMulti` functions
   struct Multi  { uint   product ; uint xp; }
-  struct Multis { uint[] products; uint productsSum; uint[] xps; uint[] tokenIds; }
+  struct Multis { uint[] products; uint productsSum; uint[] xps; }
 
   bytes private constant XP_TO_MULTI = hex"333333333435353637393a3c3f42454a4f555c636c76808b96a0abb5bfc8cfd6dce1e6e9eceff1f2";
 
@@ -111,7 +107,10 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     minXp                     = _maxSupply;
     maxXp                     = _maxSupply << 1; // *2
 
-    for (uint i = 0; i < _insiders.length; i++) { _mintNft(_insiders[i]); }
+    for (uint id = 0; id < _insiders.length; ) { 
+      _mintNft(_insiders[id], id, true);         // add starter xp
+      unchecked { ++id; }
+    }
   }
 
   // ETH price in USD
@@ -122,22 +121,28 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
   // Mint new dNFT to `to` with a deposit of atleast `DEPOSIT_MINIMUM`
   function mintNft(address to) external addressNotZero(to) payable returns (uint) {
-    uint id = _mintNft(to);
+    uint id = _mintNft(to, totalSupply(), true); // add starter xp
     _mintDyad(id, DEPOSIT_MINIMUM);
-    uint xp = idToNft[id].xp;
-    if (xp < minXp) { minXp = xp; } // sync could have increased `minXp`
     return id;
   }
 
-  // Mint new dNFT to `to`
-  function _mintNft(address to) private returns (uint id) {
-    if (totalSupply() >= MAX_SUPPLY) { revert ReachedMaxSupply(); }
-    id = tokenIdCounter.current();
-    tokenIdCounter.increment();
+  // Mint new dNFT to `to` with `id` id and add Xp if `addXp` is true
+  function _mintNft(
+    address to,
+    uint id,
+    bool addXp
+  ) private returns (uint) {
+    if (id >= MAX_SUPPLY) { revert ReachedMaxSupply(); }
     _mint(to, id); 
-    Nft storage nft = idToNft[id];
-    nft.xp = (MAX_SUPPLY<<1) - (totalSupply()-1); // break xp symmetry
+    if (addXp) {
+      unchecked {                     
+      uint xp = (MAX_SUPPLY<<1) - id; // id is always between 0 and MAX_SUPPLY-1
+      idToNft[id].xp = xp;            // break xp symmetry 
+      if (xp < minXp) { minXp = xp; } // sync could have increased `minXp`
+      }
+    }
     emit NftMinted(to, id);
+    return id;
   }
 
   // Mint and deposit DYAD into dNFT
@@ -241,18 +246,21 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   ) external addressNotZero(to) payable returns (uint) {
       Nft memory nft = idToNft[id];
       if (!nft.isLiquidatable) { revert NotLiquidatable(id); }
-      emit NftLiquidated(ownerOf(id), to,  id); 
+      address owner  = ownerOf(id);
       _burn(id); 
       delete idToNft[id];
-      return _mintCopy(to, nft);
+      _mintCopy(to, nft, id);
+      emit NftLiquidated(owner, to,  id); 
+      return id;
   }
 
-  // Mint new nft to `to` with the same xp and withdrawn amount as `nft`
+  // Mint nft with `id` to `to` with the same xp and withdrawn amount as `nft`
   function _mintCopy(
       address to,
-      Nft memory nft
+      Nft memory nft, 
+      uint id
   ) private returns (uint) { 
-      uint id = _mintNft(to);
+      _mintNft(to, id, false);          // do not add starter xp
       Nft storage newNft = idToNft[id];
       uint minDeposit;
       if (nft.deposit < 0) { minDeposit = nft.deposit.abs(); }
@@ -297,17 +305,16 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       if (productsSum == 0) { productsSum = 1; } // to avoid dividing by 0 
 
       for (uint i = 0; i < nftTotalSupply; ) {
-        uint tokenId           = multis.tokenIds[i];
         uint relativeDyadDelta = dyadDelta *                // percentagOf in bps
           (multis.products[i]*10000 / productsSum) / 10000; // relativeMulti
-        Nft storage nft = idToNft[tokenId];
+        Nft storage nft = idToNft[i];
         int  _deposit   = nft.deposit;                      // save gas
         uint _xp        = nft.xp;                           // save gas
 
         if (mode == Mode.BURNING) {
           if (_deposit >= 1) {                              // if deposit > 0
             uint xpAccrual     = relativeDyadDelta*100 / (multis.xps[i]);
-            if (id == tokenId) { xpAccrual = xpAccrual << 1; } // boost by *2
+            if (id == i) { xpAccrual = xpAccrual << 1; } // boost by *2
             _xp            += xpAccrual / (10**18);         // norm by 18 decimals
           }
           _deposit         -= relativeDyadDelta.toInt256();
@@ -339,28 +346,25 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       uint productsSum;
       uint[] memory products = new uint[](nftTotalSupply);
       uint[] memory xps      = new uint[](nftTotalSupply);
-      uint[] memory tokenIds = new uint[](nftTotalSupply);
       uint xpDelta           = maxXp - minXp;
       if (xpDelta == 0)      { xpDelta = 1; } // xpDelta min is 1
 
       for (uint i = 0; i < nftTotalSupply; ) {
-        uint tokenId = tokenByIndex(i);
-        Nft   memory nft   = idToNft[tokenId];
+        Nft   memory nft   = idToNft[i];
         Multi memory multi;                   // defaults to 0, 0
         if (nft.deposit > 0) {                // multis are 0 if deposit <= 0
           multi = _calcMulti(mode, nft, nftTotalSupply, dyadTotalSupply, xpDelta);
         } 
-        if (id == tokenId && mode == Mode.MINTING) { 
+        if (id == i && mode == Mode.MINTING) { 
           multi.product += multi.product*1500 / 10000; // boost by 15%
         }
-        tokenIds[i]  = tokenId;
         products[i]  = multi.product;
         productsSum += multi.product;
         xps[i]       = multi.xp;
         unchecked { ++i; }
       }
 
-      return Multis(products, productsSum, xps, tokenIds);
+      return Multis(products, productsSum, xps);
   }
 
   function _calcMulti(
