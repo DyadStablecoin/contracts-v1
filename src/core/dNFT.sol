@@ -130,9 +130,11 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   function _mintNft(address to, uint id) private returns (uint) {
     if (id >= MAX_SUPPLY) { revert ReachedMaxSupply(); }
     _mint(to, id); 
+    unchecked {                     // id is always between 0 and MAX_SUPPLY-1
     uint xp = (MAX_SUPPLY<<1) - id; // break xp symmetry;
     idToNft[id].xp = xp;
     if (xp < minXp) { minXp = xp; } // sync could have increased `minXp`
+    }
     emit NftMinted(to, id);
     return id;
   }
