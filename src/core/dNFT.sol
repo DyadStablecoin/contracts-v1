@@ -276,28 +276,30 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     if (block.number < lastSyncedBlock + BLOCKS_BETWEEN_SYNCS) { 
       revert SyncedTooRecently(); 
     }
-    lastSyncedBlock    = block.number;
-    uint newEthPrice   = _getLatestEthPrice();
-    Mode mode          = newEthPrice > lastEthPrice ? Mode.MINTING : Mode.BURNING;
-    uint ethPriceDelta = newEthPrice*10000 / lastEthPrice; 
+    lastSyncedBlock      = block.number;
+    uint newEthPrice     = _getLatestEthPrice();
+    Mode mode            = newEthPrice > lastEthPrice ? Mode.MINTING : Mode.BURNING;
+    uint ethPriceDelta   = newEthPrice*10000 / lastEthPrice; 
     mode == Mode.MINTING ? ethPriceDelta -= 10000                  // in bps
                          : ethPriceDelta  = 10000 - ethPriceDelta; // in bps
-    uint dyadDelta     = _updateNFTs(ethPriceDelta, mode, id);     // can be 0
+    uint dyadTotalSupply = dyad.totalSupply();
+    uint dyadDelta       = dyadTotalSupply*ethPriceDelta / 10000;  // percentagOf in bps
+    if (dyadDelta == 0) { return; }
+    _updateNFTs(dyadDelta, dyadTotalSupply, mode, id);     
     mode == Mode.MINTING ? dyad.mint(address(this), dyadDelta) 
                          : dyad.burn(address(this), dyadDelta); 
-    lastEthPrice       = newEthPrice;
+    lastEthPrice         = newEthPrice;
     emit Synced(id);
   }
 
   function _updateNFTs(
-      uint ethPriceDelta,
+      uint dyadDelta,
+      uint dyadTotalSupply,
       Mode mode,
       uint id
-  ) private returns (uint dyadDelta) {
+  ) private {
       uint nftTotalSupply  = totalSupply();
-      uint dyadTotalSupply = dyad.totalSupply();
       Multis memory multis = _calcMultis(mode, id, nftTotalSupply, dyadTotalSupply);
-      dyadDelta            = dyadTotalSupply*ethPriceDelta / 10000; // percentagOf in bps
       uint _minXp          = type(uint256).max;  // local min
       uint _maxXp          = maxXp;              // local max
       uint productsSum     = multis.productsSum; // saves gas
