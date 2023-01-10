@@ -108,7 +108,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     maxXp                     = _maxSupply << 1; // *2
 
     for (uint id = 0; id < _insiders.length; ) { 
-      _mintNft(_insiders[id], id, true); 
+      _mintNft(_insiders[id], id, true);         // add starter xp
       unchecked { ++id; }
     }
   }
@@ -121,7 +121,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
   // Mint new dNFT to `to` with a deposit of atleast `DEPOSIT_MINIMUM`
   function mintNft(address to) external addressNotZero(to) payable returns (uint) {
-    uint id = _mintNft(to, totalSupply(), true);
+    uint id = _mintNft(to, totalSupply(), true); // add starter xp
     _mintDyad(id, DEPOSIT_MINIMUM);
     return id;
   }
@@ -260,7 +260,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       Nft memory nft, 
       uint id
   ) private returns (uint) { 
-      _mintNft(to, id, false);
+      _mintNft(to, id, false);          // do not add starter xp
       Nft storage newNft = idToNft[id];
       uint minDeposit;
       if (nft.deposit < 0) { minDeposit = nft.deposit.abs(); }
