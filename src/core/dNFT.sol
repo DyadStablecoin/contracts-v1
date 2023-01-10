@@ -108,7 +108,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
     maxXp                     = _maxSupply << 1; // *2
 
     for (uint id = 0; id < _insiders.length; ) { 
-      _mintNft(_insiders[id], id, true);         // add starter xp
+      _mintNftWithXp(_insiders[id], id);         
       unchecked { ++id; }
     }
   }
@@ -121,26 +121,28 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
 
   // Mint new dNFT to `to` with a deposit of atleast `DEPOSIT_MINIMUM`
   function mintNft(address to) external addressNotZero(to) payable returns (uint) {
-    uint id = _mintNft(to, totalSupply(), true); // add starter xp
+    uint id = _mintNft(to, totalSupply()); // add starter xp
     _mintDyad(id, DEPOSIT_MINIMUM);
     return id;
+  }
+
+  // Call `mintNft` and add xp to the newly minted dNFT
+  function _mintNftWithXp(address to, uint id) private {
+    _mintNft(to, id);
+    unchecked {                     
+    uint xp = (MAX_SUPPLY<<1) - id; // id is always between 0 and MAX_SUPPLY-1
+    idToNft[id].xp = xp;            // break xp symmetry 
+    if (xp < minXp) { minXp = xp; } // sync could have increased `minXp`
+    }
   }
 
   // Mint new dNFT to `to` with `id` id and add Xp if `addXp` is true
   function _mintNft(
     address to,
-    uint id,
-    bool addXp
+    uint id
   ) private returns (uint) {
     if (id >= MAX_SUPPLY) { revert ReachedMaxSupply(); }
     _mint(to, id); 
-    if (addXp) {
-      unchecked {                     
-      uint xp = (MAX_SUPPLY<<1) - id; // id is always between 0 and MAX_SUPPLY-1
-      idToNft[id].xp = xp;            // break xp symmetry 
-      if (xp < minXp) { minXp = xp; } // sync could have increased `minXp`
-      }
-    }
     emit NftMinted(to, id);
     return id;
   }
@@ -260,7 +262,7 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
       Nft memory nft, 
       uint id
   ) private returns (uint) { 
-      _mintNft(to, id, false);          // do not add starter xp
+      _mintNft(to, id);
       Nft storage newNft = idToNft[id];
       uint minDeposit;
       if (nft.deposit < 0) { minDeposit = nft.deposit.abs(); }
