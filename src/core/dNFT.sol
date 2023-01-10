@@ -296,8 +296,9 @@ contract dNFT is ERC721Enumerable, ReentrancyGuard {
   ) private returns (uint dyadDelta) {
       uint nftTotalSupply  = totalSupply();
       uint dyadTotalSupply = dyad.totalSupply();
-      Multis memory multis = _calcMultis(mode, id, nftTotalSupply, dyadTotalSupply);
       dyadDelta            = dyadTotalSupply*ethPriceDelta / 10000; // percentagOf in bps
+      if (dyadDelta == 0)  { return 0; }
+      Multis memory multis = _calcMultis(mode, id, nftTotalSupply, dyadTotalSupply);
       uint _minXp          = type(uint256).max;  // local min
       uint _maxXp          = maxXp;              // local max
       uint productsSum     = multis.productsSum; // saves gas
